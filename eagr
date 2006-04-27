@@ -1,0 +1,459 @@
+#!/bin/sh -efu
+#
+# Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+# 
+# Extract Archive from Git package Repository.
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+
+# Note about rules:
+#  .rules is plain text file, where each meaningful line has following format:
+#  directive: args
+#  
+#  Valid directives are:
+#  spec, copy, gzip, bzip2, tar, tar.gz, tar.bz2
+#  
+#  Each directive has own args syntax:
+#  spec: path_to_file
+#  (copy|gzip|bzip2): glob_pattern..
+#  tar(|.gz|.bz2): path_to_directory [options]
+#  
+#  Valid tar options are:
+#    spec=path_to_file  - path to specfile which defines this archive name and version;
+#    name=archive_name  - this archive name;
+#    version=archive_version  - this archive version;
+
+PROG=eagr
+
+info()
+{
+	printf %s\\n "$PROG: $*" >&2
+}
+
+fatal()
+{
+	printf %s\\n "$PROG: $*" >&2
+	exit 1
+}
+
+quiet=
+verbose=
+verbose()
+{
+	[ -n "$verbose" ] || return 0
+	info "$@"
+}
+
+GIT_DIR=
+lineno=
+rules_error()
+{
+	local lineno_text=
+	[ -z "$lineno" ] || lineno_text=" line $lineno"
+	fatal "$rules$lineno_text: $*"
+}
+
+print_version()
+{
+	cat <<EOF
+$PROG version 0.1
+Written by Dmitry V. Levin <ldv@altlinux.org>
+
+Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+	exit
+}
+
+show_usage()
+{
+	[ -z "$*" ] || info "$*"
+	echo "Try \`$PROG --help' for more information." >&2
+	exit 1
+}
+
+show_help()
+{
+	cat <<EOF
+$PROG - extract archive from git package repository.
+
+Usage: $PROG [options] <path-to-git-directory> <output-tarball-name>
+or:    $PROG [options] <path-to-git-directory> --rpmbuild -- <rpmbuld-command>...
+
+Options:
+  --bzip2                           compress output archive using bzip2;
+  --gzip                            compress output archive using gzip;
+  --rpmbuild                        execute rpmbuild-like command afterwards;
+  -r, --rules=FILENAME              name of file with rules, default is .rules;
+  -t, --tree-ish=ID                 tree, commit or tag object name;
+  -q, --quiet                       try to be more quiet;
+  -v, --verbose                     print a message for each action;
+  -V, --version                     print program version and exit;
+  -h, --help                        show this text and exit.
+    
+Report bugs to http://bugs.altlinux.ru/
+
+EOF
+	exit
+}
+
+tmpdir=
+exit_handler()
+{
+	local rc=$?
+	trap - EXIT
+	[ -z "$tmpdir" ] || rm -rf -- "$tmpdir"
+	exit $rc
+}
+
+# quote argument for sed regexp.
+quote_sed_regexp()
+{
+	local out
+	out="$(printf %s "$*" |sed -e 's/[].^$[\/]/\\&/g')" || return 1
+	printf %s "$out"
+}
+
+tree=
+traverse_tree()
+{
+	local path="$1"
+	shift
+
+	set -- `printf %s "$path" |tr -s / ' '`
+	local dir id quoted
+	for dir; do
+		[ "$dir" != . ] || continue
+		quoted="$(quote_sed_regexp "$dir")"
+		id="$(git-ls-tree "$tree" "$dir" |
+			sed -ne 's/^[^[:space:]]\+[[:space:]]\+tree[[:space:]]\+\([^[:space:]]\+\)[[:space:]]\+'"$quoted"'$/\1/p')"
+		[ -n "$id" ] ||
+			rules_error "tree $dir not found in $tree"
+		tree="$id"
+	done
+}
+
+# fetch blob by id+name.
+cat_blob()
+{
+	local name dir_name base_name
+	tree="$1"
+	shift
+	name="$1"
+	shift
+
+	dir_name="$(dirname "$name")"
+	base_name="$(basename "$name")"
+	# reads and modifies $tree
+	traverse_tree "$dir_name"
+
+	# fetch blob from given tree.
+	local blob quoted
+	quoted="$(quote_sed_regexp "$base_name")"
+	blob="$(git-ls-tree "$tree" "$base_name" |
+		sed -ne 's/^[^[:space:]]\+[[:space:]]\+blob[[:space:]]\+\([^[:space:]]\+\)[[:space:]]\+'"$quoted"'$/\1/p')"
+
+	[ -n "$blob" ] ||
+		rules_error "blob $base_name not found in $tree"
+
+	git-cat-file blob "$blob"
+}
+
+check_path()
+{
+	local name value
+	name="$1" && shift
+	value="$1" && shift
+
+	[ -n "${value##/*}" -a \
+	  -n "${value##../*}" -a \
+	  -n "${value%%*/..}" -a \
+	  -n "${value##*/../*}" ] ||
+		rules_error "Invalid $name \"$value\" specified"
+}
+
+check_name()
+{
+	local name value
+	name="$1" && shift
+	value="$1" && shift
+
+	[ -n "$value" ] ||
+		rules_error "Empty $name \"$value\" specified"
+
+	[ -z "$(printf %s "$value" |tr -d '[:alnum:]_.+-')" ] ||
+		rules_error "Invalid $name \"$value\" specified"
+}
+
+find_specfile()
+{
+	specfile=
+	# first try specfile defined in .rules if any.
+	if [ -n "$(git-ls-tree "$tree_id" "$rules")" ]; then
+		cat_blob "$tree_id" "$rules" >"$workdir/rules"
+		# format: "spec: filename"
+		specfile="$(sed -ne 's/^spec:[[:space:]]\+\([^[:space:]]\+\)/\1/p' "$workdir/rules")"
+		[ `printf %s "$specfile" |wc -l` -le 1 ] ||
+			rules_error "Too many specfiles specified"
+		[ -z "$specfile" ] ||
+			check_path specfile "$specfile"
+	fi
+	# second try specfile in toplevel tree.
+	if [ -z "$specfile" ]; then
+		specfile="$(git-ls-tree "$tree_id" |
+			sed -ne 's/^[^[:space:]]\+[[:space:]]\+blob[[:space:]]\+[^[:space:]]\+[[:space:]]\+\([^/[:space:]]\+\.spec\)$/\1/p')"
+		[ `printf %s "$specfile" |wc -l` -le 1 ] ||
+			fatal "Too many specfiles found in $GIT_DIR"
+	fi
+	[ -n "$specfile" ] || fatal "No specfiles found in $GIT_DIR"
+	cat_blob "$tree_id" "$specfile" >"$workdir/specfile"
+	pkg_name="$(sed '/^Name:[[:space:]]*/!d;s///;q' "$workdir/specfile")"
+	pkg_version="$(sed '/^Version:[[:space:]]*/!d;s///;q' "$workdir/specfile")"
+}
+
+get_tar_name()
+{
+	local opt spec= name= version=
+	for opt; do
+		case "$opt" in
+			spec=*) spec="${opt#spec=}"
+				check_path specfile "$spec"
+				;;
+			name=*) name="${opt#name=}"
+				check_name name "$name"
+				;;
+			version=*) version="${opt#version=}"
+				check_name version "$version"
+				;;
+			*) rules_error "Unrecognized option: $opt"
+				;;
+		esac
+	done
+
+	[ -z "$spec" ] ||
+		cat_blob "$tree_id" "$spec" >"$workdir/spec"
+
+	[ -n "$name" -o -z "$spec" ] ||
+		name="$(sed '/^Name:[[:space:]]*/!d;s///;q' "$workdir/spec")"
+	[ -n "$name" ] || 
+		name="$pkg_name"
+	check_name name "$name"
+
+	[ -n "$version" -o -z "$spec" ] ||
+		version="$(sed '/^Version:[[:space:]]*/!d;s///;q' "$workdir/spec")"
+	[ -n "$version" ] || 
+		version="$pkg_version"
+	check_name version "$version"
+
+	tar_name="$name-$version"
+}
+
+make_tar()
+{
+	local cmd dir name
+	cmd="$1"
+	shift
+	dir="$1"
+	shift
+	name="$1"
+	shift
+
+	local id
+	if [ "$dir" = . ]; then
+		id="$tree_id"
+	else
+		local dir_name base_name quoted
+		dir_name="$(dirname "$dir")"
+		base_name="$(basename "$dir")"
+		tree="$tree_id"
+		# reads and modifies $tree
+		traverse_tree "$dir_name"
+		quoted="$(quote_sed_regexp "$base_name")"
+		id="$(git-ls-tree "$tree" "$base_name" |
+			sed -ne 's/^[^[:space:]]\+[[:space:]]\+tree[[:space:]]\+\([^[:space:]]\+\)[[:space:]]\+'"$quoted"'$/\1/p')"
+		[ -n "$id" ] ||
+			rules_error "tree $dir not found in $tree"
+
+	fi
+
+	git-tar-tree "$id" "$name" >"$outdir/$name.tar"
+	case "$cmd" in
+		tar.gz:)
+			gzip -9 "$outdir/$name.tar"
+			;;
+		tar.bz2:)
+			bzip2 -9 "$outdir/$name.tar"
+			;;
+	esac
+}
+
+make_archive()
+{
+	# format: "cmd dirname options.."
+	local cmd="$1" dir_name="$2"
+	[ -n "$dir_name" ] ||
+		rules_error "No dirname specified"
+	shift; shift
+	check_path dirname "$dir_name"
+
+	get_tar_name "$@"
+	make_tar "$cmd" "$dir_name" "$tar_name"
+}
+
+copy_by_pattern()
+{
+	# format: "cmd pattern.."
+	[ $# -ge 2 ] ||
+		rules_error "No pattern specified"
+	local cmd="$1"
+	shift
+
+	for pattern; do
+		[ -z "$(printf %s "$pattern" |tr -d '[:alnum:]_.?*-')" ] ||
+			rules_error "Invalid pattern \"$pattern\" specified"
+		local dir_name base_name
+		dir_name="$(dirname "$pattern")"
+		base_name="$(basename "$pattern")"
+		tree="$tree_id"
+		# reads and modifies $tree
+		traverse_tree "$dir_name"
+		git-ls-tree "$tree" >"$workdir/blobs"
+		local mode otype id name
+		while read -r mode otype id name; do
+			[ "$otype" = blob ] || continue
+			[ "$name" = "${name#*/}" -a "$name" = "${name%/*}" ] || continue
+			[ -z "${name##$base_name}" -o -z "${name%%$base_name}" ] || continue
+			git-cat-file blob "$id" >"$outdir/$name"
+			[ -n "${mode%%*7??}" ] ||
+				chmod a+x "$outdir/$name"
+			case "$cmd" in
+				gzip:)
+					gzip -9 "$outdir/$name"
+					;;
+				bzip2:)
+					bzip2 -9 "$outdir/$name"
+					;;
+			esac
+		done <"$workdir/blobs"
+	done
+}
+
+parse_rules()
+{
+	[ -s "$workdir/rules" ] || return 0
+
+	lineno=0
+	local cmd options
+	while read -r cmd options; do
+		lineno="$((lineno+1))"
+		case "$cmd" in
+			tar:|tar.gz:|tar.bz2:)
+				make_archive "$cmd" $options ||
+					rules_error "Failed to make archive"
+				;;
+			copy:|gzip:|bzip2:)
+				copy_by_pattern "$cmd" $options ||
+					rules_error "Failed to copy by pattern"
+				;;
+		esac
+	done <"$workdir/rules"
+	lineno=
+}
+
+TEMP=`getopt -n $PROG -o r:,t:,h,q,v,V -l bzip2,gzip,rpmbuild,rules:,tree-ish:,help,quiet,verbose,version -- "$@"` ||
+	show_usage
+eval set -- "$TEMP"
+
+rpmbuild=
+rules=.rules
+tar_compress=
+tree_id=HEAD
+while :; do
+	case "$1" in
+		--) shift; break
+			;;
+		--rpmbuild) rpmbuild=1
+			;;
+		-r|--rules) shift; rules="$1"
+			;;
+		--bzip2) tar_compress=--bzip2
+			;;
+		--gzip) tar_compress=--gzip
+			;;
+		-t|--tree-ish) shift; tree_id="$1"
+			;;
+		-h|--help) show_help
+			;;
+		-q|--quiet) quiet=-q
+			;;
+		-v|--verbose) verbose=-v
+			;;
+		-V|--version) print_version
+			;;
+		*) fatal "Unrecognized option: $1"
+			;;
+	esac
+	shift
+done
+
+# Exactly two arguments, please.
+[ "$#" -ge 2 ] || show_usage 'Not enough arguments.'
+[ "$#" -le 2  -o -n "$rpmbuild" ] || show_usage 'Too many arguments.'
+
+GIT_DIR="$1"
+shift
+if [ -n "$rpmbuild" ]; then
+	out_file=
+else
+	out_file="$1"
+	shift
+fi
+
+GIT_DIR="$(readlink -ev "$GIT_DIR")"
+export GIT_DIR
+
+# Check given tree-ish.
+type="$(git-cat-file -t "$tree_id")" ||
+	fatal "Invalid GIT_DIR ($GIT_DIR) or tree-ish ($tree_id)"
+case "$type" in
+	tag|commit|tree)
+		;;
+	*)
+		fatal "Invalid tree-ish type: $type"
+		;;
+esac
+
+tmpdir="$(mktemp -dt "$PROG.XXXXXXXX")"
+trap exit_handler HUP PIPE INT QUIT TERM EXIT
+workdir="$tmpdir/work"
+outdir="$tmpdir/out"
+mkdir "$workdir" "$outdir"
+
+find_specfile
+
+parse_rules
+
+install -pm644 "$workdir/specfile" "$outdir/${specfile##*/}"
+
+if [ -z "$out_file" ]; then
+	"$@" --define "_specdir $outdir" --define "_sourcedir $outdir" "$outdir/${specfile##*/}"
+else
+	find "$outdir" -maxdepth 1 -type f -printf '%f\0' |
+		xargs -r0 tar --create --file="$out_file" --directory="$outdir" \
+			--label="${specfile##*/}" --owner=root --group=root \
+			--mode=u+w,go-w,go+rX $tar_compress --
+fi
