@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
 # 
-# Extract Archive from Git package Repository.
+# Get Every Archive from git package Repository.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 #
 
 # Note about rules:
-#  .rules is plain text file, where each meaningful line has following format:
+#  rules is plain text file, where each meaningful line has following format:
 #  directive: args
 #  
 #  Valid directives are:
@@ -36,7 +36,7 @@
 #    name=archive_name  - this archive name;
 #    version=archive_version  - this archive version;
 
-PROG=eagr
+PROG=gear
 
 info()
 {
@@ -69,7 +69,7 @@ rules_error()
 print_version()
 {
 	cat <<EOF
-$PROG version 0.1
+$PROG version 0.2
 Written by Dmitry V. Levin <ldv@altlinux.org>
 
 Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
@@ -98,7 +98,7 @@ Options:
   --bzip2                           compress output archive using bzip2;
   --gzip                            compress output archive using gzip;
   --rpmbuild                        execute rpmbuild-like command afterwards;
-  -r, --rules=FILENAME              name of file with rules, default is .rules;
+  -r, --rules=FILENAME              name of file with rules, default is .$PROG-rules;
   -t, --tree-ish=ID                 tree, commit or tag object name;
   -q, --quiet                       try to be more quiet;
   -v, --verbose                     print a message for each action;
@@ -202,7 +202,7 @@ check_name()
 find_specfile()
 {
 	specfile=
-	# first try specfile defined in .rules if any.
+	# first try specfile defined in $rules if any.
 	if [ -n "$(git-ls-tree "$tree_id" "$rules")" ]; then
 		cat_blob "$tree_id" "$rules" >"$workdir/rules"
 		# format: "spec: filename"
@@ -379,7 +379,7 @@ TEMP=`getopt -n $PROG -o r:,t:,h,q,v,V -l bzip2,gzip,rpmbuild,rules:,tree-ish:,h
 eval set -- "$TEMP"
 
 rpmbuild=
-rules=.rules
+rules=".$PROG-rules"
 tar_compress=
 tree_id=HEAD
 while :; do
