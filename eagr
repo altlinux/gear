@@ -323,7 +323,7 @@ copy_by_pattern()
 	shift
 
 	for pattern; do
-		[ -z "$(printf %s "$pattern" |tr -d '[:alnum:]_.?*-')" ] ||
+		[ -z "$(printf %s "$pattern" |tr -d '[:alnum:]_.?*-/')" ] ||
 			rules_error "Invalid pattern \"$pattern\" specified"
 		local dir_name base_name
 		dir_name="$(dirname "$pattern")"
