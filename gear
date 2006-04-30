@@ -69,7 +69,7 @@ rules_error()
 print_version()
 {
 	cat <<EOF
-$PROG version 0.2
+$PROG version 0.3
 Written by Dmitry V. Levin <ldv@altlinux.org>
 
 Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
@@ -332,7 +332,7 @@ copy_by_pattern()
 		# reads and modifies $tree
 		traverse_tree "$dir_name"
 		git-ls-tree "$tree" >"$workdir/blobs"
-		local mode otype id name
+		local mode otype id name found=
 		while read -r mode otype id name; do
 			[ "$otype" = blob ] || continue
 			[ "$name" = "${name#*/}" -a "$name" = "${name%/*}" ] || continue
@@ -348,7 +348,10 @@ copy_by_pattern()
 					bzip2 -9 "$outdir/$name"
 					;;
 			esac
+			found=1
 		done <"$workdir/blobs"
+		[ -n "$found" ] ||
+			rules_error "Unmatched pattern \"$pattern\" specified"
 	done
 }
 
@@ -453,6 +456,7 @@ if [ -z "$out_file" ]; then
 	"$@" --define "_specdir $outdir" --define "_sourcedir $outdir" "$outdir/${specfile##*/}"
 else
 	find "$outdir" -maxdepth 1 -type f -printf '%f\0' |
+		sort -uz |
 		xargs -r0 tar --create --file="$out_file" --directory="$outdir" \
 			--label="${specfile##*/}" --owner=root --group=root \
 			--mode=u+w,go-w,go+rX $tar_compress --
