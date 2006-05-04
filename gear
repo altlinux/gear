@@ -226,8 +226,8 @@ find_specfile()
 	fi
 	[ -n "$specfile" ] || fatal "No specfiles found in $GIT_DIR"
 	cat_blob "$tree_id" "$specfile" >"$workdir/specfile"
-	pkg_name="$(sed '/^Name:[[:space:]]*/!d;s///;q' "$workdir/specfile")"
-	pkg_version="$(sed '/^Version:[[:space:]]*/!d;s///;q' "$workdir/specfile")"
+	pkg_name="$(sed '/^name:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
+	pkg_version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
 }
 
 get_tar_name()
@@ -253,13 +253,13 @@ get_tar_name()
 		cat_blob "$tree_id" "$spec" >"$workdir/spec"
 
 	[ -n "$name" -o -z "$spec" ] ||
-		name="$(sed '/^Name:[[:space:]]*/!d;s///;q' "$workdir/spec")"
+		name="$(sed '/^name:[[:space:]]*/I!d;s///;q' "$workdir/spec")"
 	[ -n "$name" ] || 
 		name="$pkg_name"
 	check_name name "$name"
 
 	[ -n "$version" -o -z "$spec" ] ||
-		version="$(sed '/^Version:[[:space:]]*/!d;s///;q' "$workdir/spec")"
+		version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$workdir/spec")"
 	[ -n "$version" ] || 
 		version="$pkg_version"
 	check_name version "$version"
