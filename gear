@@ -32,9 +32,12 @@
 #  tar(|.gz|.bz2): path_to_directory [options]
 #  
 #  Valid tar options are:
-#    spec=path_to_file  - path to specfile which defines this archive name and version;
-#    name=archive_name  - this archive name;
-#    version=archive_version  - this archive version;
+#    name=archive_name  - this archive name, may reference to keywords;
+#    spec=path_to_file  - path to specfile which defines keywords;
+#  Valid tar keywords are:
+#    @dir@ - basename(path_to_directory);
+#    @name@, @version@, @release@.
+#  Default tar archive name is @name@-@version@.
 
 PROG=gear
 
@@ -69,7 +72,7 @@ rules_error()
 print_version()
 {
 	cat <<EOF
-$PROG version 0.4
+$PROG version 0.5
 Written by Dmitry V. Levin <ldv@altlinux.org>
 
 Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
@@ -161,8 +164,8 @@ cat_blob()
 	name="$1"
 	shift
 
-	dir_name="$(dirname "$name")"
-	base_name="$(basename "$name")"
+	dir_name="$(dirname -- "$name")"
+	base_name="$(basename -- "$name")"
 	# modifies $tree
 	traverse_tree "$tree" "$dir_name"
 
@@ -184,7 +187,8 @@ check_path()
 	name="$1" && shift
 	value="$1" && shift
 
-	[ -n "${value##/*}" -a \
+	[ "$value" != '..' -a \
+	  -n "${value##/*}" -a \
 	  -n "${value##../*}" -a \
 	  -n "${value%%*/..}" -a \
 	  -n "${value##*/../*}" ] ||
@@ -228,43 +232,64 @@ find_specfile()
 	cat_blob "$tree_id" "$specfile" >"$workdir/specfile"
 	pkg_name="$(sed '/^name:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
 	pkg_version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
+	pkg_release="$(sed '/^release:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
 }
 
 get_tar_name()
 {
-	local opt spec= name= version=
+	local dir opt quoted spec= spec_name= spec_version= spec_release=
+
+	dir="$1"
+	shift
+	tar_name='@name@-@version@'
 	for opt; do
 		case "$opt" in
 			spec=*) spec="${opt#spec=}"
 				check_path specfile "$spec"
 				;;
-			name=*) name="${opt#name=}"
-				check_name name "$name"
-				;;
-			version=*) version="${opt#version=}"
-				check_name version "$version"
+			name=*) tar_name="${opt#name=}"
 				;;
 			*) rules_error "Unrecognized option: $opt"
 				;;
 		esac
 	done
 
-	[ -z "$spec" ] ||
+	if [ -n "$spec" ]; then
 		cat_blob "$tree_id" "$spec" >"$workdir/spec"
+		spec_name="$(sed '/^name:[[:space:]]*/I!d;s///;q' "$workdir/spec")"
+		spec_version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$workdir/spec")"
+		spec_release="$(sed '/^release:[[:space:]]*/I!d;s///;q' "$workdir/spec")"
+	fi
+	[ -n "$spec_name" ] || spec_name="$pkg_name"
+	[ -n "$spec_version" ] || spec_version="$pkg_version"
+	[ -n "$spec_release" ] || spec_release="$pkg_release"
+	[ "$dir" != . ]  || dir=
 
-	[ -n "$name" -o -z "$spec" ] ||
-		name="$(sed '/^name:[[:space:]]*/I!d;s///;q' "$workdir/spec")"
-	[ -n "$name" ] || 
-		name="$pkg_name"
-	check_name name "$name"
+	if [ "$tar_name" != "${tar_name#*@dir@*}" ]; then
+		check_name '@dir@' "$dir"
+		quoted="$(quote_sed_regexp "$dir")"
+		tar_name="$(printf %s "$tar_name" |sed "s/@dir@/$quoted/g")"
 
-	[ -n "$version" -o -z "$spec" ] ||
-		version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$workdir/spec")"
-	[ -n "$version" ] || 
-		version="$pkg_version"
-	check_name version "$version"
+	fi
+	if [ "$tar_name" != "${tar_name#*@name@*}" ]; then
+		check_name '@name@' "$spec_name"
+		quoted="$(quote_sed_regexp "$spec_name")"
+		tar_name="$(printf %s "$tar_name" |sed "s/@name@/$quoted/g")"
 
-	tar_name="$name-$version"
+	fi
+	if [ "$tar_name" != "${tar_name#*@version@*}" ]; then
+		check_name '@version@' "$spec_version"
+		quoted="$(quote_sed_regexp "$spec_version")"
+		tar_name="$(printf %s "$tar_name" |sed "s/@version@/$quoted/g")"
+
+	fi
+	if [ "$tar_name" != "${tar_name#*@release@*}" ]; then
+		check_name '@release@' "$spec_release"
+		quoted="$(quote_sed_regexp "$spec_release")"
+		tar_name="$(printf %s "$tar_name" |sed "s/@release@/$quoted/g")"
+
+	fi
+	check_name 'tar name' "$tar_name"
 }
 
 make_tar()
@@ -282,8 +307,8 @@ make_tar()
 		id="$tree_id"
 	else
 		local dir_name base_name quoted
-		dir_name="$(dirname "$dir")"
-		base_name="$(basename "$dir")"
+		dir_name="$(dirname -- "$dir")"
+		base_name="$(basename -- "$dir")"
 		# modifies $tree
 		traverse_tree "$tree_id" "$dir_name"
 		quoted="$(quote_sed_regexp "$base_name")"
@@ -314,7 +339,7 @@ make_archive()
 	shift; shift
 	check_path dirname "$dir_name"
 
-	get_tar_name "$@"
+	get_tar_name "$(basename -- "$dir_name")" "$@"
 	make_tar "$cmd" "$dir_name" "$tar_name"
 }
 
