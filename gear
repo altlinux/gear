@@ -37,7 +37,7 @@
 #  Valid tar keywords are:
 #    @dir@ - basename(path_to_directory);
 #    @name@, @version@, @release@.
-#  Default tar archive name is @name@-@version@.
+#  Default tar archive name is @dir@-@version@.
 
 PROG=gear
 
@@ -237,11 +237,17 @@ find_specfile()
 
 get_tar_name()
 {
-	local dir opt quoted spec= spec_name= spec_version= spec_release=
-
-	dir="$1"
+	local dir="$1"
 	shift
-	tar_name='@name@-@version@'
+	if [ "$dir" = . ]; then
+		dir=
+		tar_name='@name@-@version@'
+	else
+		tar_name='@dir@-@version@'
+	fi
+
+	local opt quoted spec= spec_name= spec_version= spec_release=
+
 	for opt; do
 		case "$opt" in
 			spec=*) spec="${opt#spec=}"
@@ -263,7 +269,6 @@ get_tar_name()
 	[ -n "$spec_name" ] || spec_name="$pkg_name"
 	[ -n "$spec_version" ] || spec_version="$pkg_version"
 	[ -n "$spec_release" ] || spec_release="$pkg_release"
-	[ "$dir" != . ]  || dir=
 
 	if [ "$tar_name" != "${tar_name#*@dir@*}" ]; then
 		check_name '@dir@' "$dir"
