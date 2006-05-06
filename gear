@@ -72,7 +72,7 @@ rules_error()
 print_version()
 {
 	cat <<EOF
-$PROG version 0.5
+$PROG version 0.6
 Written by Dmitry V. Levin <ldv@altlinux.org>
 
 Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
@@ -95,6 +95,7 @@ show_help()
 $PROG - extract archive from git package repository.
 
 Usage: $PROG [options] <path-to-git-directory> <output-tarball-name>
+or:    $PROG [options] <path-to-git-directory> --export-dir=<dirname>
 or:    $PROG [options] <path-to-git-directory> --hasher -- <hsh-command>...
 or:    $PROG [options] <path-to-git-directory> --rpmbuild -- <rpmbuld-command>...
 
@@ -103,6 +104,7 @@ Options:
   --gzip                            compress output archive using gzip;
   --hasher                          execute hsh-like command afterwards;
   --rpmbuild                        execute rpmbuild-like command afterwards;
+  --export-dir=DIRNAME              write source files to specified directory;
   -r, --rules=FILENAME              name of file with rules, default is .$PROG-rules;
   -t, --tree-ish=ID                 tree, commit or tag object name;
   -q, --quiet                       try to be more quiet;
@@ -410,12 +412,22 @@ parse_rules()
 	lineno=
 }
 
-TEMP=`getopt -n $PROG -o r:,t:,h,q,v,V -l bzip2,gzip,hasher,rpmbuild,rules:,tree-ish:,help,quiet,verbose,version -- "$@"` ||
+opt_check_dir()
+{
+	local value
+	value="$(readlink -ev "$2")" &&
+		[ -d "$value" -a -x "$value" ] ||
+		fatal "$1: $2: Directory not available"
+	printf %s "$value"
+}
+
+TEMP=`getopt -n $PROG -o r:,t:,h,q,v,V -l bzip2,gzip,hasher,rpmbuild,export-dir:,rules:,tree-ish:,help,quiet,verbose,version -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
 hasher=
 rpmbuild=
+outdir=
 rules=".$PROG-rules"
 tar_compress=--gzip
 tree_id=HEAD
@@ -428,8 +440,18 @@ while :; do
 		--gzip) tar_compress=--gzip
 			;;
 		--hasher) hasher=1
+			[ -z "$outdir$rpmbuild" ] ||
+				show_usage 'Options --hasher, --rpmbuild and --export-dir are mutually exclusive.'
 			;;
 		--rpmbuild) rpmbuild=1
+			[ -z "$hasher$outdir" ] ||
+				show_usage 'Options --hasher, --rpmbuild and --export-dir are mutually exclusive.'
+			;;
+		--export-dir)
+			outdir="$(opt_check_dir "$1" "$2")"
+			shift
+			[ -z "$hasher$rpmbuild" ] ||
+				show_usage 'Options --hasher, --rpmbuild and --export-dir are mutually exclusive.'
 			;;
 		-r|--rules) shift; rules="$1"
 			;;
@@ -449,25 +471,30 @@ while :; do
 	shift
 done
 
-# Exactly two arguments, please.
-[ "$#" -ge 2 ] ||
+# At least one argument first, please.
+[ "$#" -ge 1 ] ||
 	show_usage 'Not enough arguments.'
-[ "$#" -le 2 -o -n "$hasher" -o -n "$rpmbuild" ] ||
-	show_usage 'Too many arguments.'
-[ -z "$hasher" -o -z "$rpmbuild" ] ||
-	show_usage 'Options --hasher and --rpmbuild are mutually exclusive.'
-
-GIT_DIR="$1"
+GIT_DIR="$(opt_check_dir GIT_DIR "$1")"
+export GIT_DIR
 shift
+
+out_file=
 if [ -n "$hasher" -o -n "$rpmbuild" ]; then
-	out_file=
+	# At least one argument, please.
+	[ "$#" -ge 1 ] ||
+		show_usage 'Not enough arguments.'
+elif [ -n "$outdir" ]; then
+	[ "$#" -eq 0 ] ||
+		show_usage 'Too many arguments.'
 else
+	# Exactly one argument, please.
+	[ "$#" -ge 1 ] ||
+		show_usage 'Not enough arguments.'
+	[ "$#" -eq 1 ] ||
+		show_usage 'Too many arguments.'
 	out_file="$1"
 	shift
 fi
-
-GIT_DIR="$(readlink -ev "$GIT_DIR")"
-export GIT_DIR
 
 # Check given tree-ish.
 type="$(git-cat-file -t "$tree_id")" ||
@@ -483,8 +510,11 @@ esac
 tmpdir="$(mktemp -dt "$PROG.XXXXXXXX")"
 trap exit_handler HUP PIPE INT QUIT TERM EXIT
 workdir="$tmpdir/work"
-outdir="$tmpdir/out"
-mkdir "$workdir" "$outdir"
+mkdir "$workdir"
+if [ -z "$outdir" ]; then
+	outdir="$tmpdir/out"
+	mkdir "$outdir"
+fi
 
 find_specfile
 
@@ -492,18 +522,21 @@ parse_rules
 
 install -pm644 "$workdir/specfile" "$outdir/${specfile##*/}"
 
-if [ -n "$hasher" ]; then
-	out_file="$workdir/pkg.tar"
-fi
-if [ -z "$out_file" ]; then
+if [ -n "$rpmbuild" ]; then
 	"$@" --define "_specdir $outdir" --define "_sourcedir $outdir" "$outdir/${specfile##*/}"
 else
-	find "$outdir" -maxdepth 1 -type f -printf '%f\0' |
-		sort -uz |
-		xargs -r0 tar --create --file="$out_file" --directory="$outdir" \
-			--label="${specfile##*/}" --owner=root --group=root \
-			--mode=u+w,go-w,go+rX $tar_compress --
-	# Once tarball is created, its sources are no longer needed.
-	rm -rf -- "$outdir"
-	[ -z "$hasher" ] || "$@" "$out_file"
+	[ -z "$hasher" ] ||
+		out_file="$workdir/pkg.tar"
+	if [ -n "$out_file" ]; then
+		find "$outdir" -maxdepth 1 -type f -printf '%f\0' |
+			sort -uz |
+			xargs -r0 tar --create --file="$out_file" --directory="$outdir" \
+				--label="${specfile##*/}" --owner=root --group=root \
+				--mode=u+w,go-w,go+rX $tar_compress --
+		if [ -n "$hasher" ]; then
+			# Once tarball is created, its sources are no longer needed.
+			rm -rf -- "$outdir"
+			"$@" "$out_file"
+		fi
+	fi
 fi
