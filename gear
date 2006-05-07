@@ -60,7 +60,6 @@ verbose()
 	info "$@"
 }
 
-GIT_DIR=
 lineno=
 rules_error()
 {
@@ -94,23 +93,23 @@ show_help()
 	cat <<EOF
 $PROG - extract archive from git package repository.
 
-Usage: $PROG [options] <path-to-git-directory> <output-tarball-name>
-or:    $PROG [options] <path-to-git-directory> --export-dir=<dirname>
-or:    $PROG [options] <path-to-git-directory> --hasher -- <hsh-command>...
-or:    $PROG [options] <path-to-git-directory> --rpmbuild -- <rpmbuld-command>...
+Usage: $PROG [options] <output-tarball-name>
+or:    $PROG [options] --export-dir=<dirname>
+or:    $PROG [options] --hasher -- <hsh-command>...
+or:    $PROG [options] --rpmbuild -- <rpmbuld-command>...
 
 Options:
-  --bzip2                           compress output archive using bzip2;
-  --gzip                            compress output archive using gzip;
-  --hasher                          execute hsh-like command afterwards;
-  --rpmbuild                        execute rpmbuild-like command afterwards;
-  --export-dir=DIRNAME              write source files to specified directory;
-  -r, --rules=FILENAME              name of file with rules, default is .$PROG-rules;
-  -t, --tree-ish=ID                 tree, commit or tag object name;
-  -q, --quiet                       try to be more quiet;
-  -v, --verbose                     print a message for each action;
-  -V, --version                     print program version and exit;
-  -h, --help                        show this text and exit.
+  --bzip2                   compress output archive using bzip2;
+  --gzip                    compress output archive using gzip;
+  --hasher                  execute hsh-like command afterwards;
+  --rpmbuild                execute rpmbuild-like command afterwards;
+  --export-dir=DIRNAME      write source files to specified directory;
+  -r, --rules=FILENAME      name of file with rules, default is .$PROG-rules;
+  -t, --tree-ish=ID         tree, commit or tag object name;
+  -q, --quiet               try to be more quiet;
+  -v, --verbose             print a message for each action;
+  -V, --version             print program version and exit;
+  -h, --help                show this text and exit.
     
 Report bugs to http://bugs.altlinux.ru/
 
@@ -470,13 +469,6 @@ while :; do
 	esac
 	shift
 done
-
-# At least one argument first, please.
-[ "$#" -ge 1 ] ||
-	show_usage 'Not enough arguments.'
-GIT_DIR="$(opt_check_dir GIT_DIR "$1")"
-export GIT_DIR
-shift
 
 out_file=
 if [ -n "$hasher" -o -n "$rpmbuild" ]; then
