@@ -1,0 +1,69 @@
+#!/bin/sh -efu
+#
+# Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+#
+# Read source rpm filenames from stdin,
+# unpack and commit them to git repository.
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+
+info()
+{
+	printf %s\\n "${0##*/}: $*" >&2
+}
+
+: ${GIT_DIR:=$PWD/.git}
+export GIT_DIR
+git-ls-files >/dev/null
+
+while read f; do
+	header="$(od -A n -N 8 -t x1 -- "$f")" || continue
+	if [ -n "${header## ed ab ee db * 00 01}" ]; then
+		info "$f: Not a source rpm package"
+		continue
+	fi
+	name="$(rpmquery -p --qf '%{NAME}' -- "$f")" || continue
+	version="$(rpmquery -p --qf '%{VERSION}-%{RELEASE}' -- "$f")" || continue
+	buildtime="$(rpmquery -p --qf '%{BUILDTIME}' -- "$f")" || continue
+	filelist="$(rpm2cpio "$f" |cpio --list --quiet )" || continue
+	printf '%s: %s-%s\n' "$f" "$name" "$version"
+
+	[ ! -f .gear-rules ] || git-rm -f -- '*'
+	rpm2cpio "$f" |cpio --extract --preserve-modification-time
+	for f in $filelist; do
+		case "$f" in
+			*.gz)
+				gunzip "$f"
+				printf 'gzip: %s\n' "${f%.gz}" >>.gear-rules
+				;;
+			*.bz2)
+				bunzip2 "$f"
+				printf 'bzip2: %s\n' "${f%.bz2}" >>.gear-rules
+				;;
+			*.spec)
+				# ignore specfile
+				;;
+			*)
+				printf 'copy: %s\n' "$f" >>.gear-rules
+				;;
+		esac
+	done
+	git-add '*'
+	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
+		git-commit -a -m "$version"
+	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
+		git-tag -a -m "$name $version" "$version"
+done
