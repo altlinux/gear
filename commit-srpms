@@ -39,6 +39,9 @@ while read f; do
 	version="$(rpmquery -p --qf '%{VERSION}-%{RELEASE}' -- "$f")" || continue
 	buildtime="$(rpmquery -p --qf '%{BUILDTIME}' -- "$f")" || continue
 	filelist="$(rpm2cpio "$f" |cpio --list --quiet )" || continue
+	author="$(rpmquery -p --qf '%{CHANGELOGNAME}\n' -- "$f" |
+		sed -ne 's/^\([^<]*<[^@]\+\(@\| at \)[^@]\+>\).*/\1/p' |
+		sed -e s/alt-linux/altlinux/g)"
 	printf '%s: %s-%s\n' "$f" "$name" "$version"
 
 	[ ! -f .gear-rules ] || git-rm -f -- '*'
@@ -63,7 +66,7 @@ while read f; do
 	done
 	git-add '*'
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
-		git-commit -a -m "$version"
+		git-commit -a -m "$version" ${author:+--author "$author"}
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
 		git-tag -a -m "$name $version" "$version"
 done
