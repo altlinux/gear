@@ -7,10 +7,10 @@
 prev=
 
 while read f; do
-	rpmquery -p --qf '%{NAME}\t%{BUILDTIME}\t%{VERSION}\t%{RELEASE}' "$f" &&
+	rpmquery -p --qf '%{BUILDTIME}\t%|SERIAL?{%{SERIAL}}:{0}|\t%{VERSION}\t%{RELEASE}' "$f" &&
 		printf '\t%s\n' "$f"
 done |
-	sort -k1,1 -k2,2n -k3,4 |
+	sort -k1,2n -k3,4 |
 	cut -f5 |
 while read f; do
 	[ -f "$f" -a -r "$f" ] ||
