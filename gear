@@ -101,6 +101,7 @@ or:    $PROG [options] --hasher -- <hsh-command>...
 or:    $PROG [options] --rpmbuild -- <rpmbuld-command>...
 
 Options:
+  --no-compress             do not compress output archive;
   --bzip2                   compress output archive using bzip2;
   --gzip                    compress output archive using gzip;
   --hasher                  execute hsh-like command afterwards;
@@ -455,7 +456,7 @@ opt_check_dir()
 	printf %s "$value"
 }
 
-TEMP=`getopt -n $PROG -o r:,t:,h,q,v,V -l bzip2,gzip,hasher,rpmbuild,export-dir:,rules:,tree-ish:,help,quiet,verbose,version -- "$@"` ||
+TEMP=`getopt -n $PROG -o r:,t:,h,q,v,V -l no-compress,bzip2,gzip,hasher,rpmbuild,export-dir:,rules:,tree-ish:,help,quiet,verbose,version -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
@@ -468,6 +469,8 @@ tree_id=HEAD
 while :; do
 	case "$1" in
 		--) shift; break
+			;;
+		--no-compress) tar_compress=
 			;;
 		--bzip2) tar_compress=--bzip2
 			;;
