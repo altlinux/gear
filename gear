@@ -432,6 +432,7 @@ parse_rules()
 
 	lineno=0
 	local cmd options
+	echo >>"$workdir/rules"
 	while read -r cmd options; do
 		lineno="$((lineno+1))"
 		case "$cmd" in
