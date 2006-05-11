@@ -402,6 +402,7 @@ copy_by_pattern()
 		# modifies $tree
 		traverse_tree "$tree_id" "$dir_name"
 		git-ls-tree "$tree" >"$workdir/blobs"
+		echo >>"$workdir/blobs"
 		local mode otype id name found=
 		while read -r mode otype id name; do
 			[ "$otype" = blob ] || continue
