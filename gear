@@ -32,7 +32,9 @@
 #  tar(|.gz|.bz2): path_to_directory [options]
 #  
 #  Valid tar options are:
-#    name=archive_name  - this archive name, may reference to keywords;
+#    name=archive_name  - tar archive name, may reference to keywords;
+#    base=base_name     - when specified it is added as a leading path
+#                         to the files in the generated tar archive.
 #    spec=path_to_file  - path to specfile which defines keywords;
 #  Valid tar keywords are:
 #    @dir@ - basename(path_to_directory);
@@ -71,7 +73,7 @@ rules_error()
 print_version()
 {
 	cat <<EOF
-$PROG version 0.6
+$PROG version 0.7
 Written by Dmitry V. Levin <ldv@altlinux.org>
 
 Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
@@ -129,8 +131,20 @@ exit_handler()
 # quote argument for sed regexp.
 quote_sed_regexp()
 {
-	local out
-	out="$(printf %s "$*" |sed -e 's/[].^$[\/]/\\&/g')" || return 1
+	local out="$*"
+	if [ -z "${out##*[\[\].^\$\\/]*}" ]; then
+		out="$(printf %s "$out" |sed -e 's/[].^$[\/]/\\&/g')" || return 1
+	fi
+	printf %s "$out"
+}
+
+# quote argument for shell.
+quote_shell_arg()
+{
+	local out="$*"
+	if [ -z "${out##*[\"\$\`\\]*}" ]; then
+		out="$(printf %s "$out" |sed -e 's/["$`\]/\\&/g')" || return 1
+	fi
 	printf %s "$out"
 }
 
@@ -236,6 +250,47 @@ find_specfile()
 	pkg_release="$(sed '/^release:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
 }
 
+subst_keywords()
+{
+	local var dir name version release
+	var="$1" && shift
+	dir="$1" && shift
+	name="$1" && shift
+	version="$1" && shift
+	release="$1" && shift
+
+	local quoted value
+	eval "value=\"\$$var\""
+
+	if [ "$value" != "${value#*@dir@*}" ]; then
+		check_name '@dir@' "$dir"
+		quoted="$(quote_sed_regexp "$dir")"
+		value="$(printf %s "$value" |sed "s/@dir@/$quoted/g")"
+
+	fi
+	if [ "$value" != "${value#*@name@*}" ]; then
+		check_name '@name@' "$name"
+		quoted="$(quote_sed_regexp "$name")"
+		value="$(printf %s "$value" |sed "s/@name@/$quoted/g")"
+
+	fi
+	if [ "$value" != "${value#*@version@*}" ]; then
+		check_name '@version@' "$version"
+		quoted="$(quote_sed_regexp "$version")"
+		value="$(printf %s "$value" |sed "s/@version@/$quoted/g")"
+
+	fi
+	if [ "$value" != "${value#*@release@*}" ]; then
+		check_name '@release@' "$release"
+		quoted="$(quote_sed_regexp "$release")"
+		value="$(printf %s "$value" |sed "s/@release@/$quoted/g")"
+
+	fi
+	check_name "$var" "$value"
+
+	eval "$var=\"$(quote_shell_arg "$value")\""
+}
+
 get_tar_name()
 {
 	local dir="$1"
@@ -246,6 +301,7 @@ get_tar_name()
 	else
 		tar_name='@dir@-@version@'
 	fi
+	tar_base=
 
 	local opt quoted spec= spec_name= spec_version= spec_release=
 
@@ -255,6 +311,8 @@ get_tar_name()
 				check_path specfile "$spec"
 				;;
 			name=*) tar_name="${opt#name=}"
+				;;
+			base=*) tar_base="${opt#base=}"
 				;;
 			*) rules_error "Unrecognized option: $opt"
 				;;
@@ -271,31 +329,9 @@ get_tar_name()
 	[ -n "$spec_version" ] || spec_version="$pkg_version"
 	[ -n "$spec_release" ] || spec_release="$pkg_release"
 
-	if [ "$tar_name" != "${tar_name#*@dir@*}" ]; then
-		check_name '@dir@' "$dir"
-		quoted="$(quote_sed_regexp "$dir")"
-		tar_name="$(printf %s "$tar_name" |sed "s/@dir@/$quoted/g")"
-
-	fi
-	if [ "$tar_name" != "${tar_name#*@name@*}" ]; then
-		check_name '@name@' "$spec_name"
-		quoted="$(quote_sed_regexp "$spec_name")"
-		tar_name="$(printf %s "$tar_name" |sed "s/@name@/$quoted/g")"
-
-	fi
-	if [ "$tar_name" != "${tar_name#*@version@*}" ]; then
-		check_name '@version@' "$spec_version"
-		quoted="$(quote_sed_regexp "$spec_version")"
-		tar_name="$(printf %s "$tar_name" |sed "s/@version@/$quoted/g")"
-
-	fi
-	if [ "$tar_name" != "${tar_name#*@release@*}" ]; then
-		check_name '@release@' "$spec_release"
-		quoted="$(quote_sed_regexp "$spec_release")"
-		tar_name="$(printf %s "$tar_name" |sed "s/@release@/$quoted/g")"
-
-	fi
-	check_name 'tar name' "$tar_name"
+	subst_keywords tar_name "$dir" "$spec_name" "$spec_version" "$spec_release"
+	[ -z "$tar_base" ] ||
+		subst_keywords tar_base "$dir" "$spec_name" "$spec_version" "$spec_release"
 }
 
 make_tar()
@@ -307,6 +343,10 @@ make_tar()
 	shift
 	name="$1"
 	shift
+	tar_base="$1"
+	shift
+	[ -n "$tar_base" ] ||
+		tar_base="$name"
 
 	local id
 	if [ "$dir" = . ]; then
@@ -325,7 +365,7 @@ make_tar()
 
 	fi
 
-	git-tar-tree "$id" "$name" >"$outdir/$name.tar"
+	git-tar-tree "$id" "$tar_base" >"$outdir/$name.tar"
 	case "$cmd" in
 		tar.gz:)
 			gzip -9 "$outdir/$name.tar"
@@ -346,7 +386,7 @@ make_archive()
 	check_path dirname "$dir_name"
 
 	get_tar_name "$(basename -- "$dir_name")" "$@"
-	make_tar "$cmd" "$dir_name" "$tar_name"
+	make_tar "$cmd" "$dir_name" "$tar_name" "$tar_base"
 }
 
 copy_by_pattern()
