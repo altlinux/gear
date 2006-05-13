@@ -29,6 +29,7 @@
 #  Each directive has own args syntax:
 #  spec: path_to_file
 #  (copy|gzip|bzip2): glob_pattern..
+#  (copy|gzip|bzip2)?: glob_pattern..
 #  tar(|.gz|.bz2): path_to_directory [options]
 #  
 #  Valid tar options are:
@@ -63,6 +64,7 @@ verbose()
 }
 
 lineno=
+optional=
 rules_error()
 {
 	local lineno_text=
@@ -70,10 +72,17 @@ rules_error()
 	fatal "$rules$lineno_text: $*"
 }
 
+rules_info()
+{
+	local lineno_text=
+	[ -z "$lineno" ] || lineno_text=" line $lineno"
+	info "$rules$lineno_text: $*"
+}
+
 print_version()
 {
 	cat <<EOF
-$PROG version 0.7
+$PROG version 0.8
 Written by Dmitry V. Levin <ldv@altlinux.org>
 
 Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
@@ -164,8 +173,13 @@ traverse_tree()
 		quoted="$(quote_sed_regexp "$dir")"
 		id="$(git-ls-tree "$tree" "$dir" |
 			sed -ne 's/^[^[:space:]]\+[[:space:]]\+tree[[:space:]]\+\([^[:space:]]\+\)[[:space:]]\+'"$quoted"'$/\1/p')"
-		[ -n "$id" ] ||
-			rules_error "tree $dir not found in $tree"
+		if [ -z "$id" ]; then
+			if [ "$optional" = 1 ]; then
+				return 1
+			else
+				rules_error "tree $dir not found in $tree"
+			fi
+		fi
 		tree="$id"
 	done
 }
@@ -182,8 +196,12 @@ cat_blob()
 
 	dir_name="$(dirname -- "$name")"
 	base_name="$(basename -- "$name")"
+
+	local optional_saved="$optional"
+	optional=0
 	# modifies $tree
 	traverse_tree "$tree" "$dir_name"
+	optional="$optional_saved"
 
 	# fetch blob from given tree.
 	local blob quoted
@@ -352,21 +370,27 @@ make_tar()
 		dir_name="$(dirname -- "$dir")"
 		base_name="$(basename -- "$dir")"
 		# modifies $tree
-		traverse_tree "$tree_id" "$dir_name"
+		traverse_tree "$tree_id" "$dir_name" ||
+			return 0
 		quoted="$(quote_sed_regexp "$base_name")"
 		id="$(git-ls-tree "$tree" "$base_name" |
 			sed -ne 's/^[^[:space:]]\+[[:space:]]\+tree[[:space:]]\+\([^[:space:]]\+\)[[:space:]]\+'"$quoted"'$/\1/p')"
-		[ -n "$id" ] ||
-			rules_error "tree $dir not found in $tree"
+		if [ -z "$id" ]; then
+			if [ "$optional" = 1 ]; then
+				return 0
+			else
+				rules_error "tree $dir not found in $tree"
+			fi
+		fi
 
 	fi
 
 	git-tar-tree "$id" "$tar_base" >"$outdir/$name.tar"
 	case "$cmd" in
-		tar.gz:)
+		tar.gz)
 			gzip -9 "$outdir/$name.tar"
 			;;
-		tar.bz2:)
+		tar.bz2)
 			bzip2 -9 "$outdir/$name.tar"
 			;;
 	esac
@@ -378,7 +402,7 @@ make_archive()
 	local cmd="$1" dir_name="$2"
 	[ -n "$dir_name" ] ||
 		rules_error "No dirname specified"
-	shift; shift
+	shift 2
 	check_path dirname "$dir_name"
 
 	get_tar_name "$(basename -- "$dir_name")" "$@"
@@ -400,7 +424,8 @@ copy_by_pattern()
 		dir_name="$(dirname "$pattern")"
 		base_name="$(basename "$pattern")"
 		# modifies $tree
-		traverse_tree "$tree_id" "$dir_name"
+		traverse_tree "$tree_id" "$dir_name" ||
+			return 0
 		git-ls-tree "$tree" >"$workdir/blobs"
 		echo >>"$workdir/blobs"
 		local mode otype id name found=
@@ -412,10 +437,10 @@ copy_by_pattern()
 			[ -n "${mode%%*7??}" ] ||
 				chmod a+x "$outdir/$name"
 			case "$cmd" in
-				gzip:)
+				gzip)
 					gzip -9 "$outdir/$name"
 					;;
-				bzip2:)
+				bzip2)
 					bzip2 -9 "$outdir/$name"
 					;;
 			esac
@@ -435,14 +460,36 @@ parse_rules()
 	echo >>"$workdir/rules"
 	while read -r cmd options; do
 		lineno="$((lineno+1))"
+		optional=0
 		case "$cmd" in
-			tar:|tar.gz:|tar.bz2:)
+			""|\#*)
+				continue
+				;;
+			*\?:)
+				cmd="${cmd%\?:}"
+				optional=1
+				;;
+			*:)
+				cmd="${cmd%:}"
+				optional=0
+				;;
+			*)
+				rules_info "Unrecognized rule ignored"
+				continue
+				;;
+		esac
+		case "$cmd" in
+			tar|tar.gz|tar.bz2)
 				make_archive "$cmd" $options ||
 					rules_error "Failed to make archive"
 				;;
-			copy:|gzip:|bzip2:)
+			copy|gzip|bzip2)
 				copy_by_pattern "$cmd" $options ||
 					rules_error "Failed to copy by pattern"
+				;;
+			*)
+				rules_info "Unrecognized directive \"$cmd\" ignored"
+				continue
 				;;
 		esac
 	done <"$workdir/rules"
