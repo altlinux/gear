@@ -481,6 +481,9 @@ parse_rules()
 				;;
 		esac
 		case "$cmd" in
+			spec)
+				continue
+				;;
 			tar|tar.gz|tar.bz2)
 				make_archive "$cmd" $options ||
 					rules_error "Failed to make archive"
