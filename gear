@@ -386,6 +386,7 @@ make_tar()
 	fi
 
 	git-tar-tree "$id" "$tar_base" >"$outdir/$name.tar"
+	verbose "Extracted \"$name.tar\" tarball."
 	case "$cmd" in
 		tar.gz)
 			gzip -9 "$outdir/$name.tar"
@@ -434,6 +435,7 @@ copy_by_pattern()
 			[ "$name" = "${name#*/}" -a "$name" = "${name%/*}" ] || continue
 			[ -z "${name##$base_name}" -o -z "${name%%$base_name}" ] || continue
 			git-cat-file blob "$id" >"$outdir/$name"
+			verbose "Extracted \"$name\" by pattern \"$pattern\"."
 			[ -n "${mode%%*7??}" ] ||
 				chmod a+x "$outdir/$name"
 			case "$cmd" in
@@ -496,6 +498,12 @@ parse_rules()
 	lineno=
 }
 
+run_command()
+{
+	verbose "Executing: $*"
+	"$@"
+}
+
 opt_check_dir()
 {
 	local value
@@ -545,9 +553,9 @@ while :; do
 			;;
 		-h|--help) show_help
 			;;
-		-q|--quiet) quiet=-q
+		-q|--quiet) quiet=-q; verbose=
 			;;
-		-v|--verbose) verbose=-v
+		-v|--verbose) verbose=-v; quiet=
 			;;
 		-V|--version) print_version
 			;;
@@ -592,7 +600,7 @@ workdir="$tmpdir/work"
 mkdir "$workdir"
 if [ -z "$outdir" ]; then
 	outdir="$tmpdir/out"
-	mkdir "$outdir"
+	mkdir $verbose "$outdir"
 fi
 
 find_specfile
@@ -600,9 +608,10 @@ find_specfile
 parse_rules
 
 install -pm644 "$workdir/specfile" "$outdir/${specfile##*/}"
+verbose "Extracted \"${specfile##*/}\" specfile."
 
 if [ -n "$rpmbuild" ]; then
-	"$@" --define "_specdir $outdir" --define "_sourcedir $outdir" "$outdir/${specfile##*/}"
+	run_command "$@" --define "_specdir $outdir" --define "_sourcedir $outdir" "$outdir/${specfile##*/}"
 else
 	[ -z "$hasher" ] ||
 		out_file="$workdir/pkg.tar"
@@ -612,10 +621,11 @@ else
 			xargs -r0 tar --create --file="$out_file" --directory="$outdir" \
 				--label="${specfile##*/}" --owner=root --group=root \
 				--mode=u+w,go-w,go+rX $tar_compress --
+		verbose "Created \"$out_file\" output tarball."
 		if [ -n "$hasher" ]; then
 			# Once tarball is created, its sources are no longer needed.
 			rm -rf -- "$outdir"
-			"$@" "$out_file"
+			run_command "$@" "$out_file"
 		fi
 	fi
 fi
