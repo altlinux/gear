@@ -448,7 +448,7 @@ copy_by_pattern()
 			esac
 			found=1
 		done <"$workdir/blobs"
-		[ -n "$found" ] ||
+		[ -n "$found" -o "$optional" = 1 ] ||
 			rules_error "Unmatched pattern \"$pattern\" specified"
 	done
 }
