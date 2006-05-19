@@ -2,8 +2,7 @@
 #
 # Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
 #
-# Read source rpm filenames from stdin,
-# unpack and commit them to git repository.
+# Incrementally import source packages to git repository.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,32 +19,116 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 
+PROG=git-srpmimport
+
 info()
 {
-	printf %s\\n "${0##*/}: $*" >&2
+	printf %s\\n "$PROG: $*" >&2
 }
 
-: ${GIT_DIR:=$PWD/.git}
-export GIT_DIR
-git-ls-files >/dev/null
+fatal()
+{
+	printf %s\\n "$PROG: $*" >&2
+	exit 1
+}
 
-while read f; do
-	header="$(od -A n -N 8 -t x1 -- "$f")" || continue
-	if [ -n "${header## ed ab ee db * 00 01}" ]; then
-		info "$f: Not a source rpm package"
-		continue
+quiet=
+verbose=
+verbose()
+{
+	[ -n "$verbose" ] || return 0
+	info "$@"
+}
+
+print_version()
+{
+	cat <<EOF
+$PROG version 0.2
+Written by Dmitry V. Levin <ldv@altlinux.org>
+
+Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+	exit
+}
+
+show_usage()
+{
+	[ -z "$*" ] || info "$*"
+	echo "Try \`$PROG --help' for more information." >&2
+	exit 1
+}
+
+show_help()
+{
+	cat <<EOF
+$PROG - incrementally import source packages to git repository.
+
+Usage: $PROG [options] <source-package>...
+or:    $PROG [options] --stdin
+
+Options:
+  --branch=BRANCH           branch name where to import (default is "srpms");
+  --import-only             do not perform a checkout after importing;
+  --stdin                   read source package names from stdin;
+  -q, --quiet               try to be more quiet;
+  -v, --verbose             print a message for each action;
+  -V, --version             print program version and exit;
+  -h, --help                show this text and exit.
+    
+Report bugs to http://bugs.altlinux.ru/
+
+EOF
+	exit
+}
+
+exit_handler()
+{
+	local rc=$?
+	trap - EXIT
+	cd "$saved_cwd"
+	# Recover index file.
+	if [ -z "$index_already_recovered" ]; then
+		[ -f "$tmpdir/index" ] &&
+			cp -p "$tmpdir/index" "$index_orig" ||
+			rm -f "$index_orig" ||:
 	fi
-	name="$(rpmquery -p --qf '%{NAME}' -- "$f")" || continue
-	version="$(rpmquery -p --qf '%{VERSION}-%{RELEASE}' -- "$f")" || continue
-	buildtime="$(rpmquery -p --qf '%{BUILDTIME}' -- "$f")" || continue
-	filelist="$(rpm2cpio "$f" |cpio --list --quiet )" || continue
-	author="$(rpmquery -p --qf '%{CHANGELOGNAME}\n' -- "$f" |
+	rm -rf -- "$tmpdir"
+	# Recover HEAD.
+	[ "$branch_orig" = "refs/heads/$branch_import" ] ||
+		git-symbolic-ref HEAD "$branch_orig"
+	exit $rc
+}
+
+import()
+{
+	local srpm="$1" && shift
+	cd "$saved_cwd"
+	verbose "Processing $srpm"
+	srpm="$(readlink -ev "$srpm")"
+
+	local header name version buildtime filelist author f spec
+	header="$(od -A n -N 8 -t x1 -- "$srpm")" &&
+	[ -n "$header" -a -z "${header## ed ab ee db ?? ?? 00 01}" ] &&
+	name="$(rpmquery -p --qf '%{NAME}' -- "$srpm")" &&
+	version="$(rpmquery -p --qf '%{VERSION}-%{RELEASE}' -- "$srpm")" &&
+	buildtime="$(rpmquery -p --qf '%{BUILDTIME}' -- "$srpm")" &&
+	filelist="$(rpm2cpio "$srpm" |cpio --list --quiet )" ||
+		fatal "$srpm: Not a valid source rpm package"
+
+	author="$(rpmquery -p --qf '%{CHANGELOGNAME}\n' -- "$srpm" |
 		sed -ne 's/^\([^<]*<[^@]\+\(@\| at \)[^@]\+>\).*/\1/p' |
 		sed -e s/alt-linux/altlinux/g)"
-	printf '%s: %s-%s\n' "$f" "$name" "$version"
 
-	[ ! -f .gear-rules ] || git-rm -f -- '*'
-	rpm2cpio "$f" |cpio --extract --preserve-modification-time
+	# Use own directory for checkout.
+	rm -rf "$workdir"
+	mkdir "$workdir"
+	cd "$workdir"
+	rpm2cpio "$srpm" |cpio --extract $([ -n "$verbose" ] || echo --quiet)
+	verbose "Unpacked ${srpm##*/}"
+
+	touch .gear-rules
 	for f in $filelist; do
 		case "$f" in
 			*.gz)
@@ -57,16 +140,128 @@ while read f; do
 				printf 'bzip2: %s\n' "${f%.bz2}" >>.gear-rules
 				;;
 			*.spec)
-				# ignore specfile
+				[ -z "$spec" ] ||
+					info "${srpm##*/}: Too many spec files."
+				spec="$f"
 				;;
 			*)
 				printf 'copy: %s\n' "$f" >>.gear-rules
 				;;
 		esac
 	done
-	git-add '*'
+	[ -n "$spec" ] ||
+		info "${srpm##*/}: Spec file not found."
+	rm -f "$index_orig"
+	git-add $verbose .gear-rules $filelist
+
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
 		git-commit -a -m "$version" ${author:+--author "$author"}
+	verbose "Committed $name $version"
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
 		git-tag -a -m "$name $version" "$version"
+	info "Imported $srpm"
+}
+
+TEMP=`getopt -n $PROG -o h,q,v,V -l branch:,import-only,stdin,help,quiet,verbose,version -- "$@"` ||
+	show_usage
+eval set -- "$TEMP"
+
+branch_import=
+import_only=
+read_from_stdin=
+while :; do
+	case "$1" in
+		--) shift; break
+			;;
+		--branch) shift; branch_import="$1"
+			;;
+		--import-only) import_only=1
+			;;
+		--stdin) read_from_stdin=1
+			;;
+		-h|--help) show_help
+			;;
+		-q|--quiet) quiet=-q; verbose=
+			;;
+		-v|--verbose) verbose=-v; quiet=
+			;;
+		-V|--version) print_version
+			;;
+		*) fatal "Unrecognized option: $1"
+			;;
+	esac
+	shift
 done
+
+if [ -n "$read_from_stdin" ]; then
+	# No arguments, please.
+	[ "$#" -eq 0 ] ||
+		show_usage 'Too many arguments.'
+else
+	# At least one argument, please.
+	[ "$#" -ge 1 ] ||
+		show_usage 'Not enough arguments.'
+fi
+
+GIT_DIR="$(git-rev-parse --git-dir)"
+GIT_DIR="$(readlink -ev "$GIT_DIR")"
+export GIT_DIR
+
+if [ -n "$branch_import" ]; then
+	# Check given branch name
+	[ -f "$GIT_DIR/refs/heads/$branch_import" ]
+		fatal "$branch_import: branch not found"
+else
+	branch_import=srpms
+fi
+
+branch_orig="$(git-symbolic-ref HEAD)"
+head_orig="$(git-rev-parse --verify HEAD 2>/dev/null ||:)"
+
+unset GIT_INDEX_FILE ||:
+index_orig="$GIT_DIR/index"
+index_already_recovered=
+
+# Save current work directory.
+saved_cwd="$(/bin/pwd)"
+
+tmpdir="$(mktemp -dt "$PROG.XXXXXXXX")"
+trap exit_handler HUP PIPE INT QUIT TERM EXIT
+workdir="$tmpdir/work"
+
+# Backup index file.
+[ ! -f "$index_orig" ] ||
+	cp -p "$index_orig" "$tmpdir/index"
+
+git-symbolic-ref HEAD "refs/heads/$branch_import"
+
+if [ -n "$read_from_stdin" ]; then
+	while read; do
+		import "$REPLY"
+	done
+else
+	for REPLY; do
+		import "$REPLY"
+	done
+fi
+
+# Merge after import.
+cd "$saved_cwd"
+head_new="$(git-rev-parse --verify HEAD 2>/dev/null ||:)"
+if [ "$head_orig" = "$head_new" ]; then
+	verbose "Nothing imported."
+elif [ -z "$import_only" ]; then
+	if [ -z "$head_orig" ]; then
+		git-update-ref "$branch_orig" "refs/heads/$branch_import"
+		info "Created ${branch_orig#refs/heads/} branch"
+		git-symbolic-ref HEAD "$branch_orig"
+		git-checkout -f
+		index_already_recovered=1
+	elif [ -n "$head_new" ]; then
+		git-symbolic-ref HEAD "$branch_orig"
+		git-checkout -f
+		index_already_recovered=1
+		git-merge srpmimport HEAD "$branch_import"
+		info "Merged $branch_import branch into ${branch_orig#refs/heads/} branch"
+	fi
+fi
