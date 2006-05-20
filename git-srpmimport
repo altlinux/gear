@@ -71,6 +71,7 @@ or:    $PROG [options] --stdin
 Options:
   --branch=BRANCH           branch name where to import (default is "srpms");
   --import-only             do not perform a checkout after importing;
+  --no-untar                do not unpack source tarballs;
   --stdin                   read source package names from stdin;
   -q, --quiet               try to be more quiet;
   -v, --verbose             print a message for each action;
@@ -101,6 +102,38 @@ exit_handler()
 	exit $rc
 }
 
+untar()
+{
+	local f="$1" tar_dir="$2" copy_dir="$3" base=
+	shift 3
+
+	[ -n "$no_untar" -o -n "${f%%*.tar}" ] ||
+		base="$(tar -tf "$f" |sed -ne 's|^\([^/]\+\)/\?$|\1|p')"
+	[ -n "$base" ] &&
+		[ -z "$(printf %s "$base" |LC_COLLATE=C tr -d '[:alnum:]_.,+-')" ] ||
+		base=
+	if [ -n "$base" ]; then
+		tar -xf "$f"
+		rm "$f"
+		local base_short
+		base_short="$(printf %s "$base" |LC_COLLATE=C sed -e 's/-[0-9]\+[.[:alpha:]]\+[.[:alnum:]]*$//')"
+		if [ -n "$base_short" -a "$base_short" != "$base" ] && [ ! -e "$base_short" ]; then
+			mv "$base" "$base_short"
+			base="$base_short"
+		fi
+		local tarball="${f%.tar}"
+		if [ "$base" = "$tarball" ]; then
+			printf '%s: %s\n' "$tar_dir" "$base" >>.gear-rules
+		else
+			printf '%s: %s base=%s\n' "$tar_dir" "$base" "$tarball" >>.gear-rules
+		fi
+		git-add $verbose .gear-rules "$base"
+	else
+		printf '%s: %s\n' "$copy_dir" "$f" >>.gear-rules
+		git-add $verbose .gear-rules "$f"
+	fi
+}
+
 import()
 {
 	local srpm="$1" && shift
@@ -128,31 +161,34 @@ import()
 	rpm2cpio "$srpm" |cpio --extract $([ -n "$verbose" ] || echo --quiet)
 	verbose "Unpacked ${srpm##*/}"
 
-	touch .gear-rules
+	rm -f "$index_orig"
 	for f in $filelist; do
 		case "$f" in
+			*.tar)
+				untar "$f" tar copy
+				;;
 			*.gz)
 				gunzip "$f"
-				printf 'gzip: %s\n' "${f%.gz}" >>.gear-rules
+				untar "${f%.gz}" tar.gz gzip
 				;;
 			*.bz2)
 				bunzip2 "$f"
-				printf 'bzip2: %s\n' "${f%.bz2}" >>.gear-rules
+				untar "${f%.bz2}" tar.bz2 bzip2
 				;;
 			*.spec)
 				[ -z "$spec" ] ||
 					info "${srpm##*/}: Too many spec files."
 				spec="$f"
+				git-add $verbose "$f"
 				;;
 			*)
 				printf 'copy: %s\n' "$f" >>.gear-rules
+				git-add $verbose .gear-rules "$f"
 				;;
 		esac
 	done
 	[ -n "$spec" ] ||
 		info "${srpm##*/}: Spec file not found."
-	rm -f "$index_orig"
-	git-add $verbose .gear-rules $filelist
 
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
 		git-commit -a -m "$version" ${author:+--author "$author"}
@@ -162,12 +198,13 @@ import()
 	info "Imported $srpm"
 }
 
-TEMP=`getopt -n $PROG -o h,q,v,V -l branch:,import-only,stdin,help,quiet,verbose,version -- "$@"` ||
+TEMP=`getopt -n $PROG -o h,q,v,V -l branch:,import-only,no-untar,stdin,help,quiet,verbose,version -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
 branch_import=
 import_only=
+no_untar=
 read_from_stdin=
 while :; do
 	case "$1" in
@@ -176,6 +213,8 @@ while :; do
 		--branch) shift; branch_import="$1"
 			;;
 		--import-only) import_only=1
+			;;
+		--no-untar) no_untar=1
 			;;
 		--stdin) read_from_stdin=1
 			;;
@@ -209,7 +248,7 @@ export GIT_DIR
 
 if [ -n "$branch_import" ]; then
 	# Check given branch name
-	[ -f "$GIT_DIR/refs/heads/$branch_import" ]
+	[ -f "$GIT_DIR/refs/heads/$branch_import" ] ||
 		fatal "$branch_import: branch not found"
 else
 	branch_import=srpms
