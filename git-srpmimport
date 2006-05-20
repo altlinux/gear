@@ -116,7 +116,7 @@ untar()
 		tar -xf "$f"
 		rm "$f"
 		local base_short
-		base_short="$(printf %s "$base" |LC_COLLATE=C sed -e 's/-[0-9]\+[.[:alpha:]]\+[.[:alnum:]]*$//')"
+		base_short="$(printf %s "$base" |LC_COLLATE=C sed -e 's/\(-[0-9]\+\([.[:alpha:]]\+[.[:alnum:]]*\)\?\)\+$//')"
 		if [ -n "$base_short" -a "$base_short" != "$base" ] && [ ! -e "$base_short" ]; then
 			mv "$base" "$base_short"
 			base="$base_short"
