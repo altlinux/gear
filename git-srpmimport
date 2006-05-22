@@ -108,24 +108,26 @@ untar()
 	shift 3
 
 	[ -n "$no_untar" -o -n "${f%%*.tar}" ] ||
-		base="$(tar -tf "$f" |sed -ne 's|^\([^/]\+\)/\?$|\1|p')"
+		base="$(tar -tf "$f" |sed -ne 's|^\([^/]\+\)\(/.*\)\?$|\1|p' |LC_COLLATE=C sort -u)"
 	[ -n "$base" ] &&
-		[ -z "$(printf %s "$base" |LC_COLLATE=C tr -d '[:alnum:]_.,+-')" ] ||
+		[ "$base" = "$(printf %s "$base" |LC_COLLATE=C tr -d '[:space:]')" ] &&
+		[ -z "$(printf %s "$base" |LC_COLLATE=C tr -d -- '-[:alnum:]_.,+')" ] ||
 		base=
 	if [ -n "$base" ]; then
 		tar -xf "$f"
 		rm "$f"
-		local base_short
+		local base_full base_short
+		base_full="$base"
 		base_short="$(printf %s "$base" |LC_COLLATE=C sed -e 's/\(-[0-9]\+\([.[:alpha:]]\+[.[:alnum:]]*\)\?\)\+$//')"
 		if [ -n "$base_short" -a "$base_short" != "$base" ] && [ ! -e "$base_short" ]; then
 			mv "$base" "$base_short"
 			base="$base_short"
 		fi
 		local tarball="${f%.tar}"
-		if [ "$base" = "$tarball" ]; then
-			printf '%s: %s\n' "$tar_dir" "$base" >>.gear-rules
+		if [ "$base_full" = "$tarball" ]; then
+			printf '%s: %s name=%s\n' "$tar_dir" "$base" "$tarball" >>.gear-rules
 		else
-			printf '%s: %s base=%s\n' "$tar_dir" "$base" "$tarball" >>.gear-rules
+			printf '%s: %s name=%s base=%s\n' "$tar_dir" "$base" "$tarball" "$base_full" >>.gear-rules
 		fi
 		git-add $verbose .gear-rules "$base"
 	else
@@ -163,6 +165,10 @@ import()
 
 	rm -f "$index_orig"
 	for f in $filelist; do
+		if [ -L "$f" -o ! -f "$f" ]; then
+			info "$f: Non-regular file ignored."
+			continue
+		fi
 		case "$f" in
 			*.tar)
 				untar "$f" tar copy
