@@ -104,34 +104,45 @@ exit_handler()
 
 untar()
 {
-	local f="$1" tar_dir="$2" copy_dir="$3" base=
+	local f="$1" method_tar="$2" method_copy="$3" tar_dir=
 	shift 3
 
 	[ -n "$no_untar" -o -n "${f%%*.tar}" ] ||
-		base="$(tar -tf "$f" |sed -ne 's|^\([^/]\+\)\(/.*\)\?$|\1|p' |LC_COLLATE=C sort -u)"
-	[ -n "$base" ] &&
-		[ "$base" = "$(printf %s "$base" |LC_COLLATE=C tr -d '[:space:]')" ] &&
-		[ -z "$(printf %s "$base" |LC_COLLATE=C tr -d -- '-[:alnum:]_.,+')" ] ||
-		base=
-	if [ -n "$base" ]; then
-		tar -xf "$f"
-		rm "$f"
-		local base_full base_short
-		base_full="$base"
-		base_short="$(printf %s "$base" |LC_COLLATE=C sed -e 's/\(-[0-9]\+\([.[:alpha:]]\+[.[:alnum:]]*\)\?\)\+$//')"
-		if [ -n "$base_short" -a "$base_short" != "$base" ] && [ ! -e "$base_short" ]; then
-			mv "$base" "$base_short"
-			base="$base_short"
-		fi
-		local tarball="${f%.tar}"
-		if [ "$base_full" = "$tarball" ]; then
-			printf '%s: %s name=%s\n' "$tar_dir" "$base" "$tarball" >>.gear-rules
+		tar_dir="$(tar -tf "$f" |sed -ne 's|^\([^/]\+\)\(/.*\)\?$|\1|p' |LC_COLLATE=C sort -u)"
+	if [ -n "$tar_dir" ]; then
+		local base= short unpack_into_subdir= tar_name="${f%.tar}"
+		if [ "$tar_dir" != "$(printf %s "$tar_dir" |LC_COLLATE=C tr -d '[:space:]')" ] ||
+		   [ -n "$(printf %s "$tar_dir" |LC_COLLATE=C tr -d -- '-[:alnum:]_.,+')" ]; then
+			unpack_into_subdir=1
+			tar_dir="$tar_name"
 		else
-			printf '%s: %s name=%s base=%s\n' "$tar_dir" "$base" "$tarball" "$base_full" >>.gear-rules
+			base="$tar_dir"
+			tar -xf "$f"
+			rm "$f"
 		fi
-		git-add $verbose .gear-rules "$base"
+
+		# Heuristics.
+		short="$(printf %s "$tar_dir" |LC_COLLATE=C sed -e 's/\(-[0-9]\+\([.[:alpha:]]\+[.[:alnum:]]*\)\?\)\+$//')"
+		if [ -n "$short" -a "$short" != "$tar_dir" ] && [ ! -e "$short" ]; then
+			[ -n "$unpack_into_subdir" ] ||
+				mv "$tar_dir" "$short"
+			tar_dir="$short"
+		fi
+
+		if [ -n "$unpack_into_subdir" ]; then
+			mkdir "$tar_dir"
+			tar -x -C "$tar_dir" -f "$f"
+			rm "$f"
+		fi
+
+		if [ "$tar_name" = "$base" ]; then
+			printf '%s: %s name=%s\n' "$method_tar" "$tar_dir" "$tar_name" >>.gear-rules
+		else
+			printf '%s: %s name=%s base=%s\n' "$method_tar" "$tar_dir" "$tar_name" "$base" >>.gear-rules
+		fi
+		git-add $verbose .gear-rules "$tar_dir"
 	else
-		printf '%s: %s\n' "$copy_dir" "$f" >>.gear-rules
+		printf '%s: %s\n' "$method_copy" "$f" >>.gear-rules
 		git-add $verbose .gear-rules "$f"
 	fi
 }

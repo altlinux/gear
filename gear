@@ -320,7 +320,8 @@ get_tar_name()
 	else
 		tar_name='@dir@-@version@'
 	fi
-	tar_base=
+	# Special non-empty marker.
+	tar_base=' '
 
 	local opt quoted spec= spec_name= spec_version= spec_release=
 
@@ -349,7 +350,7 @@ get_tar_name()
 	[ -n "$spec_release" ] || spec_release="$pkg_release"
 
 	subst_keywords tar_name "$dir" "$spec_name" "$spec_version" "$spec_release"
-	[ -z "$tar_base" ] ||
+	[ -z "$tar_base" -o "$tar_base" = ' ' ] ||
 		subst_keywords tar_base "$dir" "$spec_name" "$spec_version" "$spec_release"
 }
 
@@ -364,7 +365,7 @@ make_tar()
 	shift
 	tar_base="$1"
 	shift
-	[ -n "$tar_base" ] ||
+	[ "$tar_base" != ' ' ] ||
 		tar_base="$name"
 
 	local id
@@ -390,7 +391,11 @@ make_tar()
 
 	fi
 
-	git-tar-tree "$id" "$tar_base" >"$outdir/$name.tar"
+	if [ -z "$tar_base" ]; then
+		git-tar-tree "$id" >"$outdir/$name.tar"
+	else
+		git-tar-tree "$id" "$tar_base" >"$outdir/$name.tar"
+	fi
 	verbose "Extracted \"$name.tar\" tarball."
 	case "$cmd" in
 		tar.gz)
