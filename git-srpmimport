@@ -102,6 +102,21 @@ exit_handler()
 	exit $rc
 }
 
+shorten_dir_name()
+{
+	local subdir="$1" name="$2" no_mv="$3" short
+	shift 3
+
+	short="$(printf %s "$name" |LC_COLLATE=C sed -e 's/\(-[0-9]\+\([.[:alpha:]]\+[.[:alnum:]]*\)\?\)\+$//')"
+	if [ -n "$short" -a "$short" != "$name" ] && [ ! -e "$short" ]; then
+		[ -n "$no_mv" ] ||
+			mv "$subdir/$name" "$subdir/$short"
+		name="$short"
+	fi
+
+	printf %s "$name"
+}
+
 untar()
 {
 	local f="$1" method_tar="$2" method_copy="$3" tar_dir=
@@ -110,29 +125,36 @@ untar()
 	[ -n "$no_untar" -o -n "${f%%*.tar}" ] ||
 		tar_dir="$(tar -tf "$f" |sed -ne 's|^\([^/]\+\)\(/.*\)\?$|\1|p' |LC_COLLATE=C sort -u)"
 	if [ -n "$tar_dir" ]; then
-		local base= short unpack_into_subdir= tar_name="${f%.tar}"
+		local base= short subdir unpack_into_subdir= tar_name="${f%.tar}"
 		if [ "$tar_dir" != "$(printf %s "$tar_dir" |LC_COLLATE=C tr -d '[:space:]')" ] ||
 		   [ -n "$(printf %s "$tar_dir" |LC_COLLATE=C tr -d -- '-[:alnum:]_.,+')" ]; then
 			unpack_into_subdir=1
 			tar_dir="$tar_name"
 		else
 			base="$tar_dir"
-			tar -xf "$f"
-			rm "$f"
 		fi
+		subdir="$(mktemp -d subdir.XXXXXX)"
+		tar -x -C "$subdir" -f "$f"
+		rm "$f"
 
 		# Heuristics.
-		short="$(printf %s "$tar_dir" |LC_COLLATE=C sed -e 's/\(-[0-9]\+\([.[:alpha:]]\+[.[:alnum:]]*\)\?\)\+$//')"
-		if [ -n "$short" -a "$short" != "$tar_dir" ] && [ ! -e "$short" ]; then
-			[ -n "$unpack_into_subdir" ] ||
-				mv "$tar_dir" "$short"
-			tar_dir="$short"
+		tar_dir="$(shorten_dir_name "$subdir" "$tar_dir" "$unpack_into_subdir")"
+
+		# Avoid file names clash.
+		if [ -e "$tar_dir" -a -z "$unpack_into_subdir" ]; then
+			mv "$subdir/$tar_dir" "$subdir/$tar_name"
+			tar_dir="$(shorten_dir_name "$subdir" "$tar_name" "$unpack_into_subdir")"
+		fi
+		if [ -e "$tar_dir" ]; then
+			mv "$subdir/$tar_dir" "$subdir/$tar_name.tar"
+			tar_dir="$tar_name.tar"
 		fi
 
 		if [ -n "$unpack_into_subdir" ]; then
-			mkdir "$tar_dir"
-			tar -x -C "$tar_dir" -f "$f"
-			rm "$f"
+			mv "$subdir" "$tar_dir"
+		else
+			mv "$subdir/$tar_dir" .
+			rmdir "$subdir"
 		fi
 
 		if [ "$tar_name" = "$base" ]; then
