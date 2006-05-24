@@ -72,6 +72,7 @@ Options:
   --branch=BRANCH           branch name where to import (default is "srpms");
   --import-only             do not perform a checkout after importing;
   --no-untar                do not unpack source tarballs;
+  --rules=FILENAME          gear rules filename (default is ".gear-rules");
   --spec-pattern=PATTERN    specfile pattern (defalt is "*.spec");
   --stdin                   read source package names from stdin;
   -q, --quiet               try to be more quiet;
@@ -174,21 +175,21 @@ untar()
 
 		if [ "$tar_name" = "$base" ]; then
 			if [ "$tar_dir-$version" = "$tar_name" ]; then
-				printf '%s: %s\n' "$method_tar" "$tar_dir" >>.gear-rules
+				printf '%s: %s\n' "$method_tar" "$tar_dir" >>"$gear_rules"
 			else
-				printf '%s: %s name=%s\n' "$method_tar" "$tar_dir" "$tar_name" >>.gear-rules
+				printf '%s: %s name=%s\n' "$method_tar" "$tar_dir" "$tar_name" >>"$gear_rules"
 			fi
 		else
 			if [ "$tar_dir-$version" = "$tar_name" ]; then
-				printf '%s: %s base=%s\n' "$method_tar" "$tar_dir" "$base" >>.gear-rules
+				printf '%s: %s base=%s\n' "$method_tar" "$tar_dir" "$base" >>"$gear_rules"
 			else
-				printf '%s: %s name=%s base=%s\n' "$method_tar" "$tar_dir" "$tar_name" "$base" >>.gear-rules
+				printf '%s: %s name=%s base=%s\n' "$method_tar" "$tar_dir" "$tar_name" "$base" >>"$gear_rules"
 			fi
 		fi
-		git-add $verbose .gear-rules "$tar_dir"
+		git-add $verbose "$gear_rules" "$tar_dir"
 	else
-		printf '%s: %s\n' "$method_copy" "$f" >>.gear-rules
-		git-add $verbose .gear-rules "$f"
+		printf '%s: %s\n' "$method_copy" "$f" >>"$gear_rules"
+		git-add $verbose "$gear_rules" "$f"
 	fi
 }
 
@@ -262,8 +263,8 @@ import()
 				untar "${f%.bz2}" "$spec_version" tar.bz2 bzip2
 				;;
 			*)
-				printf 'copy: %s\n' "$f" >>.gear-rules
-				git-add $verbose .gear-rules "$f"
+				printf 'copy: %s\n' "$f" >>"$gear_rules"
+				git-add $verbose "$gear_rules" "$f"
 				;;
 		esac
 	done
@@ -276,7 +277,7 @@ import()
 	info "Imported $srpm"
 }
 
-TEMP=`getopt -n $PROG -o h,q,v,V -l branch:,import-only,no-untar,spec-pattern:,stdin,help,quiet,verbose,version -- "$@"` ||
+TEMP=`getopt -n $PROG -o h,q,v,V -l branch:,import-only,no-untar,rules:,spec-pattern:,stdin,help,quiet,verbose,version -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
@@ -284,6 +285,7 @@ branch_import=
 import_only=
 no_untar=
 read_from_stdin=
+gear_rules=".gear-rules"
 spec_pattern='*.spec'
 while :; do
 	case "$1" in
@@ -294,6 +296,8 @@ while :; do
 		--import-only) import_only=1
 			;;
 		--no-untar) no_untar=1
+			;;
+		--rules) shift; gear_rules="$1"
 			;;
 		--spec-pattern) shift; spec_pattern="$1"
 			;;
