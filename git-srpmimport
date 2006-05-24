@@ -123,7 +123,10 @@ untar()
 	shift 3
 
 	[ -n "$no_untar" -o -n "${f%%*.tar}" ] ||
-		tar_dir="$(tar -tf "$f" |sed -ne 's|^\([^/]\+\)\(/.*\)\?$|\1|p' |LC_COLLATE=C sort -u)"
+		tar_dir="$(tar -tf "$f" |
+			   sed 's|^\(\./\)\+||g' |
+			   sed -n 's|^\([^/]\+\)\(/.*\)\?$|\1|p' |
+			   LC_COLLATE=C sort -u)"
 	if [ -n "$tar_dir" ]; then
 		local base= short subdir unpack_into_subdir= tar_name="${f%.tar}"
 		if [ "$tar_dir" != "$(printf %s "$tar_dir" |LC_COLLATE=C tr -d '[:space:]')" ] ||
