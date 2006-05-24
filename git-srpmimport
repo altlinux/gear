@@ -122,11 +122,19 @@ untar()
 	local f="$1" method_tar="$2" method_copy="$3" tar_dir=
 	shift 3
 
-	[ -n "$no_untar" -o -n "${f%%*.tar}" ] ||
-		tar_dir="$(tar -tf "$f" |
-			   sed 's|^\(\./\)\+||g' |
-			   sed -n 's|^\([^/]\+\)\(/.*\)\?$|\1|p' |
-			   LC_COLLATE=C sort -u)"
+	if [ -z "$no_untar" -a -z "${f%%*.tar}" ]; then
+		local filelist
+		filelist="$(tar -tf "$f")"
+		# Avoid unpacking archives with paths containing /../
+		printf %s "$filelist" |egrep -qs '^\.\.(/|$)|/\.\.(/|$)' ||
+			# Prefix leading "/" with ".", strip leading "./"
+			tar_dir="$(printf %s "$filelist" |
+				   tr -s / |
+				   sed 's|^/|.&|' |
+				   sed 's|^\(\./\)\+||g' |
+				   sed -n 's|^\([^/]\+\)\(/.*\)\?$|\1|p' |
+				   LC_COLLATE=C sort -u)"
+	fi
 	if [ -n "$tar_dir" ]; then
 		local base= short subdir unpack_into_subdir= tar_name="${f%.tar}"
 		if [ "$tar_dir" != "$(printf %s "$tar_dir" |LC_COLLATE=C tr -d '[:space:]')" ] ||
