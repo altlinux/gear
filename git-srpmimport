@@ -104,6 +104,18 @@ exit_handler()
 	exit $rc
 }
 
+# quote argument for sed regexp.
+quote_sed_regexp()
+{
+	local out="$*"
+	if [ -z "${out##*[\[\].^\$\\/]*}" ]; then
+		out="$(printf %s "$out" |sed -e 's/[].^$[\/]/\\&/g')" ||
+			return 1
+	fi
+	printf %s "$out"
+}
+
+# heuristically shorten tar directory name.
 shorten_dir_name()
 {
 	local subdir="$1" name="$2" no_mv="$3" short
@@ -117,6 +129,33 @@ shorten_dir_name()
 	fi
 
 	printf %s "$name"
+}
+
+optimize_rules()
+{
+	local rules
+	rules="$1" && shift
+	[ -s "$rules" ] || return 0
+
+	tmp="$(mktemp rules.XXXXXX)"
+	sed -ne 's/^[^:]\+: [^ ]*\.\([^ .]\+\).*/\1/p' "$rules" |
+		LC_COLLATE=C sort -u |
+		while read suffix; do
+			local quoted
+			quoted="$(quote_sed_regexp "$suffix")"
+			method="$(sed -ne 's/^\([^:]\+\): [^ ]*\.'"$quoted"'$/\1/p' "$rules" |sort -u)"
+			case "$method" in
+				copy|gzip|bzip2)
+					printf '%s: *.%s\n' "$method" "$suffix"
+					;;
+				*)
+					sed -ne 's/^[^:]\+: [^ ]*\.'"$quoted"'$/&/p' "$rules"
+					;;
+			esac
+		done >"$tmp"
+	sed -ne 's/^[^:]\+: \([^ ]\+ .*\|[^ .]\+$\)/&/p' "$rules" >>"$tmp"
+	mv "$tmp" "$rules"
+	git-add $verbose "$rules"
 }
 
 untar()
@@ -186,10 +225,10 @@ untar()
 				printf '%s: %s name=%s base=%s\n' "$method_tar" "$tar_dir" "$tar_name" "$base" >>"$gear_rules"
 			fi
 		fi
-		git-add $verbose "$gear_rules" "$tar_dir"
+		git-add $verbose "$tar_dir"
 	else
 		printf '%s: %s\n' "$method_copy" "$f" >>"$gear_rules"
-		git-add $verbose "$gear_rules" "$f"
+		git-add $verbose "$f"
 	fi
 }
 
@@ -250,6 +289,10 @@ import()
 			git-add $verbose "$f"
 			continue
 		fi
+		if [ "$f" = "$gear_rules" ]; then
+			info "$f: rules file $gear_rules ignored."
+			continue
+		fi
 		case "$f" in
 			*.tar)
 				untar "$f" "$spec_version" tar copy
@@ -264,10 +307,12 @@ import()
 				;;
 			*)
 				printf 'copy: %s\n' "$f" >>"$gear_rules"
-				git-add $verbose "$gear_rules" "$f"
+				git-add $verbose "$f"
 				;;
 		esac
 	done
+
+	optimize_rules "$gear_rules"
 
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
 		git-commit -a -m "$version" ${author:+--author "$author"}
