@@ -72,6 +72,7 @@ Options:
   --branch=BRANCH           branch name where to import (default is "srpms");
   --import-only             do not perform a checkout after importing;
   --no-untar                do not unpack source tarballs;
+  --spec-pattern=PATTERN    specfile pattern (defalt is "*.spec");
   --stdin                   read source package names from stdin;
   -q, --quiet               try to be more quiet;
   -v, --verbose             print a message for each action;
@@ -119,16 +120,19 @@ shorten_dir_name()
 
 untar()
 {
-	local f="$1" method_tar="$2" method_copy="$3" tar_dir=
-	shift 3
+	local f version method_tar method_copy tar_dir=
+	f="$1" && shift
+	version="$1" && shift
+	method_tar="$1" && shift
+	method_copy="$1" && shift
 
 	if [ -z "$no_untar" -a -z "${f%%*.tar}" ]; then
-		local filelist
-		filelist="$(tar -tf "$f")"
+		local tarlist
+		tarlist="$(tar -tf "$f")"
 		# Avoid unpacking archives with paths containing /../
-		printf %s "$filelist" |egrep -qs '^\.\.(/|$)|/\.\.(/|$)' ||
+		printf %s "$tarlist" |egrep -qs '^\.\.(/|$)|/\.\.(/|$)' ||
 			# Prefix leading "/" with ".", strip leading "./"
-			tar_dir="$(printf %s "$filelist" |
+			tar_dir="$(printf %s "$tarlist" |
 				   tr -s / |
 				   sed 's|^/|.&|' |
 				   sed 's|^\(\./\)\+||g' |
@@ -169,9 +173,17 @@ untar()
 		fi
 
 		if [ "$tar_name" = "$base" ]; then
-			printf '%s: %s name=%s\n' "$method_tar" "$tar_dir" "$tar_name" >>.gear-rules
+			if [ "$tar_dir-$version" = "$tar_name" ]; then
+				printf '%s: %s\n' "$method_tar" "$tar_dir" >>.gear-rules
+			else
+				printf '%s: %s name=%s\n' "$method_tar" "$tar_dir" "$tar_name" >>.gear-rules
+			fi
 		else
-			printf '%s: %s name=%s base=%s\n' "$method_tar" "$tar_dir" "$tar_name" "$base" >>.gear-rules
+			if [ "$tar_dir-$version" = "$tar_name" ]; then
+				printf '%s: %s base=%s\n' "$method_tar" "$tar_dir" "$base" >>.gear-rules
+			else
+				printf '%s: %s name=%s base=%s\n' "$method_tar" "$tar_dir" "$tar_name" "$base" >>.gear-rules
+			fi
 		fi
 		git-add $verbose .gear-rules "$tar_dir"
 	else
@@ -187,7 +199,7 @@ import()
 	verbose "Processing $srpm"
 	srpm="$(readlink -ev "$srpm")"
 
-	local header name version buildtime filelist author f spec
+	local header name version buildtime filelist author f
 	header="$(od -A n -N 8 -t x1 -- "$srpm")" &&
 	[ -n "$header" -a -z "${header## ed ab ee db ?? ?? 00 01}" ] &&
 	name="$(rpmquery -p --qf '%{NAME}' -- "$srpm")" &&
@@ -207,29 +219,47 @@ import()
 	rpm2cpio "$srpm" |cpio --extract $([ -n "$verbose" ] || echo --quiet)
 	verbose "Unpacked ${srpm##*/}"
 
+	# Find specfile.
+	local spec= many_specs= spec_version=
+	for f in $filelist; do
+		[ -z "${f##$spec_pattern}" -o -z "${f%%$spec_pattern}" ] ||
+			continue
+		[ ! -L "$f" -a -f "$f" ] ||
+			continue
+		[ -z "$spec" ] ||
+			many_specs=1
+		spec="$f"
+	done
+	if [ -z "$spec" ]; then
+		info "${srpm##*/}: Spec file not found."
+	elif [ -n "$many_specs" ]; then
+		info "${srpm##*/}: Too many spec files."
+		spec=
+	else
+		spec_version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$spec")"
+	fi
+
 	rm -f "$index_orig"
 	for f in $filelist; do
 		if [ -L "$f" -o ! -f "$f" ]; then
 			info "$f: Non-regular file ignored."
 			continue
 		fi
+		if [ "$f" = "$spec" ]; then
+			git-add $verbose "$f"
+			continue
+		fi
 		case "$f" in
 			*.tar)
-				untar "$f" tar copy
+				untar "$f" "$spec_version" tar copy
 				;;
 			*.gz)
 				gunzip "$f"
-				untar "${f%.gz}" tar.gz gzip
+				untar "${f%.gz}" "$spec_version" tar.gz gzip
 				;;
 			*.bz2)
 				bunzip2 "$f"
-				untar "${f%.bz2}" tar.bz2 bzip2
-				;;
-			*.spec)
-				[ -z "$spec" ] ||
-					info "${srpm##*/}: Too many spec files."
-				spec="$f"
-				git-add $verbose "$f"
+				untar "${f%.bz2}" "$spec_version" tar.bz2 bzip2
 				;;
 			*)
 				printf 'copy: %s\n' "$f" >>.gear-rules
@@ -237,8 +267,6 @@ import()
 				;;
 		esac
 	done
-	[ -n "$spec" ] ||
-		info "${srpm##*/}: Spec file not found."
 
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
 		git-commit -a -m "$version" ${author:+--author "$author"}
@@ -248,7 +276,7 @@ import()
 	info "Imported $srpm"
 }
 
-TEMP=`getopt -n $PROG -o h,q,v,V -l branch:,import-only,no-untar,stdin,help,quiet,verbose,version -- "$@"` ||
+TEMP=`getopt -n $PROG -o h,q,v,V -l branch:,import-only,no-untar,spec-pattern:,stdin,help,quiet,verbose,version -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
@@ -256,6 +284,7 @@ branch_import=
 import_only=
 no_untar=
 read_from_stdin=
+spec_pattern='*.spec'
 while :; do
 	case "$1" in
 		--) shift; break
@@ -265,6 +294,8 @@ while :; do
 		--import-only) import_only=1
 			;;
 		--no-untar) no_untar=1
+			;;
+		--spec-pattern) shift; spec_pattern="$1"
 			;;
 		--stdin) read_from_stdin=1
 			;;

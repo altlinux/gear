@@ -1,4 +1,4 @@
-MAN1PAGES = gear.1
+MAN1PAGES = gear.1 git-srpmimport.1
 
 TARGETS = $(MAN1PAGES)
 
