@@ -190,6 +190,7 @@ untar()
 		fi
 		subdir="$(mktemp -d subdir.XXXXXX)"
 		tar -x -C "$subdir" -f "$f"
+		chmod -Rf u+rwX,go-w "$subdir"
 		rm "$f"
 
 		# Heuristics.
