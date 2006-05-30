@@ -83,7 +83,7 @@ rules_info()
 print_version()
 {
 	cat <<EOF
-$PROG version 0.9
+$PROG version 0.9.9
 Written by Dmitry V. Levin <ldv@altlinux.org>
 
 Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
@@ -114,6 +114,7 @@ Options:
   --no-compress             do not compress output archive;
   --bzip2                   compress output archive using bzip2;
   --gzip                    compress output archive using gzip;
+  --commit                  make temporary commit prior to extract;
   --hasher                  execute hsh-like command afterwards;
   --rpmbuild                execute rpmbuild-like command afterwards;
   --export-dir=DIRNAME      write source files to specified directory;
@@ -131,11 +132,17 @@ EOF
 }
 
 tmpdir=
+need_git_reset=
 exit_handler()
 {
 	local rc=$?
 	trap - EXIT
-	[ -z "$tmpdir" ] || rm -rf -- "$tmpdir"
+	[ -z "$tmpdir" ] ||
+		rm -rf -- "$tmpdir"
+	if [ -n "$need_git_reset" ]; then
+		git-reset --soft HEAD^ &&
+			verbose "Reverted temporary commit."
+	fi
 	exit $rc
 }
 
@@ -554,13 +561,14 @@ opt_check_dir()
 	printf %s "$value"
 }
 
-TEMP=`getopt -n $PROG -o r:,t:,h,q,v,V -l no-compress,bzip2,gzip,hasher,rpmbuild,export-dir:,rules:,tree-ish:,help,quiet,verbose,version -- "$@"` ||
+TEMP=`getopt -n $PROG -o r:,t:,h,q,v,V -l no-compress,commit,bzip2,gzip,hasher,rpmbuild,export-dir:,rules:,tree-ish:,help,quiet,verbose,version -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
 hasher=
 rpmbuild=
 outdir=
+do_commit=
 rules=".$PROG-rules"
 tar_compress=--gzip
 tree_id=HEAD
@@ -569,6 +577,10 @@ while :; do
 		--) shift; break
 			;;
 		--no-compress) tar_compress=
+			;;
+		--commit) do_commit=1
+			[ "$tree_id" = HEAD ] ||
+				show_usage 'Options --commit and --tree-ish are mutually exclusive.'
 			;;
 		--bzip2) tar_compress=--bzip2
 			;;
@@ -591,6 +603,8 @@ while :; do
 		-r|--rules) shift; rules="$1"
 			;;
 		-t|--tree-ish) shift; tree_id="$1"
+			[ -z "$do_commit" -o "$tree_id" = HEAD ] ||
+				show_usage 'Options --commit and --tree-ish are mutually exclusive.'
 			;;
 		-h|--help) show_help
 			;;
@@ -624,14 +638,18 @@ else
 	shift
 fi
 
+# Save git directory for future use.
+git_dir="$(git-rev-parse --git-dir)"
+git_dir="$(readlink -ev "$git_dir")"
+
 # Check given tree-ish.
 type="$(git-cat-file -t "$tree_id")" ||
-	fatal "Invalid GIT_DIR ($GIT_DIR) or tree-ish ($tree_id)"
+	fatal "$tree_id: Invalid tree-ish object"
 case "$type" in
 	tag|commit|tree)
 		;;
 	*)
-		fatal "Invalid tree-ish type: $type"
+		fatal "$type: Invalid tree-ish type"
 		;;
 esac
 
@@ -643,6 +661,14 @@ if [ -z "$outdir" ]; then
 	outdir="$tmpdir/out"
 	mkdir $verbose "$outdir"
 fi
+
+if [ -n "$do_commit" ]; then
+	if git-commit -a -m "Temporary commit by $PROG."; then
+		need_git_reset=1
+		verbose "Temporarily committed local changes."
+	fi
+fi
+export GIT_DIR="$git_dir"
 
 find_specfile
 
