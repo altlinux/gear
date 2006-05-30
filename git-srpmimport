@@ -43,7 +43,7 @@ verbose()
 print_version()
 {
 	cat <<EOF
-$PROG version 0.2
+$PROG version 0.3
 Written by Dmitry V. Levin <ldv@altlinux.org>
 
 Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
@@ -240,16 +240,17 @@ import()
 	verbose "Processing $srpm"
 	srpm="$(readlink -ev "$srpm")"
 
-	local header name version buildtime filelist author f
+	local header name version buildtime filelist changelog author
 	header="$(od -A n -N 8 -t x1 -- "$srpm")" &&
 	[ -n "$header" -a -z "${header## ed ab ee db ?? ?? 00 01}" ] &&
 	name="$(rpmquery -p --qf '%{NAME}' -- "$srpm")" &&
 	version="$(rpmquery -p --qf '%{VERSION}-%{RELEASE}' -- "$srpm")" &&
 	buildtime="$(rpmquery -p --qf '%{BUILDTIME}' -- "$srpm")" &&
+	changelog="$(rpmquery -p --qf '%|CHANGELOGTEXT?{%{CHANGELOGTEXT}}|' -- "$srpm")" &&
 	filelist="$(rpm2cpio "$srpm" |cpio --list --quiet )" ||
 		fatal "$srpm: Not a valid source rpm package"
 
-	author="$(rpmquery -p --qf '%{CHANGELOGNAME}\n' -- "$srpm" |
+	author="$(rpmquery -p --qf '%|CHANGELOGNAME?{%{CHANGELOGNAME}}|' -- "$srpm" |
 		sed -ne 's/^\([^<]*<[^@]\+\(@\| at \)[^@]\+>\).*/\1/p' |
 		sed -e s/alt-linux/altlinux/g)"
 
@@ -261,7 +262,7 @@ import()
 	verbose "Unpacked ${srpm##*/}"
 
 	# Find specfile.
-	local spec= many_specs= spec_version=
+	local f spec= many_specs= spec_version=
 	for f in $filelist; do
 		[ -z "${f##$spec_pattern}" -o -z "${f%%$spec_pattern}" ] ||
 			continue
@@ -315,8 +316,10 @@ import()
 
 	optimize_rules "$gear_rules"
 
+	local message
+	message="$(printf '%s\n\n%s\n' "$version" "$changelog")"
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
-		git-commit -a -m "$version" ${author:+--author "$author"}
+		git-commit -a -m "$message" ${author:+--author "$author"}
 	verbose "Committed $name $version"
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
 		git-tag -a -m "$name $version" "$version"
