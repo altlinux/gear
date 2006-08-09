@@ -213,19 +213,22 @@ untar()
 			rmdir "$subdir"
 		fi
 
+		local quoted
+		quoted="$(quote_sed_regexp "$version")"
+
 		if [ "$tar_name" = "$base" ]; then
 			if [ "$tar_dir-$version" = "$tar_name" ]; then
-				printf '%s: %s\n' "$method_tar" "$tar_dir" >>"$gear_rules"
+				printf '%s: %s\n' "$method_tar" "$tar_dir"
 			else
-				printf '%s: %s name=%s\n' "$method_tar" "$tar_dir" "$tar_name" >>"$gear_rules"
+				printf '%s: %s name=%s\n' "$method_tar" "$tar_dir" "$tar_name"
 			fi
 		else
 			if [ "$tar_dir-$version" = "$tar_name" ]; then
-				printf '%s: %s base=%s\n' "$method_tar" "$tar_dir" "$base" >>"$gear_rules"
+				printf '%s: %s base=%s\n' "$method_tar" "$tar_dir" "$base"
 			else
-				printf '%s: %s name=%s base=%s\n' "$method_tar" "$tar_dir" "$tar_name" "$base" >>"$gear_rules"
+				printf '%s: %s name=%s base=%s\n' "$method_tar" "$tar_dir" "$tar_name" "$base"
 			fi
-		fi
+		fi |sed "s/${quoted:-@version@}/@version@/g" >>"$gear_rules"
 		git-add $verbose "$tar_dir"
 	else
 		printf '%s: %s\n' "$method_copy" "$f" >>"$gear_rules"
