@@ -240,11 +240,11 @@ import()
 	verbose "Processing $srpm"
 	srpm="$(readlink -ev "$srpm")"
 
-	local header name version buildtime filelist changelog author
+	local header name verrel buildtime filelist changelog author
 	header="$(od -A n -N 8 -t x1 -- "$srpm")" &&
 	[ -n "$header" -a -z "${header## ed ab ee db ?? ?? 00 01}" ] &&
 	name="$(rpmquery -p --qf '%{NAME}' -- "$srpm")" &&
-	version="$(rpmquery -p --qf '%{VERSION}-%{RELEASE}' -- "$srpm")" &&
+	verrel="$(rpmquery -p --qf '%{VERSION}-%{RELEASE}' -- "$srpm")" &&
 	buildtime="$(rpmquery -p --qf '%{BUILDTIME}' -- "$srpm")" &&
 	changelog="$(rpmquery -p --qf '%|CHANGELOGTEXT?{%{CHANGELOGTEXT}}|' -- "$srpm")" &&
 	filelist="$(rpm2cpio "$srpm" |cpio --list --quiet )" ||
@@ -317,12 +317,12 @@ import()
 	optimize_rules "$gear_rules"
 
 	local message
-	message="$(printf '%s\n\n%s\n' "$version" "$changelog")"
+	message="$(printf '%s\n\n%s\n' "$verrel" "$changelog")"
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
 		git-commit -a -m "$message" ${author:+--author "$author"}
-	verbose "Committed $name $version"
+	verbose "Committed $name $verrel"
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
-		git-tag -a -m "$name $version" "$version"
+		git-tag -a -m "$name $verrel" "$verrel" ||:
 	info "Imported $srpm"
 }
 
