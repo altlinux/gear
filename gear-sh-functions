@@ -1,0 +1,184 @@
+#!/bin/sh -euf
+
+PROG=gear
+
+info()
+{
+	printf %s\\n "$PROG: $*" >&2
+}
+
+fatal()
+{
+	printf %s\\n "$PROG: $*" >&2
+	exit 1
+}
+
+quiet=
+verbose=
+verbose()
+{
+	[ -n "$verbose" ] || return 0
+	info "$@"
+}
+
+show_usage()
+{
+	[ -z "$*" ] || info "$*"
+	echo "Try \`$PROG --help' for more information." >&2
+	exit 1
+}
+
+lineno=
+rules_error()
+{
+	local lineno_text=
+	[ -z "$lineno" ] || lineno_text=" line $lineno"
+	fatal "$rules$lineno_text: $*"
+}
+
+rules_info()
+{
+	local lineno_text=
+	[ -z "$lineno" ] || lineno_text=" line $lineno"
+	info "$rules$lineno_text: $*"
+}
+
+# quote argument for sed regexp.
+quote_sed_regexp()
+{
+	local out="$*"
+	if [ -z "${out##*[\[\].^\$\\/]*}" ]; then
+		out="$(printf %s "$out" |sed -e 's/[].^$[\/]/\\&/g')" ||
+			return 1
+	fi
+	printf %s "$out"
+}
+
+# quote argument for shell.
+quote_shell_arg()
+{
+	local out="$*"
+	if [ -z "${out##*[\"\$\`\\]*}" ]; then
+		out="$(printf %s "$out" |sed -e 's/["$`\]/\\&/g')" ||
+			return 1
+	fi
+	printf %s "$out"
+}
+
+traverse_tree()
+{
+	local tree="$1" && shift
+	local path="$1" && shift
+	local optional="$1" && shift
+
+	set -- `printf %s "$path" |tr -s / ' '`
+	local dir id quoted
+	for dir; do
+		[ "$dir" != . ] ||
+			continue
+		quoted="$(quote_sed_regexp "$dir")"
+		id="$(git-ls-tree "$tree" "$dir" |
+			sed -ne 's/^[^[:space:]]\+[[:space:]]\+tree[[:space:]]\+\([^[:space:]]\+\)[[:space:]]\+'"$quoted"'$/\1/p')"
+		if [ -z "$id" ]; then
+			if [ "$optional" = 1 ]; then
+				return 2
+			else
+				rules_error "tree $dir not found in $tree"
+			fi
+		fi
+		tree="$id"
+	done
+	printf %s "$tree"
+}
+
+# fetch blob by id+name.
+cat_blob()
+{
+	local tree="$1" && shift
+	local name="$1" && shift
+
+	local dir_name base_name
+	dir_name="$(dirname -- "$name")"
+	base_name="$(basename -- "$name")"
+	tree="$(traverse_tree "$tree" "$dir_name" 0)" ||
+		rules_error "blob $name not found"
+
+	# fetch blob from given tree.
+	local blob quoted
+	quoted="$(quote_sed_regexp "$base_name")"
+	blob="$(git-ls-tree "$tree" "$base_name" |
+		sed -ne 's/^[^[:space:]]\+[[:space:]]\+blob[[:space:]]\+\([^[:space:]]\+\)[[:space:]]\+'"$quoted"'$/\1/p')"
+
+	[ -n "$blob" ] ||
+		rules_error "blob $base_name not found in $tree"
+
+	git-cat-file blob "$blob"
+}
+
+check_path()
+{
+	local name="$1" && shift
+	local value="$1" && shift
+
+	[ "$value" != '..' -a \
+	  -n "${value##/*}" -a \
+	  -n "${value##../*}" -a \
+	  -n "${value%%*/..}" -a \
+	  -n "${value##*/../*}" ] ||
+		rules_error "Invalid $name \"$value\" specified"
+}
+
+check_name()
+{
+	local name="$1" && shift
+	local value="$1" && shift
+
+	[ -n "$value" ] ||
+		rules_error "Empty $name \"$value\" specified"
+
+	[ -z "$(printf %s "$value" |tr -d '[:alnum:]_.+-')" ] ||
+		rules_error "Invalid $name \"$value\" specified"
+}
+
+find_specfile()
+{
+	specfile=
+	# first try specfile defined in $rules if any.
+	if [ -n "$(git-ls-tree "$tree_id" "$rules")" ]; then
+		cat_blob "$tree_id" "$rules" >"$workdir/rules"
+		# format: "spec: filename"
+		specfile="$(sed -ne 's/^spec:[[:space:]]\+\([^[:space:]]\+\)/\1/p' "$workdir/rules")"
+		[ `printf %s "$specfile" |wc -l` -le 1 ] ||
+			rules_error "Too many specfiles specified"
+		[ -z "$specfile" ] ||
+			check_path specfile "$specfile"
+	fi
+	# second try specfile in toplevel tree.
+	if [ -z "$specfile" ]; then
+		specfile="$(git-ls-tree "$tree_id" |
+			sed -ne 's/^[^[:space:]]\+[[:space:]]\+blob[[:space:]]\+[^[:space:]]\+[[:space:]]\+\([^/[:space:]]\+\.spec\)$/\1/p')"
+		[ `printf %s "$specfile" |wc -l` -le 1 ] ||
+			fatal "Too many specfiles found in $GIT_DIR"
+	fi
+	[ -n "$specfile" ] ||
+		fatal "No specfiles found in $GIT_DIR"
+	cat_blob "$tree_id" "$specfile" >"$workdir/specfile"
+	pkg_name="$(sed '/^name:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
+	pkg_version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
+	pkg_release="$(sed '/^release:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
+}
+
+run_command()
+{
+	verbose "Executing: $*"
+	"$@"
+}
+
+opt_check_dir()
+{
+	local value
+	value="$(readlink -ev "$2")" &&
+		[ -d "$value" -a -x "$value" ] ||
+		fatal "$1: $2: Directory not available"
+	printf %s "$value"
+}
