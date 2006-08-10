@@ -19,26 +19,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 
-PROG=git-srpmimport
-
-info()
-{
-	printf %s\\n "$PROG: $*" >&2
-}
-
-fatal()
-{
-	printf %s\\n "$PROG: $*" >&2
-	exit 1
-}
-
-quiet=
-verbose=
-verbose()
-{
-	[ -n "$verbose" ] || return 0
-	info "$@"
-}
+. gear-sh-functions
 
 print_version()
 {
@@ -51,13 +32,6 @@ This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
 	exit
-}
-
-show_usage()
-{
-	[ -z "$*" ] || info "$*"
-	echo "Try \`$PROG --help' for more information." >&2
-	exit 1
 }
 
 show_help()
@@ -102,17 +76,6 @@ exit_handler()
 	[ "$branch_orig" = "refs/heads/$branch_import" ] ||
 		git-symbolic-ref HEAD "$branch_orig"
 	exit $rc
-}
-
-# quote argument for sed regexp.
-quote_sed_regexp()
-{
-	local out="$*"
-	if [ -z "${out##*[\[\].^\$\\/]*}" ]; then
-		out="$(printf %s "$out" |sed -e 's/[].^$[\/]/\\&/g')" ||
-			return 1
-	fi
-	printf %s "$out"
 }
 
 # heuristically shorten tar directory name.

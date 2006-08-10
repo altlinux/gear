@@ -1,6 +1,6 @@
 #!/bin/ash -ef
 #
-# Copyright (C) 2006  Alexey Gladkov <legionaltlinux.org>
+# Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 # 
 # git-commit wrapper for gear.
 #
