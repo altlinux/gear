@@ -32,6 +32,7 @@
 #  (copy|gzip|bzip2)?: glob_pattern..
 #  exclude: glob_pattern..
 #  tar(|.gz|.bz2): path_to_directory [options]
+#  tar(|.gz|.bz2)?: path_to_directory [options]
 #  
 #  Valid tar options are:
 #    name=archive_name  - tar archive name, may reference to keywords;
@@ -65,7 +66,6 @@ verbose()
 }
 
 lineno=
-optional=
 rules_error()
 {
 	local lineno_text=
@@ -170,11 +170,9 @@ quote_shell_arg()
 
 traverse_tree()
 {
-	tree="$1"
-	shift
-
-	local path="$1"
-	shift
+	local tree="$1" && shift
+	local path="$1" && shift
+	local optional="$1" && shift
 
 	set -- `printf %s "$path" |tr -s / ' '`
 	local dir id quoted
@@ -186,33 +184,27 @@ traverse_tree()
 			sed -ne 's/^[^[:space:]]\+[[:space:]]\+tree[[:space:]]\+\([^[:space:]]\+\)[[:space:]]\+'"$quoted"'$/\1/p')"
 		if [ -z "$id" ]; then
 			if [ "$optional" = 1 ]; then
-				return 1
+				return 2
 			else
 				rules_error "tree $dir not found in $tree"
 			fi
 		fi
 		tree="$id"
 	done
+	printf %s "$tree"
 }
 
 # fetch blob by id+name.
 cat_blob()
 {
-	tree="$1"
-	shift
+	local tree="$1" && shift
+	local name="$1" && shift
 
-	local name dir_name base_name
-	name="$1"
-	shift
-
+	local dir_name base_name
 	dir_name="$(dirname -- "$name")"
 	base_name="$(basename -- "$name")"
-
-	local optional_saved="$optional"
-	optional=0
-	# modifies $tree
-	traverse_tree "$tree" "$dir_name"
-	optional="$optional_saved"
+	tree="$(traverse_tree "$tree" "$dir_name" 0)" ||
+		rules_error "blob $name not found"
 
 	# fetch blob from given tree.
 	local blob quoted
@@ -228,9 +220,8 @@ cat_blob()
 
 check_path()
 {
-	local name value
-	name="$1" && shift
-	value="$1" && shift
+	local name="$1" && shift
+	local value="$1" && shift
 
 	[ "$value" != '..' -a \
 	  -n "${value##/*}" -a \
@@ -242,9 +233,8 @@ check_path()
 
 check_name()
 {
-	local name value
-	name="$1" && shift
-	value="$1" && shift
+	local name="$1" && shift
+	local value="$1" && shift
 
 	[ -n "$value" ] ||
 		rules_error "Empty $name \"$value\" specified"
@@ -283,10 +273,9 @@ find_specfile()
 
 subst_key()
 {
-	local var_name key_name key_value
-	var_name="$1" && shift
-	key_name="$1" && shift
-	key_value="$1" && shift
+	local var_name="$1" && shift
+	local key_name="$1" && shift
+	local key_value="$1" && shift
 
 	local quoted var_value
 	eval "var_value=\"\$$var_name\""
@@ -302,12 +291,11 @@ subst_key()
 
 subst_keywords()
 {
-	local var dir name version release
-	var="$1" && shift
-	dir="$1" && shift
-	name="$1" && shift
-	version="$1" && shift
-	release="$1" && shift
+	local var="$1" && shift
+	local dir="$1" && shift
+	local name="$1" && shift
+	local version="$1" && shift
+	local release="$1" && shift
 
 	subst_key "$var" '@dir@' "$dir"
 	subst_key "$var" '@name@' "$name"
@@ -319,8 +307,8 @@ subst_keywords()
 
 get_tar_name()
 {
-	local dir="$1"
-	shift
+	local dir="$1" && shift
+
 	if [ "$dir" = . ]; then
 		dir=
 		tar_name='@name@-@version@'
@@ -363,15 +351,12 @@ get_tar_name()
 
 make_tar()
 {
-	local cmd dir name
-	cmd="$1"
-	shift
-	dir="$1"
-	shift
-	name="$1"
-	shift
-	tar_base="$1"
-	shift
+	local optional="$1" && shift
+	local cmd="$1" && shift
+	local dir="$1" && shift
+	local name="$1" && shift
+	tar_base="$1" && shift
+
 	[ "$tar_base" != ' ' ] ||
 		tar_base="$name"
 
@@ -379,12 +364,14 @@ make_tar()
 	if [ "$dir" = . ]; then
 		id="$tree_id"
 	else
-		local dir_name base_name quoted
+		local dir_name base_name quoted rc=0
 		dir_name="$(dirname -- "$dir")"
 		base_name="$(basename -- "$dir")"
-		# modifies $tree
-		traverse_tree "$tree_id" "$dir_name" ||
-			return 0
+		tree="$(traverse_tree "$tree_id" "$dir_name" "$optional")" ||
+			rc=$?
+		if [ "$rc" = 1 ]; then exit 1
+		elif [ "$rc" != 0 ]; then return 0
+		fi
 		quoted="$(quote_sed_regexp "$base_name")"
 		id="$(git-ls-tree "$tree" "$base_name" |
 			sed -ne 's/^[^[:space:]]\+[[:space:]]\+tree[[:space:]]\+\([^[:space:]]\+\)[[:space:]]\+'"$quoted"'$/\1/p')"
@@ -416,34 +403,37 @@ make_tar()
 
 make_archive()
 {
-	# format: "cmd dirname options.."
-	local cmd="$1" dir_name="$2"
-	[ -n "$dir_name" ] ||
+	# format: "$optional cmd dirname options.."
+	[ $# -ge 3 ] ||
 		rules_error "No dirname specified"
-	shift 2
-	check_path dirname "$dir_name"
+	local optional="$1" && shift
+	local cmd="$1" && shift
+	local dir_name="$1" && shift
 
+	check_path dirname "$dir_name"
 	get_tar_name "$(basename -- "$dir_name")" "$@"
-	make_tar "$cmd" "$dir_name" "$tar_name" "$tar_base"
+	make_tar "$optional" "$cmd" "$dir_name" "$tar_name" "$tar_base"
 }
 
 copy_by_pattern()
 {
-	# format: "cmd pattern.."
-	[ $# -ge 2 ] ||
+	# format: "$optional cmd pattern.."
+	[ $# -ge 3 ] ||
 		rules_error "No pattern specified"
-	local cmd="$1"
-	shift
+	local optional="$1" && shift
+	local cmd="$1" && shift
 
 	for pattern; do
 		[ -z "$(printf %s "$pattern" |tr -d '[:alnum:]_.?*-/')" ] ||
 			rules_error "Invalid copy pattern \"$pattern\" specified"
-		local dir_name base_name
+		local dir_name base_name rc=0
 		dir_name="$(dirname "$pattern")"
 		base_name="$(basename "$pattern")"
-		# modifies $tree
-		traverse_tree "$tree_id" "$dir_name" ||
-			return 0
+		tree="$(traverse_tree "$tree_id" "$dir_name" "$optional")" ||
+			rc=$?
+		if [ "$rc" = 1 ]; then exit 1
+		elif [ "$rc" != 0 ]; then return 0
+		fi
 		git-ls-tree "$tree" >"$workdir/blobs"
 		echo >>"$workdir/blobs"
 		local mode otype id name found=
@@ -490,11 +480,12 @@ parse_rules()
 {
 	[ -s "$workdir/rules" ] || return 0
 
-	local cmd options
 	echo >>"$workdir/rules"
 
 	exclude_pattern_list=
 	lineno=0
+
+	local cmd options
 	while read -r cmd options; do
 		lineno="$((lineno+1))"
 		if [ "$cmd" = 'exclude:' ]; then
@@ -507,7 +498,7 @@ parse_rules()
 	lineno=0
 	while read -r cmd options; do
 		lineno="$((lineno+1))"
-		optional=0
+		local optional=0
 		case "$cmd" in
 			""|\#*)
 				continue
@@ -530,11 +521,11 @@ parse_rules()
 				continue
 				;;
 			tar|tar.gz|tar.bz2)
-				make_archive "$cmd" $options ||
+				make_archive "$optional" "$cmd" $options ||
 					rules_error "Failed to make archive"
 				;;
 			copy|gzip|bzip2)
-				copy_by_pattern "$cmd" $options ||
+				copy_by_pattern "$optional" "$cmd" $options ||
 					rules_error "Failed to copy by pattern"
 				;;
 			*)
