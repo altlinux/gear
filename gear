@@ -78,6 +78,7 @@ Options:
   --hasher                  execute hsh-like command afterwards;
   --rpmbuild                execute rpmbuild-like command afterwards;
   --export-dir=DIRNAME      write source files to specified directory;
+  --describe                describe package as "%{NAME} %{VERSION} %{RELEASE}";
   -r, --rules=FILENAME      name of file with rules, default is .$PROG-rules;
   -t, --tree-ish=ID         tree, commit or tag object name;
   -q, --quiet               try to be more quiet;
@@ -372,13 +373,14 @@ parse_rules()
 	lineno=
 }
 
-TEMP=`getopt -n $PROG -o r:,t:,h,q,v,V -l no-compress,commit,bzip2,gzip,hasher,rpmbuild,export-dir:,rules:,tree-ish:,help,quiet,verbose,version -- "$@"` ||
+TEMP=`getopt -n $PROG -o r:,t:,h,q,v,V -l no-compress,commit,bzip2,gzip,hasher,rpmbuild,export-dir:,describe,rules:,tree-ish:,help,quiet,verbose,version -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
 hasher=
 rpmbuild=
 outdir=
+describe=
 do_commit=
 rules=".$PROG-rules"
 tar_compress=--gzip
@@ -398,18 +400,22 @@ while :; do
 		--gzip) tar_compress=--gzip
 			;;
 		--hasher) hasher=1
-			[ -z "$outdir$rpmbuild" ] ||
-				show_usage 'Options --hasher, --rpmbuild and --export-dir are mutually exclusive.'
+			[ -z "$outdir$rpmbuild$describe" ] ||
+				show_usage 'Options --hasher, --rpmbuild, --export-dir and --describe are mutually exclusive.'
 			;;
 		--rpmbuild) rpmbuild=1
-			[ -z "$hasher$outdir" ] ||
-				show_usage 'Options --hasher, --rpmbuild and --export-dir are mutually exclusive.'
+			[ -z "$hasher$outdir$describe" ] ||
+				show_usage 'Options --hasher, --rpmbuild, --export-dir and --describe are mutually exclusive.'
 			;;
 		--export-dir)
 			outdir="$(opt_check_dir "$1" "$2")"
 			shift
-			[ -z "$hasher$rpmbuild" ] ||
-				show_usage 'Options --hasher, --rpmbuild and --export-dir are mutually exclusive.'
+			[ -z "$hasher$rpmbuild$describe" ] ||
+				show_usage 'Options --hasher, --rpmbuild, --export-dir and --describe are mutually exclusive.'
+			;;
+		--describe) describe=1
+			[ -z "$hasher$outdir$rpmbuild" ] ||
+				show_usage 'Options --hasher, --rpmbuild, --export-dir and --describe are mutually exclusive.'
 			;;
 		-r|--rules) shift; rules="$1"
 			;;
@@ -436,7 +442,7 @@ if [ -n "$hasher" -o -n "$rpmbuild" ]; then
 	# At least one argument, please.
 	[ "$#" -ge 1 ] ||
 		show_usage 'Not enough arguments.'
-elif [ -n "$outdir" ]; then
+elif [ -n "$outdir" -o -n "$describe" ]; then
 	[ "$#" -eq 0 ] ||
 		show_usage 'Too many arguments.'
 else
@@ -482,6 +488,11 @@ fi
 export GIT_DIR="$git_dir"
 
 find_specfile
+
+if [ -n "$describe" ]; then
+	printf "%s %s %s\n" "$pkg_name" "$pkg_version" "$pkg_release"
+	exit 0
+fi
 
 parse_rules
 
