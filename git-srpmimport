@@ -375,7 +375,7 @@ workdir="$tmpdir/work"
 git-symbolic-ref HEAD "refs/heads/$branch_import"
 
 if [ -n "$read_from_stdin" ]; then
-	while read; do
+	while read REPLY; do
 		import "$REPLY"
 	done
 else
