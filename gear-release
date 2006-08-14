@@ -1,0 +1,126 @@
+#!/bin/ash -ef
+#
+# Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
+# 
+# git-release creates a release tag for the project. 
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+# Example gear release tags:
+# $ cat "$GIT_DIR/geartags"
+# sisyphus
+# master24
+# rhel4
+# fedora_5
+#
+
+. gear-sh-functions
+
+[ -n "$GIT_DIR" -a -d "$GIT_DIR" ] || GIT_DIR="$(pwd)/.git"
+
+sign=-a
+signkey=
+tagsfile="$GIT_DIR/geartags"
+
+usage() {
+    local rc="$1" && shift 
+    [ "$#" -eq 0 ] || info "$*"
+    cat <<EOF
+
+Usage: $PROG [Options] <release-tag> <target>
+
+The utility creates a release tag for the project. It marks 
+specified tag or commit as "release" tag. Release tag 
+should be listed at the geartags file. Default location of 
+geartags file is \`\$GIT_DIR/geartags'.
+
+<release-tag> - release tag name or unique tag prefix.
+
+<target> - tag or commit.
+
+Options:
+  --sign[=<KEYID>]    add signature;
+  -t,--tags=FILE      release tags file.
+  -q,--quiet          try to be more quiet;
+  -v,--verbose        print a message for each action;
+  -V,--version        print program version and exit;
+  -h,--help           show this text and exit.
+
+Report bugs to http://bugs.altlinux.ru/
+
+EOF
+    exit "$rc"
+}
+
+print_version()
+{
+	cat <<EOF
+$PROG version 0.0.1
+Written by Alexey Gladkov <legion@altlinux.org>
+
+Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+	exit
+}
+
+TEMP=`getopt -n $PROG -o t:q,v,V,h -l tags:,sign::,quiet,verbose,version,help -- "$@"` || usage 1
+eval set -- "$TEMP"
+
+while :; do
+	case "$1" in
+	    --sign) shift; sign=-s
+		if [ -n "$1" ]; then
+		    sign=
+		    signkey="$1"
+		fi
+		;;
+	    -t|--tag) shift
+		[ ! -r "$1" ] || tagsfile="$1"
+		;;
+	    -q|--quiet) quiet=-q
+		;;
+	    -v|--verbose) verbose=-v
+		;;
+	    -V|--version) print_version
+	    	;;
+	    -h|--help) usage 0
+		;;
+	    --) shift; break
+		;;
+	    *) fatal "unrecognized option: $1"
+		;;
+	esac
+	shift
+done
+[ "$#" -eq 2 ] || show_usage
+[ -e "$tagsfile" ] || >"$tagsfile"
+[ -s "$tagsfile" ] || fatal "$tagsfile: empty file"
+
+TAG=
+rel="${1#tags/}"
+while read n; do
+    n="${n#tags/}"
+    [ "$n" = "${n#$rel}" ] || TAG="$n"
+done < "$tagsfile"
+[ -n "$TAG" ] || fatal "$1: tag should be listed at the \`$tagsfile'"
+shift
+
+TARGET="${1#tags/}" && shift
+type="$(git-cat-file -t "$TARGET")"
+
+! git-tag -l |grep -qsxF "tags/$TAG" || git-tag -d "$TAG" >/dev/null
+git-tag $sign ${signkey:+-u "$signkey"} -m "Release $type: $TARGET" "$TAG" "$TARGET" >/dev/null
