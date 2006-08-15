@@ -49,6 +49,7 @@ show_usage()
 }
 
 lineno=
+rules=
 rules_error()
 {
 	local lineno_text=
@@ -160,9 +161,15 @@ check_name()
 		rules_error "Invalid $name \"$value\" specified"
 }
 
+workdir=
+tree_id=
+rules=
+specfile=
+pkg_name=
+pkg_version=
+pkg_release=
 find_specfile()
 {
-	specfile=
 	# first try specfile defined in $rules if any.
 	if [ -n "$(git-ls-tree "$tree_id" "$rules")" ]; then
 		cat_blob "$tree_id" "$rules" >"$workdir/rules"
