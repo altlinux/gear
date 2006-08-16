@@ -1,4 +1,4 @@
-#!/bin/ash -ef
+#!/bin/sh -ef
 #
 # Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 # 
