@@ -41,8 +41,8 @@ if [ "$*" = "${*##--help}" ]; then
     # Get specfile from archive.
     find_specfile
 
-    vr="$(sed -ne '/^%changelog$/{n; s/\* .* \([^[:space:]]\+\)$/\1/p}' "$specfile")"
-    ch="$(sed -ne '0,/^%changelog$/{n;d}; 0,/* /{/* /!p}' "$specfile")"
+    vr="$(sed -ne '/^[[:space:]]*%changelog[[:space:]]*$/{n; s/\* .* \([^[:space:]]\+\)$/\1/p}' "$specfile")"
+    ch="$(sed -ne '0,/^[[:space:]]*%changelog[[:space:]]*$/d;2,/^* /{/^* /!p}' "$specfile")"
     commitlog="${vr:+- $vr}
 
 $ch"
