@@ -1,8 +1,8 @@
-#!/bin/ash -ef
+#!/bin/sh -ef
 #
 # Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 # 
-# git-release creates a release tag for the project. 
+# gear-release creates a release tag for the project. 
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,8 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # Example gear release tags:
-# $ cat "$GIT_DIR/geartags"
+#
+# $ cat "$GIT_DIR/gear/gear-tags"
 # sisyphus
 # master24
 # rhel4
@@ -28,27 +29,29 @@
 
 . gear-sh-functions
 
-[ -n "$GIT_DIR" -a -d "$GIT_DIR" ] || GIT_DIR="$(pwd)/.git"
+GIT_DIR="$(git-rev-parse --git-dir)"
+GIT_DIR="$(readlink -ev "$GIT_DIR")"
+export GIT_DIR="$GIT_DIR"
 
 sign=-a
 signkey=
-tagsfile="$GIT_DIR/geartags"
+tagsfile="$GIT_DIR/gear/gear-tags"
 
 usage() {
     local rc="$1" && shift 
     [ "$#" -eq 0 ] || info "$*"
     cat <<EOF
 
-Usage: $PROG [Options] <release-tag> <target>
+Usage: $PROG [Options] <release-tag> <commit-ish>
 
 The utility creates a release tag for the project. It marks 
 specified tag or commit as "release" tag. Release tag 
-should be listed at the geartags file. Default location of 
-geartags file is \`\$GIT_DIR/geartags'.
+should be listed it the gear tags file. Default location of 
+gear tags file is \`\$GIT_DIR/gear/gear-tags'.
 
-<release-tag> - release tag name or unique tag prefix.
+<release-tag> - release tag name. Names may be abbreviated.
 
-<target> - tag or commit.
+<commit-ish> -  commit or tag object name.
 
 Options:
   --sign[=<KEYID>]    add signature;
@@ -88,7 +91,7 @@ while :; do
 		    signkey="$1"
 		fi
 		;;
-	    -t|--tag) shift
+	    -t|--tags) shift
 		[ ! -r "$1" ] || tagsfile="$1"
 		;;
 	    -q|--quiet) quiet=-q
@@ -107,20 +110,28 @@ while :; do
 	shift
 done
 [ "$#" -eq 2 ] || show_usage
-[ -e "$tagsfile" ] || >"$tagsfile"
+[ -e "$tagsfile" ] || { mkdir -p "${tagsfile%/*}"; >"$tagsfile"; }
 [ -s "$tagsfile" ] || fatal "$tagsfile: empty file"
 
 TAG=
 rel="${1#tags/}"
 while read n; do
+    [ "$n" = "${n#\#}" ] || continue
     n="${n#tags/}"
-    [ "$n" = "${n#$rel}" ] || TAG="$n"
+    if [ "$n" != "${n#$rel}" ]; then
+	[ -z "$TAG" ] || fatal "tag \'$TAG' is ambiguous"
+	TAG="$n"
+    fi
 done < "$tagsfile"
-[ -n "$TAG" ] || fatal "$1: tag should be listed at the \`$tagsfile'"
+[ -n "$TAG" ] || fatal "$1: tag should be listed in the \`$tagsfile'"
 shift
 
-TARGET="${1#tags/}" && shift
-type="$(git-cat-file -t "$TARGET")"
+COMMITISH="${1#tags/}" && shift
 
-! git-tag -l |grep -qsxF "tags/$TAG" || git-tag -d "$TAG" >/dev/null
-git-tag $sign ${signkey:+-u "$signkey"} -m "Release $type: $TARGET" "$TAG" "$TARGET" >/dev/null
+type="$(git-cat-file -t "$COMMITISH")"
+case "$type" in
+	tag|commit) ;;
+	*) fatal "$type: Invalid commit-ish type" ;;
+esac
+
+git-tag $sign ${signkey:+-u "$signkey"} -f -m "Release $type: $COMMITISH" "$TAG" "$COMMITISH" >/dev/null
