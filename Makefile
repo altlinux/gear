@@ -50,7 +50,7 @@ $(MAN7PAGES):
 	$(TOUCH_R) $< $@
 	chmod --reference=$< $@
 
-%.1: % %.1.inc
+%.1: % %.1.inc gear-sh-functions
 	$(HELP2MAN1) -i $@.inc ./$< >$@
 
 install: all
