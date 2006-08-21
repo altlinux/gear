@@ -1,0 +1,112 @@
+Введение
+========
+
+gear (Get Every Archive from git package Repository) - система для
+работы с произвольными архивами программ.  В качестве хранилища данных
+gear использует git[1].  Это позволяет держать полную историю проекта.
+
+
+Создание gear-репозитория путём импорта созданного ранее srpm-пакета(ов).
+=========================================================================
+
+Пусть у нас есть srpm-пакет foobar-1.0-alt1.src.rpm, и, к примеру, в нём
+находится следующее:
+
+$ rpmquery -pl foobar-1.0-alt1.src.rpm
+foobar-1-fix.patch
+foobar-2-fix.patch
+foobar.icon.png
+foobar-1.0.tar.bz2
+foobar-pugins.tar.gz
+
+Для того чтобы сделать для него gear-репозиторий, нам нужно:
+
+1) Создать каталог, в котором будет располагаться наш архив:
+
+$ mkdir foobar
+$ cd foobar
+
+2) Создать новый git-репозиторий:
+
+$ git-init-db
+defaulting to local storage area
+
+$ ls -dlog .*
+drwxr-xr-x 4 4096 Aug 12 34:56 .
+drwxr-xr-x 6 4096 Aug 12 34:56 ..
+drwxr-xr-x 8 4096 Aug 12 34:56 .git
+
+Таким образом, git-репозиторий готов для импорта srpm-пакета.
+
+3) В проекте gear есть утилита gear-srpmimport, предназначенная для
+автоматизации импортирования srpm-пакета в git-репозиторий:
+
+$ git-srpmimport foobar-1.0-alt1.src.rpm
+Committing initial tree deadbeafdeadbeafdeadbeafdeadbeafdeadbeaf
+git-srpmimport: Imported foobar-1.0-alt1.src.rpm
+git-srpmimport: Created master branch
+
+$ ls -log
+-rw-r--r-- 1 6637 Aug 12 34:56 .git
+-rw-r--r-- 1 6637 Aug 12 34:56 .gear-rules
+-rw-r--r-- 1 6637 Aug 12 34:56 foobar.spec
+drwxr-xr-x 3 4096 Aug 12 34:56 foobar
+drwxr-xr-x 3 4096 Aug 12 34:56 foobar-plugins
+-rw-r--r-- 1  791 Aug 12 34:56 foobar-1-fix.patch
+-rw-r--r-- 1 3115 Aug 12 34:56 foobar-2-fix.patch
+-rw-r--r-- 1  842 Aug 12 34:56 foobar.icon.png
+
+Итак, пакет импортирован в репозиторий.  Для импортированного пакета
+создаётся список правил, по которым будет создаваться архив.  Правила
+располагаются в файле `.gear-rules':
+
+$ cat .gear-rules
+copy: *.patch
+copy: *.png
+tar.bz2: foobar
+tar.gz: foobar-plugins name=foobar-plugins base=
+
+4) При необходимости в файл правил можно вносить изменения.  Например,
+можно убрать сжатие исходников (соответствующие изменения следует вносить
+и в spec-файл).
+
+
+Создание gear-репозитория на основе готового git-репозитория.
+=============================================================
+
+1) Создайть и добавить в git-репозиторий spec-файл.
+2) Создайть и добавить в git-репозиторий файл с правилами `.gear-rules'.
+
+
+Сборка пакета из gear-репозитория при помощи hasher(7).
+=======================================================
+
+1) Сборка пакета при помощи hasher'а осуществляется при помощи gear --hasher:
+
+$ gear --hasher -- hsh ~/build
+
+2) Чтобы собрать старый пакет, который не содержит определения тэга Packager в spec-файле,
+следует отключить проверку packager'а:
+
+$ gear --hasher -- hsh ~/build --no-sisyphus-check=packager
+
+3) Для того, чтобы сделать commit очередной сборки пакета, имеет смысл воспользоваться утилитой gear-commit,
+которая помогает сформировать список изменений на основе записи в spec-файле:
+
+$ gear-commit -a
+
+Прежде чем сделать первый commit, не забудьте сконфигурировать ваш адрес.
+Это можно сделать либо глобально, определив переменные окружения
+GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, GIT_COMMITTER_NAME и GIT_COMMITTER_EMAIL,
+либо отдельно для git-репозитория, добавив текст
+
+[user]
+	name = "Your Name"
+	email = "your@email.address.xz"
+в .git/config _каждого_ git-репозитория.
+
+
+Ссылки
+======
+
+[1] http://kernel.org/pub/software/scm/git/
