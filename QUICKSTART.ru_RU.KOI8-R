@@ -41,10 +41,10 @@ drwxr-xr-x 8 4096 Aug 12 34:56 .git
 3) В проекте gear есть утилита gear-srpmimport, предназначенная для
 автоматизации импортирования srpm-пакета в git-репозиторий:
 
-$ git-srpmimport foobar-1.0-alt1.src.rpm
+$ gear-srpmimport foobar-1.0-alt1.src.rpm
 Committing initial tree deadbeafdeadbeafdeadbeafdeadbeafdeadbeaf
-git-srpmimport: Imported foobar-1.0-alt1.src.rpm
-git-srpmimport: Created master branch
+gear-srpmimport: Imported foobar-1.0-alt1.src.rpm
+gear-srpmimport: Created master branch
 
 $ ls -log
 -rw-r--r-- 1 6637 Aug 12 34:56 .git

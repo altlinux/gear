@@ -1,6 +1,6 @@
 .\" Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
 .\" 
-.\" Additional documentation for the git-srpmimport command.
+.\" Additional documentation for the gear-srpmimport command.
 .\"
 .\" This file is free software; you can redistribute it and/or modify
 .\" it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-\fBgit-srpmimport\fR \- Incrementally import source packages to git repository
+\fBgear-srpmimport\fR \- Incrementally import source packages to git repository
 
 [ENVIRONMENT]
 .TP

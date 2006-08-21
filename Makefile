@@ -1,4 +1,4 @@
-MAN1PAGES = gear.1 gear-release.1 git-srpmimport.1
+MAN1PAGES = gear.1 gear-release.1 gear-srpmimport.1
 
 TARGETS = $(MAN1PAGES)
 
