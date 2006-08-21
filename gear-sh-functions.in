@@ -21,6 +21,7 @@
 #
 
 PROG="${0##*/}"
+PROG_VERSION='@VERSION@'
 
 info()
 {

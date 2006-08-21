@@ -70,7 +70,7 @@ EOF
 print_version()
 {
 	cat <<EOF
-$PROG version 0.0.1
+$PROG version $PROG_VERSION
 Written by Alexey Gladkov <legion@altlinux.org>
 
 Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>

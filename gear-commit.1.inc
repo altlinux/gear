@@ -1,6 +1,6 @@
 .\" Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
 .\" 
-.\" Additional documentation for the gear command.
+.\" Additional documentation for the gear-commit command.
 .\"
 .\" This file is free software; you can redistribute it and/or modify
 .\" it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-\fBgear\fR \- Get Every Archive from git package Repository
+\fBgear-commit\fR \- record changes using git-commit
 
 [ENVIRONMENT]
 .TP
@@ -28,9 +28,6 @@ environment variable is set then it specifies a path to use instead of
 the default for the base of the repository.
 
 [SEE ALSO]
-.BR gear-commit (1),
-.BR gear-release (1),
-.BR gear-srpminport (1),
-.BR hsh (1),
-.BR git (7),
-.BR rpmbuild (8).
+.BR gear (1),
+.BR git-commit (1).
+
