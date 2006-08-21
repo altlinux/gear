@@ -25,6 +25,7 @@ MAN1PAGES = $(PROGRAMS:=.1)
 TARGETS = gear-sh-functions $(MAN1PAGES)
 
 bindir = /usr/bin
+datadir = /usr/share
 mandir = $(datadir)/man
 man1dir = $(mandir)/man1
 DESTDIR =
