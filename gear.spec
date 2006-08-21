@@ -28,7 +28,7 @@ See %_docdir/%name-%version/QUICKSTART.ru_RU.KOI8-R for details.
 %files
 %_bindir/*
 %_mandir/man?/*
-%doc QUICKSTART
+%doc QUICKSTART*
 
 %changelog
 * Tue Aug 22 2006 Dmitry V. Levin <ldv@altlinux.org> 1.0.0-alt1
