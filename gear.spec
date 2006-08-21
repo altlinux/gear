@@ -13,7 +13,7 @@ Source: %name-%version.tar
 BuildPreReq: git-core, help2man
 
 %description
-This package contains a few utilities for managing gear repository.
+This package contains a few utilities for managing gear repositories.
 See %_docdir/%name-%version/QUICKSTART.ru_RU.KOI8-R for details.
 
 %prep
