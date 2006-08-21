@@ -10,7 +10,7 @@ BuildArch: noarch
 
 Source: %name-%version.tar
 
-BuildPreReq: help2man
+BuildPreReq: git-core, help2man
 
 %description
 This package contains a few utilities for managing gear repository.
