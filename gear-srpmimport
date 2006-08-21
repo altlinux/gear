@@ -246,6 +246,8 @@ import()
 		info "${srpm##*/}: Too many spec files."
 		spec=
 	else
+		[ "$spec_pattern" = "$def_spec_pattern" ] ||
+			printf 'spec: %s\n' "$spec" >>"$gear_rules"
 		spec_version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$spec")"
 	fi
 
@@ -303,7 +305,8 @@ import_only=
 no_untar=
 read_from_stdin=
 gear_rules=".gear-rules"
-spec_pattern='*.spec'
+def_spec_pattern='*.spec'
+spec_pattern="$def_spec_pattern"
 while :; do
 	case "$1" in
 		--) shift; break
