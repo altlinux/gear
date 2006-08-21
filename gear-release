@@ -30,14 +30,6 @@
 
 . gear-sh-functions
 
-GIT_DIR="$(git-rev-parse --git-dir)"
-GIT_DIR="$(readlink -ev "$GIT_DIR")"
-export GIT_DIR="$GIT_DIR"
-
-sign=-a
-signkey=
-tagsfile="$GIT_DIR/gear/release-tags"
-
 show_help()
 {
 	cat <<EOF
@@ -84,6 +76,8 @@ TEMP=`getopt -n $PROG -o t:q,v,V,h -l tags:,sign::,quiet,verbose,version,help --
 	show_usage
 eval set -- "$TEMP"
 
+sign=-a
+signkey=
 while :; do
 	case "$1" in
 	    --sign) shift; sign=-s
@@ -110,7 +104,13 @@ while :; do
 	esac
 	shift
 done
+
 [ "$#" -eq 2 ] || show_usage
+
+GIT_DIR="$(git-rev-parse --git-dir)"
+GIT_DIR="$(readlink -ev "$GIT_DIR")"
+export GIT_DIR="$GIT_DIR"
+[ -n "$tagsfile" ] || tagsfile="$GIT_DIR/gear/release-tags"
 [ -e "$tagsfile" ] || { mkdir -p "${tagsfile%/*}" && >"$tagsfile"; }
 [ -f "$tagsfile" ] || fatal "$tagsfile: file not available"
 [ -s "$tagsfile" ] || fatal "$tagsfile: file is empty"
