@@ -26,6 +26,12 @@ If the
 .B GIT_DIR
 environment variable is set then it specifies a path to use instead of
 the default for the base of the repository.
+.TP
+.B RULES
+Specifies a gear rules filename.
+.TP
+.B TREE_ID
+Specifies a commit-ish git object where to look for spec file.
 
 [SEE ALSO]
 .BR gear (1),
