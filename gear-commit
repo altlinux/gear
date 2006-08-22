@@ -56,7 +56,7 @@ elif [ "$*" = '--help' ]; then
 	git-commit --help |
 		sed "s/git-commit/$PROG/g"
 	exit
-else
+elif git-cat-file -t "$tree_id" >/dev/null 2>&1; then
     trap exit_handler HUP INT QUIT TERM EXIT
     workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
 
@@ -65,7 +65,7 @@ else
 
     vr="$(sed -ne '/^[[:space:]]*%changelog[[:space:]]*$/{n; s/\* .* \([^[:space:]]\+\)$/\1/p}' "$specfile")"
     ch="$(sed -ne '0,/^[[:space:]]*%changelog[[:space:]]*$/d;2,/^* /{/^* /!p}' "$specfile")"
-    commitlog="${vr:+- $vr}
+    commitlog="${vr:+$vr}
 
 $ch"
     [ -z "$workdir" ] || rm -rf -- "$workdir"
