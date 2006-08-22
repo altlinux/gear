@@ -45,8 +45,9 @@ gear tags file is \`\$GIT_DIR/gear/release-tags'.
 <commit-ish> -  commit or tag object name.
 
 Options:
-  --sign[=<KEYID>]    add signature;
-  -t,--tags=FILE      release tags file.
+  --sign[=<KEYID>]    make a GPG-signed tag;
+  -n,--pkgname=NAME   add project name to tag message;
+  -t,--tags=FILE      release tags file;
   -q,--quiet          try to be more quiet;
   -v,--verbose        print a message for each action;
   -V,--version        print program version and exit;
@@ -72,12 +73,14 @@ EOF
 	exit
 }
 
-TEMP=`getopt -n $PROG -o t:q,v,V,h -l tags:,sign::,quiet,verbose,version,help -- "$@"` ||
+TEMP=`getopt -n $PROG -o n:,t:q,v,V,h -l pkgname:,tags:,sign::,quiet,verbose,version,help -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
 sign=-a
 signkey=
+tagsfile=
+pkgname=
 while :; do
 	case "$1" in
 	    --sign) shift; sign=-s
@@ -85,6 +88,9 @@ while :; do
 		    sign=
 		    signkey="$1"
 		fi
+		;;
+	    -n|--pkgname) shift
+		[ -z "$1" ] || pkgname="$1"
 		;;
 	    -t|--tags) shift
 		[ ! -r "$1" ] || tagsfile="$1"
@@ -136,4 +142,5 @@ case "$type" in
 	*) fatal "$type: Invalid commit-ish type" ;;
 esac
 
-git-tag $sign ${signkey:+-u "$signkey"} -f -m "Release $type: $COMMITISH" "$TAG" "$COMMITISH"
+git-tag $sign ${signkey:+-u "$signkey"} -f -m "${pkgname:+Package name: $pkgname
+}Release $type: $COMMITISH" "$TAG" "$COMMITISH"
