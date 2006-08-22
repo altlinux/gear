@@ -196,6 +196,41 @@ find_specfile()
 	pkg_release="$(sed '/^release:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
 }
 
+def_spec_pattern='*.spec'
+spec_pattern="$def_spec_pattern"
+find_specfile_in_cwd()
+{
+	local prefix="$1" && shift
+
+	local f pattern spec= many_specs=
+	for pattern in ${spec_pattern}; do
+		for f; do
+			[ -z "${f##$pattern}" -o -z "${f%%$pattern}" ] ||
+				continue
+			[ ! -L "$f" -a -f "$f" ] ||
+				continue
+			[ -z "$spec" ] ||
+				many_specs=1
+			spec="$f"
+		done
+		[ -z "$spec" ] ||
+			break
+	done
+	if [ -z "$spec" ]; then
+		info "${prefix}Spec file not found."
+	elif [ -n "$many_specs" ]; then
+		info "${prefix}Too many spec files - ignored all."
+		spec=
+	fi
+
+	if [ -n "$spec" ]; then
+		printf %s "$spec"
+		return 0
+	else
+		return 1
+	fi
+}
+
 run_command()
 {
 	verbose "Executing: $*"

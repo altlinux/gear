@@ -49,7 +49,7 @@ Options:
   --import-only             do not perform a checkout after importing;
   --no-untar                do not unpack source tarballs;
   --rules=FILENAME          gear rules filename (default is ".gear-rules");
-  --spec-pattern=PATTERN    specfile pattern (defalt is "*.spec");
+  --spec-pattern=PATTERN    specfile pattern list (default is "*.spec");
   --stdin                   read source package names from stdin;
   -q, --quiet               try to be more quiet;
   -v, --verbose             print a message for each action;
@@ -230,29 +230,16 @@ import()
 	verbose "Unpacked ${srpm##*/}"
 
 	# Find specfile.
-	local f spec= many_specs= spec_version=
-	for f in $filelist; do
-		[ -z "${f##$spec_pattern}" -o -z "${f%%$spec_pattern}" ] ||
-			continue
-		[ ! -L "$f" -a -f "$f" ] ||
-			continue
-		[ -z "$spec" ] ||
-			many_specs=1
-		spec="$f"
-	done
-	if [ -z "$spec" ]; then
-		info "${srpm##*/}: Spec file not found."
-	elif [ -n "$many_specs" ]; then
-		info "${srpm##*/}: Too many spec files."
-		spec=
-	else
-		[ "$spec_pattern" = "$def_spec_pattern" ] ||
+	local spec= spec_version=
+	if spec="$(find_specfile_in_cwd "${srpm##*/}: " ${filelist})"; then
+		[ -z "${spec##$def_spec_pattern}" -o -z "${spec%%$def_spec_pattern}" ] ||
 			printf 'spec: %s\n' "$spec" >>"$gear_rules"
 		spec_version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$spec")"
 	fi
 
 	rm -f "$index_orig"
-	for f in $filelist; do
+	local f
+	for f in ${filelist}; do
 		if [ -L "$f" -o ! -f "$f" ]; then
 			info "$f: Non-regular file ignored."
 			continue
@@ -305,8 +292,6 @@ import_only=
 no_untar=
 read_from_stdin=
 gear_rules=".gear-rules"
-def_spec_pattern='*.spec'
-spec_pattern="$def_spec_pattern"
 while :; do
 	case "$1" in
 		--) shift; break
