@@ -1,4 +1,4 @@
-#!/bin/sh -ef
+#!/bin/sh -efu
 #
 # Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
@@ -54,7 +54,7 @@ if [ "$*" = '--version' ]; then
 	print_version
 elif [ "$*" = '--help' ]; then
 	git-commit --help |
-		sed "s/git-commit/$PROG/g"
+		sed "s|\(/usr/bin/\)\?git-commit|$PROG|g"
 	exit
 elif git-cat-file -t "$tree_id" >/dev/null 2>&1; then
     trap exit_handler HUP INT QUIT TERM EXIT
@@ -62,15 +62,23 @@ elif git-cat-file -t "$tree_id" >/dev/null 2>&1; then
 
     # Get specfile from archive.
     find_specfile
+    cd "$(git-rev-parse --show-cdup)"
 
+    rm -rf -- "$workdir"
+    trap - HUP INT QUIT TERM EXIT
+    unset rules tree_id workdir
+else
+    cd "$(git-rev-parse --show-cdup)"
+    specfile="$(set +f; find_specfile_in_cwd '' *)" ||:
+fi
+
+if [ -f "$specfile" ]; then
     vr="$(sed -ne '/^[[:space:]]*%changelog[[:space:]]*$/{n; s/\* .* \([^[:space:]]\+\)$/\1/p}' "$specfile")"
     ch="$(sed -ne '0,/^[[:space:]]*%changelog[[:space:]]*$/d;2,/^* /{/^* /!p}' "$specfile")"
     commitlog="${vr:+$vr}
 
 $ch"
-    [ -z "$workdir" ] || rm -rf -- "$workdir"
-    trap - HUP INT QUIT TERM EXIT
-    unset ch rules specfile tree_id vr workdir
+    unset ch vr specfile
 fi
 
 exec git-commit ${commitlog:+-m "$commitlog" --edit} "$@"
