@@ -73,7 +73,7 @@ EOF
 	exit
 }
 
-TEMP=`getopt -n $PROG -o n:,t:q,v,V,h -l pkgname:,tags:,sign::,quiet,verbose,version,help -- "$@"` ||
+TEMP=`getopt -n $PROG -o n:,t:,q,v,V,h -l pkgname:,tags:,sign::,quiet,verbose,version,help -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
