@@ -10,6 +10,9 @@ BuildArch: noarch
 
 Source: %name-%version.tar
 
+# hasher>=1.0.30 supports tar packages made by gear utility.
+Conflicts: hasher < 0:1.0.30
+
 BuildPreReq: git-core, help2man
 
 %description
