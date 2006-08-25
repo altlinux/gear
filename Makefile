@@ -20,8 +20,9 @@
 
 PROJECT = gear
 VERSION = $(shell sed '/^Version: */!d;s///;q' gear.spec)
-PROGRAMS = gear gear-commit gear-release gear-srpmimport
-MAN1PAGES = $(PROGRAMS:=.1)
+PROGRAMS = gear gear-commit gear-release gear-srpmimport gear-update
+ALIAS = gear-update-archive gear-update-directory
+MAN1PAGES = $(PROGRAMS:=.1) $(ALIAS:=.1)
 TARGETS = gear-sh-functions $(MAN1PAGES)
 
 bindir = /usr/bin
@@ -35,12 +36,13 @@ INSTALL = install
 LN_S = ln -s
 MKDIR_P = mkdir -p
 TOUCH_R = touch -r
+CP = cp -a
 
 .PHONY:	all install clean
 
 all: $(TARGETS)
 
-$(MAN1PAGES): gear-sh-functions
+$(MAN1PAGES): gear-sh-functions $(ALIAS)
 
 $(MAN7PAGES):
 
@@ -54,11 +56,15 @@ $(MAN7PAGES):
 %.1: % %.1.inc gear-sh-functions
 	$(HELP2MAN1) -i $@.inc ./$< >$@
 
+gear-update-%:
+	$(LN_S) gear-update $@
+
 install: all
 	$(MKDIR_P) -m755 $(DESTDIR)$(bindir)
 	$(INSTALL) -p -m755 gear-sh-functions $(PROGRAMS) $(DESTDIR)$(bindir)/
 	$(MKDIR_P) -m755 $(DESTDIR)$(man1dir)
 	$(INSTALL) -p -m644 $(MAN1PAGES) $(DESTDIR)$(man1dir)/
+	$(CP) -t $(DESTDIR)$(bindir)/ -- $(ALIAS)
 
 clean:
-	$(RM) $(TARGETS) *~
+	$(RM) $(TARGETS) $(ALIAS) *~

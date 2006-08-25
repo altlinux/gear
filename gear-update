@@ -1,0 +1,152 @@
+#!/bin/sh -efu
+#
+# Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
+# 
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+
+. gear-sh-functions
+
+srctype=archive
+archive_help=
+case "${PROG##*-}" in
+    archive) 
+	srctype=archive 
+	archive_help="
+  -t,--tardir=NAME    define tar archive directory name;"
+	;;
+    directory) srctype=directory ;;
+esac
+
+show_help() {
+    cat <<EOF
+
+Usage: $PROG [Options] <src-$srctype> <dst-directory>
+
+Utility updates git subdirectory from target $srctype.
+
+Options: ${archive_help:+$archive_help}
+  -v,--verbose        print a message for each action;
+  -V,--version        print program version and exit;
+  -h,--help           show this text and exit.
+    
+Report bugs to http://bugs.altlinux.ru/
+
+EOF
+    exit
+}
+
+print_version() {
+    cat <<EOF
+$PROG version $PROG_VERSION
+Written by Alexey Gladkov <legion@altlinux.org>
+
+Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+    exit
+}
+
+workdir=
+exit_handler() {
+    local rc=$?
+    trap - EXIT
+    [ -z "$workdir" ] || rm -rf -- "$workdir"
+    exit $rc
+}
+
+TEMP=`getopt -n $PROG -o t:,v,V,h -l tardir:,verbose,version,help -- "$@"` || show_usage
+eval set -- "$TEMP"
+
+tardir=
+while :; do
+	case "$1" in
+	    -t|--tardir) shift
+		[ "$srctype" = "archive" ] && tardir="$1" || 
+		    fatal "unrecognized option: $1"
+		;;
+	    -v|--verbose) verbose=-v
+		;;
+	    -V|--version) print_version
+	    	;;
+	    -h|--help) show_help
+		;;
+	    --) shift; break
+		;;
+	    *) fatal "unrecognized option: $1"
+		;;
+	esac
+	shift
+done
+[ "$#" -eq 2 ] || show_usage
+
+source="$(readlink -ve "$1")"; shift
+destdir="$(readlink -ev "$1")"; shift
+
+[ "$source" != "$destdir" ] || 
+    fatal "source and destination is same place: $source -> $destdir"
+
+# Move to topdir
+cd "$(git-rev-parse --show-cdup)"
+destdir="${destdir#$PWD/}"
+
+compress=
+if [ "$srctype" = "archive" ]; then
+    case "${source##*.}" in
+        bz2)    compress=-j ;;
+	gz|tgz) compress=-z ;;
+    esac
+
+    if [ -n "$tardir" ]; then
+	tar $compress -tf "$source" |grep -qsG "^$tardir\(/\|\$\)" || 
+	    fatal "tar archive directory not found"
+    else
+	tardir="$(tar $compress -tf "$source"|cut -d\/ -f1 |sort -u)"
+    fi
+
+    n="$(printf %s\\n "$tardir" |wc -l)"
+    if [ "$n" -gt 1 ]; then
+	fatal "too many tar archive root directories: $(printf %s\\n "$tardir" |tr \\n \ )"
+    elif [ "$n" -lt 1 ]; then
+	falal "tar archive root directory not found"
+    fi    
+fi
+
+# Remove obsolete source
+rm $verbose -rf -- "$destdir"
+
+# Copy new sources
+case "$srctype" in
+    archive)
+	trap exit_handler HUP INT QUIT TERM EXIT 
+	workdir="$(mktemp -d "$PROG.XXXXXXXXX")" &&
+	    printf %s\\n "$tardir/" |tar $compress -T- -C "$workdir" -xf "$source" &&
+	    mv -f -- "$workdir/$tardir" "$destdir"
+	;;
+    directory)
+	cp -a -- "$source" "$destdir"
+	;;
+esac || 
+    {
+	# Rollback actions
+	[ ! -d "$destdir" ] || rm -rf -- "$destdir" 
+	mkdir -p -- "$destdir"
+	cd "$destdir"
+	git-checkout-index -a
+	fatal "unable to unpack new archive."
+    }
+git-rm $verbose "$destdir"
+git-add $verbose "$destdir"
