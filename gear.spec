@@ -1,5 +1,5 @@
 Name: gear
-Version: 1.0.0
+Version: 1.0.1
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -37,5 +37,9 @@ See %_docdir/%name-%version/QUICKSTART.ru_RU.KOI8-R for details.
 %doc QUICKSTART*
 
 %changelog
+* Mon Aug 28 2006 Dmitry V. Levin <ldv@altlinux.org> 1.0.1-alt1
+- gear-release: Fix typo in option handling (legion).
+- gear-update: New utility (legion, ldv).
+
 * Tue Aug 22 2006 Dmitry V. Levin <ldv@altlinux.org> 1.0.0-alt1
 - Initial revision.
