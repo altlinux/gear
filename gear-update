@@ -61,10 +61,19 @@ EOF
 }
 
 workdir=
+destdir=
 exit_handler() {
     local rc=$?
     trap - EXIT
     [ -z "$workdir" ] || rm -rf -- "$workdir"
+    if [ "$rc" -gt 0 ]; then
+    	# Rollback actions
+	[ ! -e "$destdir" ] || rm -rf -- "$destdir" 
+	mkdir -p -- "$destdir"
+	cd "$destdir"
+	git-checkout-index -a
+	info "unable to unpack new archive."
+    fi
     exit $rc
 }
 
@@ -132,29 +141,24 @@ if [ "$srctype" = "archive" ]; then
     fi    
 fi
 
+# Trap for rollback
+trap exit_handler HUP INT QUIT TERM EXIT 
+
 # Remove obsolete source
 rm $verbose -rf -- "$destdir"
 
 # Copy new sources
 case "$srctype" in
-    archive)
-	trap exit_handler HUP INT QUIT TERM EXIT 
-	workdir="$(mktemp -d "$PROG.XXXXXXXXX")" &&
-	    printf %s\\n "$tardir/" |tar $compress -T- -C "$workdir" -xf "$source" &&
-	    mv -f -- "$workdir/$tardir" "$destdir"
+    archive)	
+	workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
+	printf %s\\n "$tardir/" |tar $compress -T- -C "$workdir" -xf "$source"
+	mv -f -- "$workdir/$tardir" "$destdir"
 	;;
     directory)
 	cp -a -- "$source" "$destdir"
 	;;
-esac && [ -d "$destdir" ] || 
-    {
-	# Rollback actions
-	[ ! -d "$workdir" ] || rm -rf -- "$workdir" 
-	[ ! -e "$destdir" ] || rm -rf -- "$destdir" 
-	mkdir -p -- "$destdir"
-	cd "$destdir"
-	git-checkout-index -a
-	fatal "unable to unpack new archive."
-    }
+esac
+[ -d "$destdir" ] ||
+    fatal "$destdir: result target not directory"
 git-rm $verbose "$destdir"
 git-add $verbose "$destdir"
