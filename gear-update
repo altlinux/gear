@@ -41,6 +41,8 @@ Usage: $PROG [Options] <src-$srctype> <dst-directory>
 Update subdirectory from source $srctype.
 
 Options: ${archive_help:+$archive_help}
+  -f,--force          remove the file from the <dst-directory> even
+                      when the untacked or modified files found;
   -v,--verbose        print a message for each action;
   -V,--version        print program version and exit;
   -h,--help           show this text and exit.
@@ -83,12 +85,15 @@ exit_handler()
 	exit $rc
 }
 
-TEMP=`getopt -n $PROG -o t:,v,V,h -l tardir:,verbose,version,help -- "$@"` || show_usage
+TEMP=`getopt -n $PROG -o f,t:,v,V,h -l force,tardir:,verbose,version,help -- "$@"` || show_usage
 eval set -- "$TEMP"
 
+force=
 tardir=
 while :; do
 	case "$1" in
+	    -f|--force) force=1
+		;;
 	    -t|--tardir) shift
 		[ "$srctype" = "archive" ] && tardir="$1" || 
 		    fatal "unrecognized option: $1"
@@ -125,6 +130,11 @@ destdir="${destdir#$PWD/}"
 	fatal "$destdir: directory out of \`$PWD' tree."
 
 git-rm -n "$destdir" >/dev/null
+
+if [ -z "$force" ]; then
+    out="$(git diff --name-only -- "$destdir"; git-ls-files --others "" --exclude-per-directory=.gitignore -- "$destdir")"
+    [ -z "$out" ] || fatal "$destdir: untacked or modified files found"
+fi
 
 if [ "$srctype" = "archive" ]; then
     if [ -n "$tardir" ]; then
