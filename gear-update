@@ -1,6 +1,9 @@
 #!/bin/sh -efu
 #
 # Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
+# Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+# 
+# gear-update updates subdirectory from source archive/directory. 
 # 
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,12 +33,12 @@ case "${PROG##*-}" in
     directory) srctype=directory ;;
 esac
 
-show_help() {
-    cat <<EOF
-
+show_help()
+{
+	cat <<EOF
 Usage: $PROG [Options] <src-$srctype> <dst-directory>
 
-Utility updates git subdirectory from target $srctype.
+Update subdirectory from source $srctype.
 
 Options: ${archive_help:+$archive_help}
   -v,--verbose        print a message for each action;
@@ -45,36 +48,39 @@ Options: ${archive_help:+$archive_help}
 Report bugs to http://bugs.altlinux.ru/
 
 EOF
-    exit
+	exit
 }
 
-print_version() {
-    cat <<EOF
+print_version()
+{
+	cat <<EOF
 $PROG version $PROG_VERSION
 Written by Alexey Gladkov <legion@altlinux.org>
 
 Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
+Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
-    exit
+	exit
 }
 
 workdir=
 destdir=
-exit_handler() {
-    local rc=$?
-    trap - EXIT
-    [ -z "$workdir" ] || rm -rf -- "$workdir"
-    if [ "$rc" -gt 0 ]; then
-    	# Rollback actions
-	[ ! -e "$destdir" ] || rm -rf -- "$destdir" 
-	mkdir -p -- "$destdir"
-	cd "$destdir"
-	git-checkout-index -a
-	info "unable to unpack new archive."
-    fi
-    exit $rc
+exit_handler()
+{
+	local rc=$?
+	trap - EXIT
+	[ -z "$workdir" ] || rm -rf -- "$workdir"
+	if [ "$rc" -gt 0 ]; then
+		# Rollback actions
+		[ ! -e "$destdir" ] || rm -rf -- "$destdir" 
+		mkdir -p -- "$destdir"
+		cd "$destdir"
+		git-checkout-index -a
+		info "unable to unpack new archive"
+	fi
+	exit $rc
 }
 
 TEMP=`getopt -n $PROG -o t:,v,V,h -l tardir:,verbose,version,help -- "$@"` || show_usage
@@ -106,38 +112,34 @@ source="$(readlink -ev "$1")"; shift
 destdir="$(readlink -ev "$1")"; shift
 
 [ "$source" != "$destdir" ] || 
-    fatal "source and destination is same place: $source -> $destdir"
+	fatal "\`$source' and \`$destdir' are the same place"
 
 [ -d "$destdir" ] || 
-    fatal "$destdir: not directory"
+	fatal "$destdir: directory not available"
 
 # Move to topdir
 cd "$(git-rev-parse --show-cdup)"
 destdir="${destdir#$PWD/}"
 
 [ "$destdir" = "${destdir#/}" ] || 
-    fatal "'$destdir' did not match any."
+	fatal "$destdir: directory out of \`$PWD' tree."
 
-compress=
+git-rm -n "$destdir" >/dev/null
+
 if [ "$srctype" = "archive" ]; then
-    case "${source##*.}" in
-        bz2)    compress=-j ;;
-	gz|tgz) compress=-z ;;
-    esac
-
     if [ -n "$tardir" ]; then
-	quote_tardir="$(quote_sed_regexp "$tardir")"
-	tar $compress -tf "$source" |grep -qs "^$quote_tardir\(/\|\$\)" || 
+	quoted_tardir="$(quote_sed_regexp "$tardir")"
+	tar -tf "$source" |grep -qs "^$quoted_tardir\(/\|\$\)" || 
 	    fatal "tar archive directory not found"
     else
-	tardir="$(tar $compress -tf "$source"|cut -d\/ -f1 |sort -u)"
+	tardir="$(tar -tf "$source"|cut -d\/ -f1 |sort -u)"
     fi
 
     n="$(printf %s\\n "$tardir" |wc -l)"
     if [ "$n" -gt 1 ]; then
-	fatal "too many tar archive root directories: $(printf %s\\n "$tardir" |tr \\n \ )"
+	fatal "too many tar archive directories: $(printf %s\\n "$tardir" |tr \\n \ )"
     elif [ "$n" -lt 1 ]; then
-	fatal "tar archive root directory not found"
+	fatal "tar archive directory not found"
     fi    
 fi
 
@@ -151,7 +153,7 @@ rm $verbose -rf -- "$destdir"
 case "$srctype" in
     archive)	
 	workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
-	printf %s\\n "$tardir/" |tar $compress -T- -C "$workdir" -xf "$source"
+	printf %s\\n "$tardir/" |tar -T- -C "$workdir" -xf "$source"
 	mv -f -- "$workdir/$tardir" "$destdir"
 	;;
     directory)
@@ -159,6 +161,6 @@ case "$srctype" in
 	;;
 esac
 [ -d "$destdir" ] ||
-    fatal "$destdir: result target not directory"
+	fatal "$destdir: result of extraction is not a directory"
 git-rm $verbose "$destdir"
 git-add $verbose "$destdir"
