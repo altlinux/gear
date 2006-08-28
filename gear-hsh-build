@@ -1,0 +1,186 @@
+#!/bin/sh -efu
+#
+# Copyright (C) 2006  Sir Raorn <raorn@altlinux.org>
+#
+# gear-hsh-build - build packages from gear repositories with hasher
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+
+. gear-sh-functions
+
+print_version()
+{
+    cat <<EOF
+$PROG version $PROG_VERSION
+Written by Sir Raorn <raorn@altlinux.org>
+
+Copyright (C) 2006  Sir Raorn <raorn@altlinux.org>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+    exit
+}
+
+show_help()
+{
+    cat <<EOF
+Usage: $PROG [options] [<dirname...>]
+
+This program will build package(s) from your gear repository(es) with
+hasher.  If no arguments are given, it will use \$GIT_DIR environment
+variable to find repository, otherwise it will treat all given arguments
+as GIT repositories and try to build packages in one hasher repo.
+
+Options:
+  --apt-config=FILE         path to custom apt.conf file;
+  --cleanup-repo            cleanup hasher repo after build;
+  --export-dir=DIR          write built packages to specified directory;
+  --number=NUMBER           hasher subconfig identifier;
+  --packager=EMAIL          override default RPM packager tag;
+  --prefix=DIR              path to hasher workdir;
+  --repo=DIR                repository directory;
+  --sisyphus                export packages to sisyphus-like START_DIR;
+  --target=ARCH             target architecture;
+  -t, --tree-ish=ID         tree, commit or tag object name;
+  -q, --quiet               try to be more quiet;
+  -v, --verbose             print a message for each action;
+  -V, --version             print program version and exit;
+  -h, --help                show this text and exit.
+    
+Report bugs to http://bugs.altlinux.ru/
+
+EOF
+    exit
+}
+
+run_gear()
+{
+	run_command gear $quiet $verbose ${tree_id:+--tree-ish="$tree_id"} --hasher -- hsh $quiet $verbose ${apt_config:+--apt-config="$apt_config"} ${number:+--number="${number}"} ${packager:+--packager="$packager"} ${repo:+--repo="$repo"} ${target:+--target="$target"} -- "$prefix"
+}
+
+apt_config=
+cleanup_repo=
+number=
+outdir=
+packager=
+prefix=
+repo="$(mktemp -u "buildXXXXXXXXXX")"
+sisyphus=
+target="$(uname -m)"
+tree_id=
+
+exit_handler()
+{
+	local rc=$?
+	trap - EXIT
+	if [ "$rc" -eq 0 ]; then
+		if [ -n "$cleanup_repo" ]; then
+			rm -rf $verbose -- "$prefix/$repo"
+		else
+			info "You may add \`\`rpm file:$prefix/$repo $target hasher'' to your sources.list"
+		fi
+	fi
+	exit $rc
+}
+
+TEMP=$(getopt -n $PROG -o h,q,t:,V,v -l apt-config:,cleanup-repo,export-dir:,number:,packager:,prefix:,repo:,sisyphus,target:,tree-ish:,help,quiet,verbose,version -- "$@")
+eval set -- "$TEMP"
+
+while :; do
+	case "$1" in
+		--) shift; break
+			;;
+		--apt-config) apt_config="$2"; shift
+			;;
+		--cleanup-repo) cleanup_repo=1
+			;;
+		--export-dir) outdir="$(opt_check_dir "$1" "$2")"; shift
+			;;
+		--number) number="$2"; shift
+			;;
+		--packager) packager="$2"; shift
+			;;
+		--prefix) prefix="$(opt_check_dir "$1" "$2")"; shift
+			;;
+		--repo) repo="$2"; shift
+			;;
+		--sisyphus) sis
+			;;
+		--target) target="$2"; shift
+			;;
+		-t|--tree-ish) tree_id="$2"; shift
+			;;
+		-h|--help) show_help
+			;;
+		-q|--quiet) quiet=-q; verbose=
+			;;
+		-v|--verbose) verbose=-v; quiet=
+			;;
+		-V|--version) print_version
+			;;
+		*) fatal "Unrecognized option: $1"
+			;;
+	esac
+	shift
+done
+
+[ -n "$prefix" ] ||
+	fatal "Can't operate with empty prefix"
+
+if [ -z "$outdir" ]; then
+	[ -z "$cleanup_repo" ] ||
+		fatal "--cleanup-repo without --export-dir doesn't makes sense"
+	[ -z "$sisyphus" ] ||
+		fatal "--sisyphus without --export-dir doesn't makes sense"
+fi
+
+trap exit_handler HUP INT QUIT TERM EXIT
+
+if [ $# -gt 0 ]; then
+	for git_dir; do
+		[ -d "$git_dir" ] || continue
+		git_dir="$(readlink -ev "$git_dir")"
+		info "Building $git_dir..."
+		export GIT_DIR="$git_dir"
+		run_gear
+	done
+else
+	git_dir="$(git-rev-parse --git-dir)"
+	git_dir="$(readlink -ev "$git_dir")"
+	info "Building $git_dir..."
+	export GIT_DIR="$git_dir"
+	run_gear
+fi
+
+if [ -n "$outdir" ]; then
+	verbose "Exporting packages to $ourdir..."
+	rpms="$prefix/$repo/$target/RPMS.hasher"
+	srpms="$prefix/$repo/SRPMS.hasher"
+	if [ -n "$sisyphus" ]; then
+		mkdir -p "$outdir/RPMS"
+		mkdir -p "$outdir/SRPMS"
+		rpms_out="$outdir/RPMS"
+		srpms_out="$outdir/SRPMS"
+	else
+		rpms_out="$outdir"
+		srpms_out="$outdir"
+	fi
+
+	find "$rpms" -mindepth 1 -maxdepth 1 -type f -name '*.rpm' -print0 |
+		xargs -r0 cp -f $verbose --target-directory="$rpms_out" --
+	find "$srpms" -mindepth 1 -maxdepth 1 -type f -name '*.rpm' -print0 |
+		xargs -r0 cp -f $verbose --target-directory="$srpms_out" --
+fi
