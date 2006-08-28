@@ -93,15 +93,21 @@ while :; do
 done
 [ "$#" -eq 2 ] || show_usage
 
-source="$(readlink -ve "$1")"; shift
+source="$(readlink -ev "$1")"; shift
 destdir="$(readlink -ev "$1")"; shift
 
 [ "$source" != "$destdir" ] || 
     fatal "source and destination is same place: $source -> $destdir"
 
+[ -d "$destdir" ] || 
+    fatal "$destdir: not directory"
+
 # Move to topdir
 cd "$(git-rev-parse --show-cdup)"
 destdir="${destdir#$PWD/}"
+
+[ "$destdir" = "${destdir#/}" ] || 
+    fatal "'$destdir' did not match any."
 
 compress=
 if [ "$srctype" = "archive" ]; then
@@ -111,7 +117,8 @@ if [ "$srctype" = "archive" ]; then
     esac
 
     if [ -n "$tardir" ]; then
-	tar $compress -tf "$source" |grep -qsG "^$tardir\(/\|\$\)" || 
+	quote_tardir="$(quote_sed_regexp "$tardir")"
+	tar $compress -tf "$source" |grep -qs "^$quote_tardir\(/\|\$\)" || 
 	    fatal "tar archive directory not found"
     else
 	tardir="$(tar $compress -tf "$source"|cut -d\/ -f1 |sort -u)"
@@ -121,7 +128,7 @@ if [ "$srctype" = "archive" ]; then
     if [ "$n" -gt 1 ]; then
 	fatal "too many tar archive root directories: $(printf %s\\n "$tardir" |tr \\n \ )"
     elif [ "$n" -lt 1 ]; then
-	falal "tar archive root directory not found"
+	fatal "tar archive root directory not found"
     fi    
 fi
 
@@ -139,10 +146,11 @@ case "$srctype" in
     directory)
 	cp -a -- "$source" "$destdir"
 	;;
-esac || 
+esac && [ -d "$destdir" ] || 
     {
 	# Rollback actions
-	[ ! -d "$destdir" ] || rm -rf -- "$destdir" 
+	[ ! -d "$workdir" ] || rm -rf -- "$workdir" 
+	[ ! -e "$destdir" ] || rm -rf -- "$destdir" 
 	mkdir -p -- "$destdir"
 	cd "$destdir"
 	git-checkout-index -a
