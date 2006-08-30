@@ -141,7 +141,11 @@ shift
 
 COMMITISH="${1#tags/}" && shift
 
-[ -z "$create_tag" ] || git-tag -a -m "$COMMITISH" "$COMMITISH"
+if [ -n "$create_tag" ]; then
+    git-describe "$COMMITISH" >/dev/null 2>&1 && 
+	fatal "'$COMMITISH' already exists" ||
+	git-tag $sign ${signkey:+-u "$signkey"} -m "$COMMITISH" "$COMMITISH"
+fi
 type="$(git-cat-file -t "$COMMITISH")"
 case "$type" in
 	tag|commit) ;;
