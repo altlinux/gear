@@ -46,8 +46,9 @@ gear tags file is \`\$GIT_DIR/gear/release-tags'.
 
 Options:
   --sign[=<KEYID>]    make a GPG-signed release tag;
-  -c,--create         create tag named \`<commit-ish>' before
-                      release tag creation;
+  --create[=TEXT]     create tag named \`<commit-ish>' before
+                      release tag creation. If TEXT is not empty 
+		      string, it will be used as tag message;
   -n,--pkgname=NAME   add project name to release tag message;
   -t,--tags=FILE      release tags file;
   -q,--quiet          try to be more quiet;
@@ -75,7 +76,7 @@ EOF
 	exit
 }
 
-TEMP=`getopt -n $PROG -o c,n:,t:,q,v,V,h -l create,pkgname:,tags:,sign::,quiet,verbose,version,help -- "$@"` ||
+TEMP=`getopt -n $PROG -o n:,t:,q,v,V,h -l create::,pkgname:,tags:,sign::,quiet,verbose,version,help -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
@@ -84,9 +85,11 @@ signkey=
 tagsfile=
 pkgname=
 create_tag=
+tag_msg=
 while :; do
 	case "$1" in
-	    -c|--create) create_tag=1
+	    --create) shift; create_tag=1
+		[ -z "$1" ] || tag_msg="$1"
 		;;
 	    --sign) shift; sign=-s
 		if [ -n "$1" ]; then
@@ -142,9 +145,9 @@ shift
 COMMITISH="${1#tags/}" && shift
 
 if [ -n "$create_tag" ]; then
-    git-describe "$COMMITISH" >/dev/null 2>&1 && 
+    git-cat-file -t "$COMMITISH" >/dev/null 2>&1 &&
 	fatal "'$COMMITISH' already exists" ||
-	git-tag $sign ${signkey:+-u "$signkey"} -m "$COMMITISH" "$COMMITISH"
+	git-tag $sign ${signkey:+-u "$signkey"} -m "${tag_msg:-$COMMITISH}" "$COMMITISH"
 fi
 type="$(git-cat-file -t "$COMMITISH")"
 case "$type" in
