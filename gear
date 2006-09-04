@@ -3,19 +3,19 @@
 # Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006  Sir Raorn <raorn@altlinux.org>
 # Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
-# 
+#
 # Get Every Archive from git package Repository.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
@@ -24,10 +24,10 @@
 # Note about rules:
 #  rules is plain text file, where each meaningful line has following format:
 #  directive: args
-#  
+#
 #  Valid directives are:
 #  spec, copy, gzip, bzip2, exclude, tar, tar.gz, tar.bz2
-#  
+#
 #  Each directive has own args syntax:
 #  spec: path_to_file
 #  (copy|gzip|bzip2): glob_pattern..
@@ -35,7 +35,7 @@
 #  exclude: glob_pattern..
 #  tar(|.gz|.bz2): path_to_directory [options]
 #  tar(|.gz|.bz2)?: path_to_directory [options]
-#  
+#
 #  Valid tar options are:
 #    name=archive_name  - tar archive name, may reference to keywords;
 #    base=base_name     - when specified it is added as a leading path
@@ -88,7 +88,7 @@ Options:
   -v, --verbose             print a message for each action;
   -V, --version             print program version and exit;
   -h, --help                show this text and exit.
-    
+
 Report bugs to http://bugs.altlinux.ru/
 
 EOF

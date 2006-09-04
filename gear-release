@@ -2,19 +2,19 @@
 #
 # Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
-# 
-# gear-release creates a release tag for the project. 
+#
+# gear-release creates a release tag for the project.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
@@ -35,9 +35,9 @@ show_help()
 	cat <<EOF
 Usage: $PROG [Options] <release-tag> <commit-ish>
 
-The utility creates a release tag for the project. It marks 
-specified tag or commit as "release" tag. Release tag 
-should be listed it the gear tags file. Default location of 
+The utility creates a release tag for the project. It marks
+specified tag or commit as "release" tag. Release tag
+should be listed it the gear tags file. Default location of
 gear tags file is \`\$GIT_DIR/gear/release-tags'.
 
 <release-tag> - release tag name. Names may be abbreviated.
@@ -47,7 +47,7 @@ gear tags file is \`\$GIT_DIR/gear/release-tags'.
 Options:
   --sign[=<KEYID>]    make a GPG-signed release tag;
   --create[=TEXT]     create tag named \`<commit-ish>' before
-                      release tag creation. If TEXT is not empty 
+                      release tag creation. If TEXT is not empty
 		      string, it will be used as tag message;
   -n,--pkgname=NAME   add project name to release tag message;
   -t,--tags=FILE      release tags file;
@@ -55,7 +55,7 @@ Options:
   -v,--verbose        print a message for each action;
   -V,--version        print program version and exit;
   -h,--help           show this text and exit.
-    
+
 Report bugs to http://bugs.altlinux.ru/
 
 EOF

@@ -2,19 +2,19 @@
 #
 # Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
-# 
-# gear-update updates subdirectory from source archive/directory. 
-# 
+#
+# gear-update updates subdirectory from source archive/directory.
+#
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
@@ -25,8 +25,8 @@
 srctype=archive
 archive_help=
 case "${PROG##*-}" in
-    archive) 
-	srctype=archive 
+    archive)
+	srctype=archive
 	archive_help="
   -t,--tardir=NAME    define tar archive directory name;"
 	;;
@@ -46,7 +46,7 @@ Options: ${archive_help:+$archive_help}
   -v,--verbose        print a message for each action;
   -V,--version        print program version and exit;
   -h,--help           show this text and exit.
-    
+
 Report bugs to http://bugs.altlinux.ru/
 
 EOF
@@ -76,7 +76,7 @@ exit_handler()
 	[ -z "$workdir" ] || rm -rf -- "$workdir"
 	if [ "$rc" -gt 0 ]; then
 		# Rollback actions
-		[ ! -e "$destdir" ] || rm -rf -- "$destdir" 
+		[ ! -e "$destdir" ] || rm -rf -- "$destdir"
 		mkdir -p -- "$destdir"
 		cd "$destdir"
 		git-checkout-index -a
@@ -95,7 +95,7 @@ while :; do
 	    -f|--force) force=1
 		;;
 	    -t|--tardir) shift
-		[ "$srctype" = "archive" ] && tardir="$1" || 
+		[ "$srctype" = "archive" ] && tardir="$1" ||
 		    fatal "unrecognized option: $1"
 		;;
 	    -v|--verbose) verbose=-v
@@ -116,17 +116,17 @@ done
 source="$(readlink -ev "$1")"; shift
 destdir="$(readlink -ev "$1")"; shift
 
-[ "$source" != "$destdir" ] || 
+[ "$source" != "$destdir" ] ||
 	fatal "\`$source' and \`$destdir' are the same place"
 
-[ -d "$destdir" ] || 
+[ -d "$destdir" ] ||
 	fatal "$destdir: directory not available"
 
 # Move to topdir
 cd "$(git-rev-parse --show-cdup)"
 destdir="${destdir#$PWD/}"
 
-[ "$destdir" = "${destdir#/}" ] || 
+[ "$destdir" = "${destdir#/}" ] ||
 	fatal "$destdir: directory out of \`$PWD' tree."
 
 git-rm -n "$destdir" >/dev/null
@@ -139,7 +139,7 @@ fi
 if [ "$srctype" = "archive" ]; then
     if [ -n "$tardir" ]; then
 	quoted_tardir="$(quote_sed_regexp "$tardir")"
-	tar -tf "$source" |grep -qs "^$quoted_tardir\(/\|\$\)" || 
+	tar -tf "$source" |grep -qs "^$quoted_tardir\(/\|\$\)" ||
 	    fatal "tar archive directory not found"
     else
 	tardir="$(tar -tf "$source"|cut -d\/ -f1 |sort -u)"
@@ -150,18 +150,18 @@ if [ "$srctype" = "archive" ]; then
 	fatal "too many tar archive directories: $(printf %s\\n "$tardir" |tr \\n \ )"
     elif [ "$n" -lt 1 ]; then
 	fatal "tar archive directory not found"
-    fi    
+    fi
 fi
 
 # Trap for rollback
-trap exit_handler HUP INT QUIT TERM EXIT 
+trap exit_handler HUP INT QUIT TERM EXIT
 
 # Remove obsolete source
 rm $verbose -rf -- "$destdir"
 
 # Copy new sources
 case "$srctype" in
-    archive)	
+    archive)
 	workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
 	printf %s\\n "$tardir/" |tar -T- -C "$workdir" -xf "$source"
 	mv -f -- "$workdir/$tardir" "$destdir"
