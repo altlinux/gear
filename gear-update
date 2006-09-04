@@ -111,7 +111,11 @@ while :; do
 	esac
 	shift
 done
-[ "$#" -eq 2 ] || show_usage
+
+[ "$#" -ge 2 ] ||
+	show_usage 'Not enough arguments.'
+[ "$#" -eq 2 ] ||
+	show_usage 'Too many arguments.'
 
 source="$(readlink -ev "$1")"; shift
 destdir="$(readlink -ev "$1")"; shift

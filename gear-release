@@ -119,7 +119,10 @@ while :; do
 	shift
 done
 
-[ "$#" -eq 2 ] || show_usage
+[ "$#" -ge 2 ] ||
+	show_usage 'Not enough arguments.'
+[ "$#" -eq 2 ] ||
+	show_usage 'Too many arguments.'
 
 GIT_DIR="$(git-rev-parse --git-dir)"
 GIT_DIR="$(readlink -ev "$GIT_DIR")"
