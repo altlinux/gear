@@ -35,20 +35,20 @@ show_help()
 	cat <<EOF
 Usage: $PROG [Options] <release-tag> <commit-ish>
 
-The utility creates a release tag for the project. It marks
-specified tag or commit as "release" tag. Release tag
-should be listed it the gear tags file. Default location of
-gear tags file is \`\$GIT_DIR/gear/release-tags'.
+The utility creates a release tag for the project.  It marks
+specified tag or commit as "release" tag.  Release tag should be
+listed it the gear tags file.  Default location of gear tags file
+is \`\$GIT_DIR/gear/release-tags'.
 
-<release-tag> - release tag name. Names may be abbreviated.
+<release-tag> - release tag name, names may be abbreviated.
 
 <commit-ish> -  commit or tag object name.
 
 Options:
   --sign[=<KEYID>]    make a GPG-signed release tag;
   --create[=TEXT]     create tag named \`<commit-ish>' before
-                      release tag creation. If TEXT is not empty
-		      string, it will be used as tag message;
+                      release tag creation.  If TEXT is not empty
+                      string, it will be used as tag message;
   -n,--pkgname=NAME   add project name to release tag message;
   -t,--tags=FILE      release tags file;
   -q,--quiet          try to be more quiet;
@@ -132,12 +132,12 @@ export GIT_DIR="$GIT_DIR"
 TAG=
 rel="${1#tags/}"
 while read n; do
-    [ "$n" = "${n#\#}" ] || continue
-    n="${n#tags/}"
-    if [ "$n" != "${n#$rel}" ]; then
-	[ -z "$TAG" ] || fatal "tag \'$TAG' is ambiguous"
-	TAG="$n"
-    fi
+	[ "$n" = "${n#\#}" ] || continue
+	n="${n#tags/}"
+	if [ "$n" != "${n#$rel}" ]; then
+		[ -z "$TAG" ] || fatal "tag \'$TAG' is ambiguous"
+		TAG="$n"
+	fi
 done < "$tagsfile"
 [ -n "$TAG" ] || fatal "$1: tag should be listed in the \`$tagsfile'"
 shift
@@ -145,9 +145,9 @@ shift
 COMMITISH="${1#tags/}" && shift
 
 if [ -n "$create_tag" ]; then
-    git-cat-file -t "$COMMITISH" >/dev/null 2>&1 &&
-	fatal "'$COMMITISH' already exists" ||
-	git-tag $sign ${signkey:+-u "$signkey"} -m "${tag_msg:-$COMMITISH}" "$COMMITISH"
+	git-cat-file -t "$COMMITISH" >/dev/null 2>&1 &&
+		fatal "'$COMMITISH' already exists" ||
+		git-tag $sign ${signkey:+-u "$signkey"} -m "${tag_msg:-$COMMITISH}" "$COMMITISH"
 fi
 type="$(git-cat-file -t "$COMMITISH")"
 case "$type" in

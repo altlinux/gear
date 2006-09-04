@@ -30,10 +30,10 @@ commitlog=
 workdir=
 exit_handler()
 {
-    local rc=$?
-    trap - EXIT
-    [ -z "$workdir" ] || rm -rf -- "$workdir"
-    exit $rc
+	local rc=$?
+	trap - EXIT
+	[ -z "$workdir" ] || rm -rf -- "$workdir"
+	exit $rc
 }
 
 print_version()
@@ -61,28 +61,28 @@ elif [ "$*" = '--help' ]; then
 		sed "s|\(/usr/bin/\)\?git-commit|$PROG|g"
 	exit
 elif git-cat-file -t "$tree_id" >/dev/null 2>&1; then
-    trap exit_handler HUP INT QUIT TERM EXIT
-    workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
+	trap exit_handler HUP INT QUIT TERM EXIT
+	workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
 
-    # Get specfile from archive.
-    find_specfile
-    cd "$(git-rev-parse --show-cdup)"
+	# Get specfile from archive.
+	find_specfile
+	cd "$(git-rev-parse --show-cdup)"
 
-    rm -rf -- "$workdir"
-    trap - HUP INT QUIT TERM EXIT
-    unset rules tree_id workdir
+	rm -rf -- "$workdir"
+	trap - HUP INT QUIT TERM EXIT
+	unset rules tree_id workdir
 else
-    cd "$(git-rev-parse --show-cdup)"
-    specfile="$(set +f; find_specfile_in_cwd '' *)" ||:
+	cd "$(git-rev-parse --show-cdup)"
+	specfile="$(set +f; find_specfile_in_cwd '' *)" ||:
 fi
 
 if [ -f "$specfile" ]; then
-    vr="$(sed -ne '/^[[:space:]]*%changelog[[:space:]]*$/{n; s/\* .* \([^[:space:]]\+\)$/\1/p}' "$specfile")"
-    ch="$(sed -ne '0,/^[[:space:]]*%changelog[[:space:]]*$/d;2,/^* /{/^* /!p}' "$specfile")"
-    commitlog="${vr:+$vr}
+	vr="$(sed -ne '/^[[:space:]]*%changelog[[:space:]]*$/{n; s/\* .* \([^[:space:]]\+\)$/\1/p}' "$specfile")"
+	ch="$(sed -ne '0,/^[[:space:]]*%changelog[[:space:]]*$/d;2,/^* /{/^* /!p}' "$specfile")"
+	commitlog="${vr:+$vr}
 
 $ch"
-    unset ch vr specfile
+	unset ch vr specfile
 fi
 
 exec git-commit ${commitlog:+-m "$commitlog" --edit} "$@"

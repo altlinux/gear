@@ -25,12 +25,12 @@
 srctype=archive
 archive_help=
 case "${PROG##*-}" in
-    archive)
-	srctype=archive
-	archive_help="
+	archive)
+		srctype=archive
+		archive_help="
   -t,--tardir=NAME    define tar archive directory name;"
-	;;
-    directory) srctype=directory ;;
+		;;
+	directory) srctype=directory ;;
 esac
 
 show_help()
@@ -41,8 +41,8 @@ Usage: $PROG [Options] <src-$srctype> <dst-directory>
 Update subdirectory from source $srctype.
 
 Options: ${archive_help:+$archive_help}
-  -f,--force          remove the file from the <dst-directory> even
-                      when the untacked or modified files found;
+  -f,--force          remove files from the <dst-directory>
+                      even if untacked or modified files found;
   -v,--verbose        print a message for each action;
   -V,--version        print program version and exit;
   -h,--help           show this text and exit.
@@ -132,25 +132,25 @@ destdir="${destdir#$PWD/}"
 git-rm -n "$destdir" >/dev/null
 
 if [ -z "$force" ]; then
-    out="$(git diff --name-only -- "$destdir"; git-ls-files --others "" --exclude-per-directory=.gitignore -- "$destdir")"
-    [ -z "$out" ] || fatal "$destdir: untacked or modified files found"
+	out="$(git diff --name-only -- "$destdir"; git-ls-files --others "" --exclude-per-directory=.gitignore -- "$destdir")"
+	[ -z "$out" ] || fatal "$destdir: untacked or modified files found"
 fi
 
 if [ "$srctype" = "archive" ]; then
-    if [ -n "$tardir" ]; then
-	quoted_tardir="$(quote_sed_regexp "$tardir")"
-	tar -tf "$source" |grep -qs "^$quoted_tardir\(/\|\$\)" ||
-	    fatal "tar archive directory not found"
-    else
-	tardir="$(tar -tf "$source"|cut -d\/ -f1 |sort -u)"
-    fi
+	if [ -n "$tardir" ]; then
+		quoted_tardir="$(quote_sed_regexp "$tardir")"
+		tar -tf "$source" |grep -qs "^$quoted_tardir\(/\|\$\)" ||
+			fatal "tar archive directory not found"
+	else
+		tardir="$(tar -tf "$source"|cut -d\/ -f1 |sort -u)"
+	fi
 
-    n="$(printf %s\\n "$tardir" |wc -l)"
-    if [ "$n" -gt 1 ]; then
-	fatal "too many tar archive directories: $(printf %s\\n "$tardir" |tr \\n \ )"
-    elif [ "$n" -lt 1 ]; then
-	fatal "tar archive directory not found"
-    fi
+	n="$(printf %s\\n "$tardir" |wc -l)"
+	if [ "$n" -gt 1 ]; then
+		fatal "too many tar archive directories: $(printf %s\\n "$tardir" |tr \\n \ )"
+	elif [ "$n" -lt 1 ]; then
+		fatal "tar archive directory not found"
+	fi
 fi
 
 # Trap for rollback
@@ -161,14 +161,14 @@ rm $verbose -rf -- "$destdir"
 
 # Copy new sources
 case "$srctype" in
-    archive)
-	workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
-	printf %s\\n "$tardir/" |tar -T- -C "$workdir" -xf "$source"
-	mv -f -- "$workdir/$tardir" "$destdir"
-	;;
-    directory)
-	cp -a -- "$source" "$destdir"
-	;;
+	archive)
+		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
+		printf %s\\n "$tardir/" |tar -T- -C "$workdir" -xf "$source"
+		mv -f -- "$workdir/$tardir" "$destdir"
+		;;
+	directory)
+		cp -a -- "$source" "$destdir"
+		;;
 esac
 [ -d "$destdir" ] ||
 	fatal "$destdir: result of extraction is not a directory"
