@@ -20,8 +20,8 @@
 
 PROJECT = gear
 VERSION = $(shell sed '/^Version: */!d;s///;q' gear.spec)
-PROGRAMS = gear gear-commit gear-hsh-build gear-release gear-srpmimport gear-update
-ALIAS = gear-update-archive gear-update-directory
+PROGRAMS = gear gear-commit gear-hsh-build gear-release gear-srpmimport gear-update-archive
+ALIAS = gear-update-directory
 MAN1PAGES = $(PROGRAMS:=.1) $(ALIAS:=.1)
 TARGETS = gear-sh-functions $(MAN1PAGES)
 
@@ -57,7 +57,7 @@ $(MAN7PAGES):
 	$(HELP2MAN1) -i $@.inc ./$< >$@
 
 gear-update-%:
-	$(LN_S) gear-update $@
+	$(LN_S) gear-update-archive $@
 
 install: all
 	$(MKDIR_P) -m755 $(DESTDIR)$(bindir)
