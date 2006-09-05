@@ -80,6 +80,8 @@ Options:
   --commit                  make temporary commit prior to extract;
   --hasher                  execute hsh-like command afterwards;
   --rpmbuild                execute rpmbuild-like command afterwards;
+  --update-spec             change specfile in repository if specfile changed 
+                            after --rpmbuild command;
   --export-dir=DIRNAME      write source files to specified directory;
   --describe                describe package as "%{NAME} %{VERSION} %{RELEASE}";
   -r, --rules=FILENAME      name of file with rules, default is .$PROG-rules;
@@ -376,11 +378,12 @@ parse_rules()
 	lineno=
 }
 
-TEMP=`getopt -n $PROG -o r:,t:,h,q,v,V -l no-compress,commit,bzip2,gzip,hasher,rpmbuild,export-dir:,describe,rules:,tree-ish:,help,quiet,verbose,version -- "$@"` ||
+TEMP=`getopt -n $PROG -o r:,t:,h,q,v,V -l no-compress,commit,bzip2,gzip,hasher,rpmbuild,update-spec,export-dir:,describe,rules:,tree-ish:,help,quiet,verbose,version -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
 hasher=
+update_spec=
 rpmbuild=
 outdir=
 describe=
@@ -409,6 +412,8 @@ while :; do
 		--rpmbuild) rpmbuild=1
 			[ -z "$hasher$outdir$describe" ] ||
 				show_usage 'Options --hasher, --rpmbuild, --export-dir and --describe are mutually exclusive.'
+			;;
+		--update-spec) update_spec=1
 			;;
 		--export-dir)
 			outdir="$(opt_check_dir "$1" "$2")"
@@ -473,6 +478,10 @@ case "$type" in
 		;;
 esac
 
+if [ -n "$update_spec" ] && [ -z "$(git-rev-parse --show-cdup)" ]; then
+	fatal "unable to update specfile."
+fi
+
 tmpdir="$(mktemp -dt "$PROG.XXXXXXXX")"
 trap exit_handler HUP PIPE INT QUIT TERM EXIT
 workdir="$tmpdir/work"
@@ -504,6 +513,11 @@ verbose "Extracted \"${specfile##*/}\" specfile."
 
 if [ -n "$rpmbuild" ]; then
 	run_command "$@" --define "_specdir $outdir" --define "_sourcedir $outdir" "$outdir/${specfile##*/}"
+	if [ -n "$update_spec" ]; then
+		cd "$(git-rev-parse --show-cdup)"
+		cmp -s "$outdir/${specfile##*/}" "$specfile" && rc=0 || rc="$?"
+		[ "$rc" -ne 1 ] || cp $verbose -f -- "$outdir/${specfile##*/}" "$specfile"
+	fi
 else
 	[ -z "$hasher" ] ||
 		out_file="$workdir/pkg.tar"

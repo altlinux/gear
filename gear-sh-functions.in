@@ -186,10 +186,10 @@ find_specfile()
 		specfile="$(git-ls-tree "$tree_id" |
 			sed -ne 's/^[^[:space:]]\+[[:space:]]\+blob[[:space:]]\+[^[:space:]]\+[[:space:]]\+\([^/[:space:]]\+\.spec\)$/\1/p')"
 		[ `printf %s "$specfile" |wc -l` -le 1 ] ||
-			fatal "Too many specfiles found in $GIT_DIR"
+			fatal "Too many specfiles found${GIT_DIR:+ in $GIT_DIR}"
 	fi
 	[ -n "$specfile" ] ||
-		fatal "No specfiles found in $GIT_DIR"
+		fatal "No specfiles found${GIT_DIR:+ in $GIT_DIR}"
 	cat_blob "$tree_id" "$specfile" >"$workdir/specfile"
 	pkg_name="$(sed '/^name:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
 	pkg_version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
