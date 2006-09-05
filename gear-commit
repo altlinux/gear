@@ -58,8 +58,22 @@ if [ "$*" = '--version' ]; then
 	print_version
 elif [ "$*" = '--help' ]; then
 	git-commit --help |
-		sed "s|\(/usr/bin/\)\?git-commit|$PROG|g"
+		sed "s|\(/usr/bin/\)\?git-commit|$PROG [--spec=<file>]|g"
 	exit
+elif [ "$*" != "${*#--spec[= ]}" ]; then
+	case "$1" in
+	    --spec=*) specfile="${1#*=}"
+		shift
+		;;
+	    --spec) shift
+		[ "$#" -gt 0 ] ||
+		    fatal "option requires an argument: --spec"
+		specfile="$1"
+		shift
+		;;
+	esac
+	[ -f "$specfile" -o -z "$specfile" ] ||
+	    fatal "$specfile: file not available"
 elif git-cat-file -t "$tree_id" >/dev/null 2>&1; then
 	trap exit_handler HUP INT QUIT TERM EXIT
 	workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
