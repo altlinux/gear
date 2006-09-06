@@ -19,6 +19,11 @@
 [NAME]
 \fBgear-commit\fR \- record changes using git-commit
 
+[OPTIONS]
+.TP
+.B --spec=FILE
+don't search specfile in repository and use a FILE instead.
+
 [ENVIRONMENT]
 .TP
 .B GIT_DIR
