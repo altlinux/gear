@@ -478,8 +478,9 @@ case "$type" in
 		;;
 esac
 
-if [ -n "$update_spec" ] && [ -z "$(git-rev-parse --show-cdup)" ]; then
-	fatal "unable to update specfile."
+if [ -n "$update_spec" ]; then
+	[ -n "$rpmbuild" -a -z "$GIT_DIR" ] ||
+		fatal "Unable to update specfile in this mode."
 fi
 
 tmpdir="$(mktemp -dt "$PROG.XXXXXXXX")"
@@ -497,7 +498,6 @@ if [ -n "$do_commit" ]; then
 		verbose "Temporarily committed local changes."
 	fi
 fi
-export GIT_DIR="$git_dir"
 
 find_specfile
 
@@ -514,9 +514,9 @@ verbose "Extracted \"${specfile##*/}\" specfile."
 if [ -n "$rpmbuild" ]; then
 	run_command "$@" --define "_specdir $outdir" --define "_sourcedir $outdir" "$outdir/${specfile##*/}"
 	if [ -n "$update_spec" ]; then
-		cd "$(git-rev-parse --show-cdup)"
-		cmp -s "$outdir/${specfile##*/}" "$specfile" && rc=0 || rc="$?"
-		[ "$rc" -ne 1 ] || cp $verbose -f -- "$outdir/${specfile##*/}" "$specfile"
+		cdup="$(git-rev-parse --show-cdup |tr -d '\n')"
+		cmp -s "$outdir/${specfile##*/}" "$cdup$specfile" && rc=0 || rc="$?"
+		[ "$rc" -ne 1 ] || cp $verbose -f -- "$outdir/${specfile##*/}" "$cdup$specfile"
 	fi
 else
 	[ -z "$hasher" ] ||
