@@ -479,7 +479,7 @@ case "$type" in
 esac
 
 if [ -n "$update_spec" ]; then
-	[ -n "$rpmbuild" -a -z "$GIT_DIR" ] ||
+	[ -n "$rpmbuild" -a -z "${GIT_DIR:-}" ] ||
 		fatal "Unable to update specfile in this mode."
 fi
 
