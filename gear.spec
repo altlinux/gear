@@ -1,5 +1,5 @@
 Name: gear
-Version: 1.0.1
+Version: 1.0.2
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -37,6 +37,18 @@ See %_docdir/%name-%version/QUICKSTART.ru_RU.KOI8-R for details.
 %doc QUICKSTART*
 
 %changelog
+* Fri Sep 08 2006 Dmitry V. Levin <ldv@altlinux.org> 1.0.2-alt1
+- gear:
+  + New option: --update-spec (legion).
+- gear-commit:
+  + New option: --spec (legion).
+- gear-release:
+  + New option: --create (legion).
+- gear-update:
+  + Rename to gear-update-archive (legion).
+- gear-hsh-build:
+  + New utility (raorn).
+
 * Mon Aug 28 2006 Dmitry V. Levin <ldv@altlinux.org> 1.0.1-alt1
 - gear-release: Fix typo in option handling (legion).
 - gear-update: New utility (legion, ldv).
