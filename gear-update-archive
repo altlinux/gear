@@ -128,7 +128,8 @@ destdir="$(readlink -ev "$1")"; shift
 
 # Move to topdir
 cd "$(git-rev-parse --show-cdup)"
-destdir="${destdir#$PWD/}"
+workdir="$(readlink -ev .)"
+destdir="${destdir#$workdir/}"
 
 [ "$destdir" = "${destdir#/}" ] ||
 	fatal "$destdir: directory out of \`$PWD' tree."
