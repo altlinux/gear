@@ -158,5 +158,5 @@ case "$type" in
 	*) fatal "$type: Invalid commit-ish type" ;;
 esac
 
-git-tag $sign ${signkey:+-u "$signkey"} -f -m "${pkgname:+Package name: $pkgname
-}Release $type: $COMMITISH" "$TAG" "$COMMITISH"
+git-tag --full-ref-name $sign ${signkey:+-u "$signkey"} -f -m "${pkgname:+Package name: $pkgname
+}Release $type: $COMMITISH" "releases/$TAG" "$COMMITISH"
