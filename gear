@@ -358,7 +358,7 @@ parse_rules()
 				;;
 		esac
 		case "$cmd" in
-			spec)
+			spec|exclude)
 				continue
 				;;
 			tar|tar.gz|tar.bz2)
