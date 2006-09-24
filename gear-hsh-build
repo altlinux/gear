@@ -37,24 +37,22 @@ EOF
 show_help()
 {
     cat <<EOF
-Usage: $PROG [options] [<dirname...>]
+Usage: $PROG [OPTIONS...] -- REPOSITORY... [-- HASHER_OPTIONS...]
 
 This program will build package(s) from your gear repository(es) with
-hasher.  If no arguments are given, it will use \$GIT_DIR environment
-variable to find repository, otherwise it will treat all given arguments
-as GIT repositories and try to build packages in one hasher repo.
+hasher.  REPOSITORY is a path to git directory (/path/to/repo.git or
+/path/to/repo/.git) with optional tree-ish separated by \`\`#''
+(/path/to/repo#tree-ish).  You can specify additional hasher options
+after repository list.
 
 Options:
-  --apt-config=FILE         path to custom apt.conf file;
   --cleanup-repo            cleanup hasher repo after build;
   --export-dir=DIR          write built packages to specified directory;
-  --number=NUMBER           hasher subconfig identifier;
-  --packager=EMAIL          override default RPM packager tag;
+  --hasher=FILE             path to hasher binary;
   --prefix=DIR              path to hasher workdir;
   --repo=DIR                repository directory;
   --sisyphus                export packages to sisyphus-like START_DIR;
   --target=ARCH             target architecture;
-  -t, --tree-ish=ID         tree, commit or tag object name;
   -q, --quiet               try to be more quiet;
   -v, --verbose             print a message for each action;
   -V, --version             print program version and exit;
@@ -66,21 +64,14 @@ EOF
     exit
 }
 
-run_gear()
-{
-	run_command gear $quiet $verbose ${tree_id:+--tree-ish="$tree_id"} --hasher -- hsh $quiet $verbose ${apt_config:+--apt-config="$apt_config"} ${number:+--number="${number}"} ${packager:+--packager="$packager"} ${repo:+--repo="$repo"} ${target:+--target="$target"} -- "$prefix"
-}
-
-apt_config=
 cleanup_repo=
-number=
+hasher="hsh"
 outdir=
-packager=
 prefix=
 repo="$(mktemp -u "build-XXXXXXXXXX")"
 sisyphus=
 target="$(uname -m)"
-tree_id=
+repos=
 
 exit_handler()
 {
@@ -96,22 +87,18 @@ exit_handler()
 	exit $rc
 }
 
-TEMP=$(getopt -n $PROG -o h,q,t:,V,v -l apt-config:,cleanup-repo,export-dir:,number:,packager:,prefix:,repo:,sisyphus,target:,tree-ish:,help,quiet,verbose,version -- "$@")
+TEMP=$(getopt -n $PROG -o +h,q,V,v -l cleanup-repo,export-dir:,hasher:,prefix:,repo:,sisyphus,target:,help,quiet,verbose,version -- "$@")
 eval set -- "$TEMP"
 
 while :; do
 	case "$1" in
 		--) shift; break
 			;;
-		--apt-config) apt_config="$2"; shift
-			;;
 		--cleanup-repo) cleanup_repo=1
 			;;
 		--export-dir) outdir="$(opt_check_dir "$1" "$2")"; shift
 			;;
-		--number) number="$2"; shift
-			;;
-		--packager) packager="$2"; shift
+		--hasher) hasher="$2"; shift
 			;;
 		--prefix) prefix="$(opt_check_dir "$1" "$2")"; shift
 			;;
@@ -120,8 +107,6 @@ while :; do
 		--sisyphus) sisyphus=1
 			;;
 		--target) target="$2"; shift
-			;;
-		-t|--tree-ish) tree_id="$2"; shift
 			;;
 		-h|--help) show_help
 			;;
@@ -147,23 +132,46 @@ if [ -z "$outdir" ]; then
 		fatal "--sisyphus without --export-dir doesn't makes sense"
 fi
 
+while [ $# -gt 0 ]; do
+	case "$1" in
+		--) shift; break
+			;;
+		*) repos="${repos:+$repos
+}$1"
+			;;
+	esac
+	shift
+done
+
+[ -n "$repos" ] || {
+	info "Nothing to do."
+	exit 0
+}
+
 trap exit_handler HUP INT QUIT TERM EXIT
 
-if [ $# -gt 0 ]; then
-	for git_dir; do
-		[ -d "$git_dir" ] || continue
-		git_dir="$(readlink -ev "$git_dir")"
-		info "Building $git_dir..."
-		export GIT_DIR="$git_dir"
-		run_gear
-	done
-else
-	git_dir="$(git-rev-parse --git-dir)"
+save_IFS="$IFS"
+IFS="
+"
+for git_repo in $repos; do
+	IFS="$save_IFS"
+	if [ -z "${git_repo##*\#*}" ]; then
+		git_dir="${git_repo%%\#*}"
+		git_tree="${git_repo#*\#}"
+	else
+		git_dir="$git_repo"
+		git_tree=
+	fi
+	[ -d "$git_dir" ] || continue
 	git_dir="$(readlink -ev "$git_dir")"
-	info "Building $git_dir..."
+	info "Building $git_dir${git_tree:+ with tag $git_tree}..."
 	export GIT_DIR="$git_dir"
-	run_gear
-fi
+	run_command gear $quiet $verbose ${git_tree:+--tree="$git_tree"} --hasher -- "$hasher" $quiet $verbose --target="$target" "$@" -- "$prefix"
+	save_IFS="$IFS"
+	IFS="
+"
+done
+IFS="$save_IFS"
 
 if [ -n "$outdir" ]; then
 	verbose "Exporting packages to $ourdir..."
