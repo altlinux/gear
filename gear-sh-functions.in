@@ -176,7 +176,7 @@ find_specfile()
 		cat_blob "$tree_id" "$rules" >"$workdir/rules"
 		# format: "spec: filename"
 		specfile="$(sed -ne 's/^spec:[[:space:]]\+\([^[:space:]]\+\)/\1/p' "$workdir/rules")"
-		[ `printf %s "$specfile" |wc -l` -le 1 ] ||
+		[ `printf %s "$specfile" |wc -l` -le 0 ] ||
 			rules_error "Too many specfiles specified"
 		[ -z "$specfile" ] ||
 			check_path specfile "$specfile"
@@ -185,7 +185,7 @@ find_specfile()
 	if [ -z "$specfile" ]; then
 		specfile="$(git-ls-tree "$tree_id" |
 			sed -ne 's/^[^[:space:]]\+[[:space:]]\+blob[[:space:]]\+[^[:space:]]\+[[:space:]]\+\([^/[:space:]]\+\.spec\)$/\1/p')"
-		[ `printf %s "$specfile" |wc -l` -le 1 ] ||
+		[ `printf %s "$specfile" |wc -l` -le 0 ] ||
 			fatal "Too many specfiles found${GIT_DIR:+ in $GIT_DIR}"
 	fi
 	[ -n "$specfile" ] ||
