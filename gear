@@ -155,6 +155,23 @@ subst_spec_keywords()
 	subst_key_in_vars '@release@' "$release" "$@"
 }
 
+subst_NVR_from_spec()
+{
+	local spec="$1" && shift
+
+	local spec_name= spec_version= spec_release=
+
+	if [ -n "$spec" ]; then
+		cat_blob "$main_tree_id" "$spec" >"$workdir/spec"
+		get_NVR_from_spec "$workdir/spec"
+	fi
+	[ -n "$spec_name" ] || spec_name="$pkg_name"
+	[ -n "$spec_version" ] || spec_version="$pkg_version"
+	[ -n "$spec_release" ] || spec_release="$pkg_release"
+
+	subst_spec_keywords "$spec_name" "$spec_version" "$spec_release" "$@"
+}
+
 get_tar_name()
 {
 	local dir="$1" && shift
@@ -168,7 +185,7 @@ get_tar_name()
 	# Special non-empty marker.
 	tar_base=' '
 
-	local opt spec= spec_name= spec_version= spec_release=
+	local opt spec=
 
 	for opt; do
 		case "$opt" in
@@ -184,20 +201,12 @@ get_tar_name()
 		esac
 	done
 
-	if [ -n "$spec" ]; then
-		cat_blob "$main_tree_id" "$spec" >"$workdir/spec"
-		get_NVR_from_spec "$workdir/spec"
-	fi
-	[ -n "$spec_name" ] || spec_name="$pkg_name"
-	[ -n "$spec_version" ] || spec_version="$pkg_version"
-	[ -n "$spec_release" ] || spec_release="$pkg_release"
-
 	local subst_vars="tar_name"
 	[ -z "$tar_base" -o "$tar_base" = ' ' ] ||
 		subst_vars="$subst_vars tar_base"
 
 	subst_key_in_vars '@dir@' "$dir" $subst_vars
-	subst_spec_keywords "$spec_name" "$spec_version" "$spec_release" $subst_vars
+	subst_NVR_from_spec "$spec" $subst_vars
 
 	check_name "tar name" "$tar_name"
 	[ -n "${subst_vars##*tar_base*}" ] ||
