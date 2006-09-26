@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-\fBgear\fR \- Get Every Archive from git package Repository
+gear \- Get Every Archive from git package Repository
 
 [ENVIRONMENT]
 .TP

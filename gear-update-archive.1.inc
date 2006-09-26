@@ -15,7 +15,7 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-\fBgear-update-archive\fR \- update source subdirectory from archive
+gear-update-archive \- update source subdirectory from archive
 
 [ENVIRONMENT]
 .TP

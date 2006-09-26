@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-\fBgear-srpmimport\fR \- Incrementally import source packages to git repository
+gear-srpmimport \- Incrementally import source packages to git repository
 
 [ENVIRONMENT]
 .TP

@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-\fBgear\-commit\fR \- invoke \fBgit\-commit\fR using last changelog entry from spec file as commit message
+gear\-commit \- invoke git\-commit using last changelog entry from spec file as commit message
 
 [OPTIONS]
 .TP

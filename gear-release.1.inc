@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-\fBgear-release\fR \- creates a release tag for the project
+gear-release \- creates a release tag for the project
 
 [ENVIRONMENT]
 .TP
