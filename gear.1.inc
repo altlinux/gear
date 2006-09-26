@@ -83,6 +83,14 @@ If the
 environment variable is set then it specifies a path to use instead of
 the default for the base of the repository.
 
+[BUGS]
+\fBgear\fR does not get correct package name, version and
+release from spec files which use RPM macros to define these
+fields.
+.PP
+\fBgear \-\-commit\fR loses the merge information saved by
+\fBgit\-merge\fR.
+
 [SEE ALSO]
 .BR gear-commit (1),
 .BR gear-release (1),
