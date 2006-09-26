@@ -26,5 +26,5 @@ environment variable is set then it specifies a path to use instead of
 the default for the base of the repository.
 
 [SEE ALSO]
-.BR gear (1),
+.BR gear (1).
 
