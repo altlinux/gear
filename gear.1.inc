@@ -30,7 +30,7 @@ the default for the base of the repository.
 [SEE ALSO]
 .BR gear-commit (1),
 .BR gear-release (1),
-.BR gear-srpminport (1),
+.BR gear-srpmimport (1),
 .BR hsh (1),
 .BR git (7),
 .BR rpmbuild (8).
