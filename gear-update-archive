@@ -42,7 +42,7 @@ Update subdirectory from source $srctype.
 
 Options: ${archive_help:+$archive_help}
   -f,--force          remove files from the <dst-directory>
-                      even if untacked or modified files found;
+                      even if untracked or modified files found;
   -v,--verbose        print a message for each action;
   -V,--version        print program version and exit;
   -h,--help           show this text and exit.
@@ -138,7 +138,7 @@ git-rm -n "$destdir" >/dev/null
 
 if [ -z "$force" ]; then
 	out="$(git diff --name-only -- "$destdir"; git-ls-files --others "" --exclude-per-directory=.gitignore -- "$destdir")"
-	[ -z "$out" ] || fatal "$destdir: untacked or modified files found"
+	[ -z "$out" ] || fatal "$destdir: untracked or modified files found"
 fi
 
 if [ "$srctype" = "archive" ]; then
