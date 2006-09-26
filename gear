@@ -27,7 +27,8 @@
 #  directive: args
 #
 #  Valid directives are:
-#  spec, tags, copy, gzip, bzip2, exclude, tar, tar.gz, tar.bz2
+#    spec, tags, copy, diff, diff.gz, diff.bz2, gzip, bzip2, exclude,
+#    tar, tar.gz, tar.bz2
 #
 #  Each directive has own args syntax:
 #  spec: path_to_file
@@ -37,6 +38,8 @@
 #  exclude: glob_pattern..
 #  tar(|.gz|.bz2): tree_path [options]
 #  tar(|.gz|.bz2)?: tree_path [options]
+#  diff(|.gz|.bz2): old_tree_path new_tree_path options
+#  diff(|.gz|.bz2)?: old_tree_path new_tree_path options
 #
 #  tree_path may be a plain path or commit:path, where commit is specified
 #  by tag name (keywords may be used) or full SHA-1.
@@ -50,6 +53,15 @@
 #    @dir@ - basename(path(tree_path));
 #    @name@, @version@, @release@.
 #  Default tar archive name is @dir@-@version@.
+#
+#  Valid diff options are:
+#    name=diff_name     - diff name, may reference to keywords;
+#    spec=path_to_file  - path to specfile which defines keywords;
+#  Valid diff keywords are:
+#    @old_dir@ - basename(path(old_tree_path));
+#    @new_dir@ - basename(path(new_tree_path));
+#    @name@, @version@, @release@.
+#  Default diff name is @new_dir@-@version@-@release@.patch.
 
 . gear-sh-functions
 
@@ -278,6 +290,101 @@ make_archive()
 	make_tar "$optional" "$cmd" "$tar_tree" "$dir_name" "$tar_name" "$tar_base"
 }
 
+get_diff_name()
+{
+	local old_dir="$1" && shift
+	local new_dir="$1" && shift
+
+	[ "$old_dir" != '.' ] || old_dir=
+	[ "$new_dir" != '.' ] || new_dir=
+
+	if [ -z "$new_dir" ]; then
+		diff_name='@name@-@version@-@release@.patch'
+	else
+		diff_name='@new_dir@-@version@-@release@.patch'
+	fi
+
+	local opt spec=
+
+	for opt; do
+		case "$opt" in
+			spec=*) spec="${opt#spec=}"
+				check_path specfile "$spec"
+				;;
+			name=*) diff_name="${opt#name=}"
+				;;
+			*) rules_error "Unrecognized option: $opt"
+				;;
+		esac
+	done
+
+	local subst_vars="diff_name diff_old_tree diff_new_tree"
+	subst_key_in_vars '@old_dir@' "$old_dir" $subst_vars
+	subst_key_in_vars '@new_dir@' "$new_dir" $subst_vars
+	subst_NVR_from_spec "$spec" $subst_vars
+}
+
+make_diff()
+{
+	local optional="$1" && shift
+	local cmd="$1" && shift
+	local old_tree="$1" && shift
+	local old_dir="$1" && shift
+	local new_tree="$1" && shift
+	local new_dir="$1" && shift
+	local name="$1" && shift
+
+	local old_id new_id rc
+
+	rc=0
+	old_id="$(traverse_tree "$old_tree" "$old_dir" "$optional")" ||
+		rc=$?
+	if [ "$rc" = 1 ]; then exit 1
+	elif [ "$rc" != 0 ]; then return 0
+	fi
+
+	rc=0
+	new_id="$(traverse_tree "$new_tree" "$new_dir" "$optional")" ||
+		rc=$?
+	if [ "$rc" = 1 ]; then exit 1
+	elif [ "$rc" != 0 ]; then return 0
+	fi
+
+	git-diff-tree --patch-with-stat "$old_id" "$new_id" >"$outdir/$name"
+	verbose "Extracted \"$name\" diff."
+	compress_file "$cmd" "$outdir/$name"
+}
+
+make_difference()
+{
+	# format: "$optional cmd old_dir new_dir options.."
+	[ $# -ge 4 ] ||
+		rules_error "No old_dir or new_dir specified"
+	local optional="$1" && shift
+	local cmd="$1" && shift
+	local old_dir="$1" && shift
+	local new_dir="$1" && shift
+
+	old_dir="$(parse_tree_path dirname "$old_dir")" ||
+		rules_error "Invalid old_dir specified"
+	diff_old_tree="${old_dir%%:*}"
+	old_dir="${old_dir#*:}"
+
+	new_dir="$(parse_tree_path dirname "$new_dir")" ||
+		rules_error "Invalid new_dir specified"
+	diff_new_tree="${new_dir%%:*}"
+	new_dir="${new_dir#*:}"
+
+	get_diff_name "$(basename -- "$old_dir")" "$(basename -- "$new_dir")" "$@"
+
+	diff_old_tree="$(resolve_tree_base_name "$diff_old_tree")" ||
+		rules_error "Invalid old tree"
+	diff_new_tree="$(resolve_tree_base_name "$diff_new_tree")" ||
+		rules_error "Invalid new tree"
+
+	make_diff "$optional" "$cmd" "$diff_old_tree" "$old_dir" "$diff_new_tree" "$new_dir" "$diff_name"
+}
+
 copy_by_pattern()
 {
 	# format: "$optional cmd pattern.."
@@ -379,6 +486,10 @@ parse_rules()
 			tar|tar.gz|tar.bz2)
 				make_archive "$optional" "$cmd" $options ||
 					rules_error "Failed to make archive"
+				;;
+			diff|diff.gz|diff.bz2)
+				make_difference "$optional" "$cmd" $options ||
+					rules_error "Failed to make diff"
 				;;
 			copy|gzip|bzip2)
 				copy_by_pattern "$optional" "$cmd" $options ||
