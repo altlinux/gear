@@ -31,7 +31,7 @@ mandir = $(datadir)/man
 man1dir = $(mandir)/man1
 DESTDIR =
 
-HELP2MAN1 = env PATH=":$$PATH" help2man -N -s1
+HELP2MAN1 = env PATH=":$$PATH" help2man -N -s1 -S '$(PROJECT) $(VERSION)'
 INSTALL = install
 LN_S = ln -s
 MKDIR_P = mkdir -p
