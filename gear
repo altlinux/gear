@@ -87,7 +87,7 @@ Options:
   --export-dir=DIRNAME      write source files to specified directory;
   --describe                describe package as "%{NAME} %{VERSION} %{RELEASE}";
   -r, --rules=FILENAME      name of file with rules, default is .$PROG-rules;
-  -t, --tree-ish=ID         tree, commit or tag object name;
+  -t, --tree-ish=ID         COMMIT[:PATH] specifying the tree to process;
   -q, --quiet               try to be more quiet;
   -v, --verbose             print a message for each action;
   -V, --version             print program version and exit;
@@ -470,15 +470,13 @@ git_dir="$(git-rev-parse --git-dir)"
 git_dir="$(readlink -ev "$git_dir")"
 
 # Check given tree-ish.
-type="$(git-cat-file -t "$main_tree_id")" ||
-	fatal "$main_tree_id: Invalid tree-ish object"
-case "$type" in
-	tag|commit|tree)
-		;;
-	*)
-		fatal "$type: Invalid tree-ish type"
-		;;
-esac
+main_commit_id="${main_tree_id%%:*}"
+main_commit_sha1="$(get_commit_sha1 "$main_commit_id")" ||
+	fatal "Invalid commit \"$main_commit_id\""
+main_tree_sha1="$(get_object_sha1 "$main_tree_id")" ||
+	fatal "Invalid tree \"$main_tree_id\""
+git-cat-file -e "$main_tree_sha1^{tree}" ||
+	fatal "Invalid tree \"$main_tree_id\""
 
 if [ -n "$update_spec" ]; then
 	[ -n "$rpmbuild" -a -z "${GIT_DIR:-}" ] ||
