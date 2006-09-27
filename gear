@@ -161,7 +161,7 @@ get_tar_name()
 	# Special non-empty marker.
 	tar_base=' '
 
-	local opt quoted spec= spec_name= spec_version= spec_release=
+	local opt spec= spec_name= spec_version= spec_release=
 
 	for opt; do
 		case "$opt" in
@@ -201,29 +201,11 @@ make_tar()
 	[ "$tar_base" != ' ' ] ||
 		tar_base="$name"
 
-	local id
-	if [ "$dir" = . ]; then
-		id="$main_tree_id"
-	else
-		local dir_name base_name quoted rc=0
-		dir_name="$(dirname -- "$dir")"
-		base_name="$(basename -- "$dir")"
-		tree="$(traverse_tree "$main_tree_id" "$dir_name" "$optional")" ||
-			rc=$?
-		if [ "$rc" = 1 ]; then exit 1
-		elif [ "$rc" != 0 ]; then return 0
-		fi
-		quoted="$(quote_sed_regexp "$base_name")"
-		id="$(git-ls-tree "$tree" "$base_name" |
-			sed -ne 's/^[^[:space:]]\+[[:space:]]\+tree[[:space:]]\+\([^[:space:]]\+\)[[:space:]]\+'"$quoted"'$/\1/p')"
-		if [ -z "$id" ]; then
-			if [ "$optional" = 1 ]; then
-				return 0
-			else
-				rules_error "tree $dir not found in $tree"
-			fi
-		fi
-
+	local id rc=0
+	id="$(traverse_tree "$main_tree_id" "$dir" "$optional")" ||
+		rc=$?
+	if [ "$rc" = 1 ]; then exit 1
+	elif [ "$rc" != 0 ]; then return 0
 	fi
 
 	if [ -z "$tar_base" ]; then
