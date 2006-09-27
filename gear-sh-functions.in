@@ -121,30 +121,34 @@ get_commit_sha1()
 	git-rev-parse --verify "$sha1^0" || return 1
 }
 
+tree_entry_name()
+{
+	local tree="$1" && shift
+	local path="$1" && shift
+
+	if [ -z "${path#.}" ]; then
+		printf %s "$tree"
+	elif [ -z "${tree##*:*}" ]; then
+		printf %s "$tree/$path"
+	else
+		printf %s "$tree:$path"
+	fi
+}
+
 traverse_tree()
 {
 	local tree="$1" && shift
 	local path="$1" && shift
 	local optional="$1" && shift
 
-	set -- `printf %s "$path" |tr -s / ' '`
-	local dir id quoted
-	for dir; do
-		[ "$dir" != . ] ||
-			continue
-		quoted="$(quote_sed_regexp "$dir")"
-		id="$(git-ls-tree "$tree" "$dir" |
-			sed -ne 's/^[^[:space:]]\+[[:space:]]\+tree[[:space:]]\+\([^[:space:]]\+\)[[:space:]]\+'"$quoted"'$/\1/p')"
-		if [ -z "$id" ]; then
-			if [ "$optional" = 1 ]; then
-				return 2
-			else
-				rules_error "tree $dir not found in $tree"
-			fi
-		fi
-		tree="$id"
-	done
-	printf %s "$tree"
+	local id="$(tree_entry_name "$tree" "$path")"
+	if git-cat-file tree "$id" >/dev/null 2>&1; then
+		printf %s "$id"
+	elif [ "$optional" = 1 ]; then
+		return 2
+	else
+		rules_error "tree \"$path\" not found in \"$tree\""
+	fi
 }
 
 # fetch blob by id+name.
@@ -153,22 +157,9 @@ cat_blob()
 	local tree="$1" && shift
 	local name="$1" && shift
 
-	local dir_name base_name
-	dir_name="$(dirname -- "$name")"
-	base_name="$(basename -- "$name")"
-	tree="$(traverse_tree "$tree" "$dir_name" 0)" ||
-		rules_error "blob $name not found"
-
-	# fetch blob from given tree.
-	local blob quoted
-	quoted="$(quote_sed_regexp "$base_name")"
-	blob="$(git-ls-tree "$tree" "$base_name" |
-		sed -ne 's/^[^[:space:]]\+[[:space:]]\+blob[[:space:]]\+\([^[:space:]]\+\)[[:space:]]\+'"$quoted"'$/\1/p')"
-
-	[ -n "$blob" ] ||
-		rules_error "blob $base_name not found in $tree"
-
-	git-cat-file blob "$blob"
+	local id="$(tree_entry_name "$tree" "$name")"
+	git-cat-file blob "$id" ||
+		rules_error "blob \"$name\" not found in \"$tree\""
 }
 
 check_path()
