@@ -227,6 +227,18 @@ get_filename_from_rules()
 	printf %s "$file"
 }
 
+spec_name=
+spec_version=
+spec_release=
+get_NVR_from_spec()
+{
+	local spec="$1" && shift
+
+	spec_name="$(sed '/^name:[[:space:]]*/I!d;s///;q' "$spec")"
+	spec_version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$spec")"
+	spec_release="$(sed '/^release:[[:space:]]*/I!d;s///;q' "$spec")"
+}
+
 specfile=
 pkg_name=
 pkg_version=
@@ -246,9 +258,12 @@ find_specfile()
 	[ -n "$specfile" ] ||
 		fatal "No specfiles found${GIT_DIR:+ in $GIT_DIR}"
 	cat_blob "$main_tree_id" "$specfile" >"$workdir/specfile"
-	pkg_name="$(sed '/^name:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
-	pkg_version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
-	pkg_release="$(sed '/^release:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
+
+	local spec_name spec_version spec_release
+	get_NVR_from_spec "$workdir/specfile"
+	pkg_name="$spec_name"
+	pkg_version="$spec_version"
+	pkg_release="$spec_release"
 }
 
 def_spec_pattern='*.spec'
