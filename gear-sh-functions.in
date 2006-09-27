@@ -112,6 +112,15 @@ get_object_sha1()
 	printf %s "$sha1"
 }
 
+get_commit_sha1()
+{
+	local name="$1" && shift
+
+	local sha1
+	sha1="$(get_object_sha1 "$name")" || return 1
+	git-rev-parse --verify "$sha1^0" || return 1
+}
+
 traverse_tree()
 {
 	local tree="$1" && shift
