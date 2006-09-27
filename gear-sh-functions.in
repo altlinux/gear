@@ -88,6 +88,16 @@ quote_shell_arg()
 	printf %s "$out"
 }
 
+is_hex_sha1()
+{
+	[ "${#1}" -eq 40 ] || return 1
+
+	# "${1##*[![:xdigit:]]*}" does not work in ash
+	[ -n "${1##*[!0123456789abcdefABCDEF]*}" ] || return 1
+
+	return 0
+}
+
 traverse_tree()
 {
 	local tree="$1" && shift
