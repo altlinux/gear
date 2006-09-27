@@ -98,6 +98,20 @@ is_hex_sha1()
 	return 0
 }
 
+get_object_sha1()
+{
+	local name="$1" && shift
+
+	local sha1
+	sha1="$(git-rev-parse --verify "$name")" || return 1
+
+	# Verify that we really got a SHA-1 (git-rev-parse --verify accepts
+	# things like ^COMMIT and returns ^SHA1 for them).
+	is_hex_sha1 "$sha1" || return 1
+
+	printf %s "$sha1"
+}
+
 traverse_tree()
 {
 	local tree="$1" && shift
