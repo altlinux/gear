@@ -199,6 +199,17 @@ check_name()
 workdir=
 main_tree_id=
 rules=
+find_rules()
+{
+	if [ -f "$workdir/rules" ]; then
+		return 0
+	elif [ -n "$(git-ls-tree "$main_tree_id" "$rules")" ]; then
+		cat_blob "$main_tree_id" "$rules" >"$workdir/rules"
+	else
+		: >"$workdir/rules"
+	fi
+}
+
 specfile=
 pkg_name=
 pkg_version=
@@ -206,8 +217,8 @@ pkg_release=
 find_specfile()
 {
 	# first try specfile defined in $rules if any.
-	if [ -n "$(git-ls-tree "$main_tree_id" "$rules")" ]; then
-		cat_blob "$main_tree_id" "$rules" >"$workdir/rules"
+	find_rules
+	if [ -s "$workdir/rules" ]; then
 		# format: "spec: filename"
 		specfile="$(sed -ne 's/^spec:[[:space:]]\+\([^[:space:]]\+\)/\1/p' "$workdir/rules")"
 		[ `printf %s "$specfile" |wc -l` -le 0 ] ||
