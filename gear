@@ -488,6 +488,13 @@ if [ -n "$describe" ]; then
 	exit 0
 fi
 
+# Create a temporary object directory for extracting stored tags.
+orig_object_dir="${GIT_OBJECT_DIRECTORY-"$git_dir/objects"}"
+mkdir -p "$tmpdir/objects/info"
+printf %s\\n "$orig_object_dir" >"$tmpdir/objects/info/alternates"
+GIT_OBJECT_DIRECTORY="$tmpdir/objects"
+export GIT_OBJECT_DIRECTORY
+
 find_tags
 parse_rules
 
