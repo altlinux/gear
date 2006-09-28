@@ -281,6 +281,14 @@ find_tags()
 	fi
 }
 
+tag_list_lineno=
+tag_list_error()
+{
+	local lineno_text=
+	[ -z "$tag_list_lineno" ] || lineno_text=" line $tag_list_lineno"
+	fatal "$tag_dir/list$lineno_text: $*"
+}
+
 def_spec_pattern='*.spec'
 spec_pattern="$def_spec_pattern"
 find_specfile_in_cwd()
