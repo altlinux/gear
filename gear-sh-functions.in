@@ -257,6 +257,30 @@ find_specfile()
 	pkg_release="$spec_release"
 }
 
+tag_dir=
+tag_dir_default=
+find_tags()
+{
+	# first try tag directory defined in rules if any.
+	tag_dir="$(get_filename_from_rules tags "tag directory")"
+
+	# second try tag directory in toplevel tree.
+	if [ -z "$tag_dir" ] && [ -n "$tag_dir_default" ]; then
+		local id type
+		id="$(tree_entry_name "$main_tree_id" "$tag_dir_default/list")"
+		type="$(git-cat-file -t "$id" 2>/dev/null)" || type=
+		if [ "$type" = "blob" ]; then
+			tag_dir="$tag_dir_default"
+		fi
+	fi
+
+	if [ -n "$tag_dir" ]; then
+		cat_blob "$main_tree_id" "$tag_dir/list" >"$workdir/tags"
+	else
+		: >"$workdir/tags"
+	fi
+}
+
 def_spec_pattern='*.spec'
 spec_pattern="$def_spec_pattern"
 find_specfile_in_cwd()
