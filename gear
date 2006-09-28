@@ -27,10 +27,11 @@
 #  directive: args
 #
 #  Valid directives are:
-#  spec, copy, gzip, bzip2, exclude, tar, tar.gz, tar.bz2
+#  spec, tags, copy, gzip, bzip2, exclude, tar, tar.gz, tar.bz2
 #
 #  Each directive has own args syntax:
 #  spec: path_to_file
+#  tags: path_to_directory
 #  (copy|gzip|bzip2): glob_pattern..
 #  (copy|gzip|bzip2)?: glob_pattern..
 #  exclude: glob_pattern..
@@ -340,7 +341,7 @@ parse_rules()
 				;;
 		esac
 		case "$cmd" in
-			spec|exclude)
+			spec|exclude|tags)
 				continue
 				;;
 			tar|tar.gz|tar.bz2)
@@ -371,6 +372,7 @@ outdir=
 describe=
 do_commit=
 rules=".$PROG-rules"
+tag_dir_default=".$PROG-tags"
 tar_compress=--gzip
 main_tree_id=HEAD
 while :; do
@@ -486,6 +488,7 @@ if [ -n "$describe" ]; then
 	exit 0
 fi
 
+find_tags
 parse_rules
 
 install -pm644 "$workdir/specfile" "$outdir/${specfile##*/}"
