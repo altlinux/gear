@@ -308,6 +308,30 @@ lookup_tag()
 	return 1
 }
 
+extract_stored_tag_chain()
+{
+	local sha1="$1" && shift
+
+	local id type real_sha1 next
+	id="$(tree_entry_name "$main_tree_id" "$tag_dir/$sha1")"
+	type="$(git-cat-file -t "$id" 2>/dev/null)" || type=
+	if [ "$type" = "blob" ]; then
+		next="$(git-cat-file blob "$id" | sed -ne '1s/^object \(.*\)$/\1/p')" ||
+			tag_list_error "Bad stored tag $sha1: parse failed"
+		is_hex_sha1 "$next" ||
+			tag_list_error "Bad stored tag $sha1: invalid format"
+		real_sha1="$(git-cat-file blob "$id" | git-hash-object -t tag -w --stdin)" ||
+			tag_list_error "Bad stored tag $sha1: extract failed"
+		[ "$real_sha1" = "$sha1" ] ||
+			tag_list_error "Bad stored tag $sha1: hash mismatch (got $real_sha1)"
+		extract_stored_tag_chain "$next"
+	elif [ -n "$type" ]; then
+		tag_list_error "Bad stored tag $sha1: type=$type"
+	else
+		printf %s "$sha1"
+	fi
+}
+
 def_spec_pattern='*.spec'
 spec_pattern="$def_spec_pattern"
 find_specfile_in_cwd()
