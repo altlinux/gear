@@ -332,6 +332,17 @@ extract_stored_tag_chain()
 	fi
 }
 
+is_ancestor_commit()
+{
+	local ancestor="$1" && shift
+	local descendant="$1" && shift
+
+	local bases
+	bases=" $(git-merge-base "$descendant" "$ancestor" | tr '\n' ' ') " ||
+		return 1
+	[ -z "${bases##* $ancestor *}" ] || return 1
+}
+
 def_spec_pattern='*.spec'
 spec_pattern="$def_spec_pattern"
 find_specfile_in_cwd()
