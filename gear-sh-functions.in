@@ -359,6 +359,44 @@ check_tag_name()
 		rules_error "Invalid tag name \"$name\""
 }
 
+main_commit_sha1=
+resolve_commit_name()
+{
+	local name="$1" && shift
+
+	local result found_commit type final_sha1
+	if is_hex_sha1 "$name"; then
+		result="$name"
+		found_commit="$name"
+	else
+		check_tag_name "$name"
+		lookup_tag "$workdir/tags" "$name" result ||
+			rules_error "Name \"$name\" not found in tag list"
+		is_hex_sha1 "$result" ||
+			tag_list_error "Invalid SHA-1 \"$result\" for name \"$name\""
+		found_commit="$(extract_stored_tag_chain "$result")" ||
+			tag_list_error "Broken tag chain for name \"$name\""
+	fi
+
+	type="$(git-cat-file -t "$found_commit")" ||
+		rules_error "Name \"$name\" specifies a nonexistent object $found_commit"
+	if [ "$type" = "tag" ]; then
+		rules_error "Tag object $found_commit for name \"$name\" is not stored"
+	elif [ "$type" != "commit" ]; then
+		rules_error "Name \"$name\" specifies a $type, not a commit"
+	fi
+
+	# Clean up possible upper/lower case differences in raw SHA-1 ids
+	final_sha1="$(git-rev-parse --verify "$found_commit")" ||
+		rules_error "Name \"$name\" resolved to invalid object ID \"$found_commit\""
+
+	# Ensure than $final_sha1 is an ancestor of $main_commit_sha1
+	is_ancestor_commit "$final_sha1" "$main_commit_sha1" ||
+		rules_error "Name \"$name\" resolved to $final_sha1, which is not an ancestor of commit $main_commit_sha1"
+
+	printf %s "$result"
+}
+
 def_spec_pattern='*.spec'
 spec_pattern="$def_spec_pattern"
 find_specfile_in_cwd()
