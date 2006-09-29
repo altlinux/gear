@@ -106,11 +106,11 @@ exit_handler()
 {
 	local rc=$?
 	trap - EXIT
-	[ -z "$tmpdir" ] ||
-		rm -rf -- "$tmpdir"
 	if [ -n "$need_git_reset" ]; then
 		git-reset --soft HEAD^ &&
 			verbose "Reverted temporary commit."
+	[ -z "$tmpdir" ] ||
+		rm -rf -- "$tmpdir"
 	fi
 	exit $rc
 }
