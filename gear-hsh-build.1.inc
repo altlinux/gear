@@ -1,4 +1,6 @@
 .\" Copyright (C) 2006  Sir Raorn <raorn@altlinux.org>
+.\" Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+.\" Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 .\"
 .\" This file is free software; you can redistribute it and/or modify
 .\" it under the terms of the GNU General Public License as published by
@@ -28,4 +30,3 @@ the default for the base of the repository.
 [SEE ALSO]
 .BR gear (1),
 .BR hsh (1).
-

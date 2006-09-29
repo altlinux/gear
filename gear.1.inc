@@ -1,4 +1,5 @@
 .\" Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+.\" Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 .\"
 .\" Additional documentation for the gear command.
 .\"
