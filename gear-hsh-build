@@ -166,7 +166,7 @@ for git_repo in $repos; do
 	git_dir="$(readlink -ev "$git_dir")"
 	info "Building $git_dir${git_tree:+ with tag $git_tree}..."
 	export GIT_DIR="$git_dir"
-	run_command gear $quiet $verbose ${git_tree:+--tree="$git_tree"} --hasher -- "$hasher" $quiet $verbose --target="$target" "$@" -- "$prefix"
+	run_command gear $quiet $verbose ${git_tree:+--tree="$git_tree"} --hasher -- "$hasher" $quiet $verbose "$@" --target="$target" --repo="$repo" -- "$prefix"
 	save_IFS="$IFS"
 	IFS="
 "
@@ -174,7 +174,7 @@ done
 IFS="$save_IFS"
 
 if [ -n "$outdir" ]; then
-	verbose "Exporting packages to $ourdir..."
+	verbose "Exporting packages to $outdir..."
 	rpms="$prefix/$repo/$target/RPMS.hasher"
 	srpms="$prefix/$repo/SRPMS.hasher"
 	if [ -n "$sisyphus" ]; then
