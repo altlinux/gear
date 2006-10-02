@@ -164,7 +164,7 @@ check_name()
 }
 
 workdir=
-tree_id=
+main_tree_id=
 rules=
 specfile=
 pkg_name=
@@ -173,8 +173,8 @@ pkg_release=
 find_specfile()
 {
 	# first try specfile defined in $rules if any.
-	if [ -n "$(git-ls-tree "$tree_id" "$rules")" ]; then
-		cat_blob "$tree_id" "$rules" >"$workdir/rules"
+	if [ -n "$(git-ls-tree "$main_tree_id" "$rules")" ]; then
+		cat_blob "$main_tree_id" "$rules" >"$workdir/rules"
 		# format: "spec: filename"
 		specfile="$(sed -ne 's/^spec:[[:space:]]\+\([^[:space:]]\+\)/\1/p' "$workdir/rules")"
 		[ `printf %s "$specfile" |wc -l` -le 0 ] ||
@@ -184,14 +184,14 @@ find_specfile()
 	fi
 	# second try specfile in toplevel tree.
 	if [ -z "$specfile" ]; then
-		specfile="$(git-ls-tree "$tree_id" |
+		specfile="$(git-ls-tree "$main_tree_id" |
 			sed -ne 's/^[^[:space:]]\+[[:space:]]\+blob[[:space:]]\+[^[:space:]]\+[[:space:]]\+\([^/[:space:]]\+\.spec\)$/\1/p')"
 		[ `printf %s "$specfile" |wc -l` -le 0 ] ||
 			fatal "Too many specfiles found${GIT_DIR:+ in $GIT_DIR}"
 	fi
 	[ -n "$specfile" ] ||
 		fatal "No specfiles found${GIT_DIR:+ in $GIT_DIR}"
-	cat_blob "$tree_id" "$specfile" >"$workdir/specfile"
+	cat_blob "$main_tree_id" "$specfile" >"$workdir/specfile"
 	pkg_name="$(sed '/^name:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
 	pkg_version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
 	pkg_release="$(sed '/^release:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
