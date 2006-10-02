@@ -64,13 +64,20 @@ EOF
     exit
 }
 
+target=
+# source user config if any
+hasher_config="$HOME/.hasher/config"
+if [ -s "$hasher_config" ]; then
+	. "$hasher_config"
+fi
+[ -n "$target" ] || target="$(uname -m)"
+
 cleanup_repo=
 hasher="hsh"
 outdir=
 prefix=
 repo="$(mktemp -u "build-XXXXXXXXXX")"
 sisyphus=
-target="$(uname -m)"
 repos=
 
 exit_handler()
