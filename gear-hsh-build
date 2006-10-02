@@ -151,8 +151,8 @@ while [ $# -gt 0 ]; do
 done
 
 [ -n "$repos" ] || {
-	info "Nothing to do."
-	exit 0
+	repos="$(git-rev-parse --git-dir)"
+	verbose "No repositories given, assuming $repos..."
 }
 
 trap exit_handler HUP INT QUIT TERM EXIT
