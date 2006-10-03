@@ -217,6 +217,7 @@ make_tar()
 {
 	local optional="$1" && shift
 	local cmd="$1" && shift
+	local tree="$1" && shift
 	local dir="$1" && shift
 	local name="$1" && shift
 	tar_base="$1" && shift
@@ -225,7 +226,7 @@ make_tar()
 		tar_base="$name"
 
 	local id rc=0
-	id="$(traverse_tree "$main_tree_id" "$dir" "$optional")" ||
+	id="$(traverse_tree "$tree" "$dir" "$optional")" ||
 		rc=$?
 	if [ "$rc" = 1 ]; then exit 1
 	elif [ "$rc" != 0 ]; then return 0
@@ -258,7 +259,7 @@ make_archive()
 
 	check_path dirname "$dir_name"
 	get_tar_name "$(basename -- "$dir_name")" "$@"
-	make_tar "$optional" "$cmd" "$dir_name" "$tar_name" "$tar_base"
+	make_tar "$optional" "$cmd" "$main_tree_id" "$dir_name" "$tar_name" "$tar_base"
 }
 
 copy_by_pattern()
