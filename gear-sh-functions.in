@@ -397,6 +397,17 @@ resolve_commit_name()
 	printf %s "$result"
 }
 
+resolve_tree_base_name()
+{
+	local name="$1" && shift
+
+	if [ "$name" = '.' ]; then
+		printf %s "$main_tree_id"
+	else
+		resolve_commit_name "$name"
+	fi
+}
+
 def_spec_pattern='*.spec'
 spec_pattern="$def_spec_pattern"
 find_specfile_in_cwd()
