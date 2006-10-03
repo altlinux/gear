@@ -35,8 +35,11 @@
 #  (copy|gzip|bzip2): glob_pattern..
 #  (copy|gzip|bzip2)?: glob_pattern..
 #  exclude: glob_pattern..
-#  tar(|.gz|.bz2): path_to_directory [options]
-#  tar(|.gz|.bz2)?: path_to_directory [options]
+#  tar(|.gz|.bz2): tree_path [options]
+#  tar(|.gz|.bz2)?: tree_path [options]
+#
+#  tree_path may be a plain path or commit:path, where commit is specified
+#  by tag name (keywords may be used) or full SHA-1.
 #
 #  Valid tar options are:
 #    name=archive_name  - tar archive name, may reference to keywords;
@@ -44,7 +47,7 @@
 #                         to the files in the generated tar archive.
 #    spec=path_to_file  - path to specfile which defines keywords;
 #  Valid tar keywords are:
-#    @dir@ - basename(path_to_directory);
+#    @dir@ - basename(path(tree_path));
 #    @name@, @version@, @release@.
 #  Default tar archive name is @dir@-@version@.
 
@@ -201,7 +204,7 @@ get_tar_name()
 		esac
 	done
 
-	local subst_vars="tar_name"
+	local subst_vars="tar_name tar_tree"
 	[ -z "$tar_base" -o "$tar_base" = ' ' ] ||
 		subst_vars="$subst_vars tar_base"
 
@@ -255,11 +258,16 @@ make_archive()
 		rules_error "No dirname specified"
 	local optional="$1" && shift
 	local cmd="$1" && shift
-	local dir_name="$1" && shift
+	local tree_path="$1" && shift
 
-	check_path dirname "$dir_name"
+	tree_path="$(parse_tree_path dirname "$tree_path")" || return 1
+	local dir_name="${tree_path#*:}"
+	tar_tree="${tree_path%%:*}"
+
 	get_tar_name "$(basename -- "$dir_name")" "$@"
-	make_tar "$optional" "$cmd" "$main_tree_id" "$dir_name" "$tar_name" "$tar_base"
+
+	tar_tree="$(resolve_tree_base_name "$tar_tree")" || return 1
+	make_tar "$optional" "$cmd" "$tar_tree" "$dir_name" "$tar_name" "$tar_base"
 }
 
 copy_by_pattern()
