@@ -408,6 +408,29 @@ resolve_tree_base_name()
 	fi
 }
 
+parse_tree_path()
+{
+	local name="$1" && shift
+	local value="$1" && shift
+
+	[ -n "$value" ] ||
+		rules_error "Empty $name specified"
+
+	local path
+	if [ -z "${value##*:*}" ]; then
+		[ -n "${value%%:*}" ] ||
+			rules_error "Empty commit name in $name specified"
+		path="${value#*:}"
+		[ -n "$path" ] ||
+			rules_error "Empty path in $name specified"
+	else
+		path="$value"
+		value=".:$value"
+	fi
+	check_path "$name" "$path"
+	printf %s "$value"
+}
+
 def_spec_pattern='*.spec'
 spec_pattern="$def_spec_pattern"
 find_specfile_in_cwd()
