@@ -146,18 +146,20 @@ subst_key_in_vars()
 
 subst_keywords()
 {
-	local var="$1" && shift
 	local dir="$1" && shift
 	local name="$1" && shift
 	local version="$1" && shift
 	local release="$1" && shift
 
-	subst_key "$var" '@dir@' "$dir"
-	subst_key "$var" '@name@' "$name"
-	subst_key "$var" '@version@' "$version"
-	subst_key "$var" '@release@' "$release"
+	subst_key_in_vars '@dir@' "$dir" "$@"
+	subst_key_in_vars '@name@' "$name" "$@"
+	subst_key_in_vars '@version@' "$version" "$@"
+	subst_key_in_vars '@release@' "$release" "$@"
 
-	eval check_name "$var" "\"\$$var\""
+	local var
+	for var; do
+		eval check_name "$var" "\"\$$var\""
+	done
 }
 
 get_tar_name()
@@ -197,9 +199,11 @@ get_tar_name()
 	[ -n "$spec_version" ] || spec_version="$pkg_version"
 	[ -n "$spec_release" ] || spec_release="$pkg_release"
 
-	subst_keywords tar_name "$dir" "$spec_name" "$spec_version" "$spec_release"
+	local subst_vars="tar_name"
 	[ -z "$tar_base" -o "$tar_base" = ' ' ] ||
-		subst_keywords tar_base "$dir" "$spec_name" "$spec_version" "$spec_release"
+		subst_vars="$subst_vars tar_base"
+
+	subst_keywords "$dir" "$spec_name" "$spec_version" "$spec_release" $subst_vars
 }
 
 make_tar()
