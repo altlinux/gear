@@ -133,6 +133,17 @@ subst_key()
 	eval "$var_name=\"$(quote_shell_arg "$var_value")\""
 }
 
+subst_key_in_vars()
+{
+	local key_name="$1" && shift
+	local key_value="$1" && shift
+
+	local variable
+	for variable; do
+		subst_key "$variable" "$key_name" "$key_value"
+	done
+}
+
 subst_keywords()
 {
 	local var="$1" && shift
