@@ -144,7 +144,7 @@ subst_key_in_vars()
 	done
 }
 
-subst_keywords()
+subst_spec_keywords()
 {
 	local name="$1" && shift
 	local version="$1" && shift
@@ -197,7 +197,7 @@ get_tar_name()
 		subst_vars="$subst_vars tar_base"
 
 	subst_key_in_vars '@dir@' "$dir" $subst_vars
-	subst_keywords "$spec_name" "$spec_version" "$spec_release" $subst_vars
+	subst_spec_keywords "$spec_name" "$spec_version" "$spec_release" $subst_vars
 
 	check_name "tar name" "$tar_name"
 	[ -n "${subst_vars##*tar_base*}" ] ||
