@@ -155,11 +155,6 @@ subst_keywords()
 	subst_key_in_vars '@name@' "$name" "$@"
 	subst_key_in_vars '@version@' "$version" "$@"
 	subst_key_in_vars '@release@' "$release" "$@"
-
-	local var
-	for var; do
-		eval check_name "$var" "\"\$$var\""
-	done
 }
 
 get_tar_name()
@@ -204,6 +199,10 @@ get_tar_name()
 		subst_vars="$subst_vars tar_base"
 
 	subst_keywords "$dir" "$spec_name" "$spec_version" "$spec_release" $subst_vars
+
+	check_name "tar name" "$tar_name"
+	[ -n "${subst_vars##*tar_base*}" ] ||
+		check_name "tar base" "$tar_base"
 }
 
 make_tar()
