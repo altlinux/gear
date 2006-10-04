@@ -118,6 +118,21 @@ exit_handler()
 	exit $rc
 }
 
+compress_file()
+{
+	local cmd="$1" && shift
+	local file="$1" && shift
+
+	case "$cmd" in
+		gzip|*.gz)
+			gzip -9 "$file"
+			;;
+		bzip2|*.bz2)
+			bzip2 -9 "$file"
+			;;
+	esac
+}
+
 subst_key()
 {
 	local var_name="$1" && shift
@@ -241,14 +256,7 @@ make_tar()
 		git-tar-tree "$id" "$tar_base" >"$outdir/$name.tar"
 	fi
 	verbose "Extracted \"$name.tar\" tarball."
-	case "$cmd" in
-		tar.gz)
-			gzip -9 "$outdir/$name.tar"
-			;;
-		tar.bz2)
-			bzip2 -9 "$outdir/$name.tar"
-			;;
-	esac
+	compress_file "$cmd" "$outdir/$name.tar"
 }
 
 make_archive()
@@ -316,14 +324,7 @@ copy_by_pattern()
 			verbose "Extracted \"$name\" by pattern \"$pattern\"."
 			[ -n "${mode%%*7??}" ] ||
 				chmod a+x "$outdir/$name"
-			case "$cmd" in
-				gzip)
-					gzip -9 "$outdir/$name"
-					;;
-				bzip2)
-					bzip2 -9 "$outdir/$name"
-					;;
-			esac
+			compress_file "$cmd" "$outdir/$name"
 			found=1
 		done <"$workdir/blobs"
 		[ -n "$found" -o "$optional" = 1 ] ||
