@@ -1,5 +1,5 @@
 Name: gear
-Version: 1.0.2
+Version: 1.0.3
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -40,6 +40,37 @@ See %_docdir/%name-%version/QUICKSTART.ru_RU.KOI8-R for details.
 %doc QUICKSTART*
 
 %changelog
+* Thu Oct 05 2006 Dmitry V. Levin <ldv@altlinux.org> 1.0.3-alt1
+- Update copyright information.
+- Add fresh git-core to package requirements.
+- gear:
+  + Process exclude directives without warnings (vsu).
+- gear-sh-functions.in:
+  + Fix checks for multiple specfiles (vsu).
+- gear-release:
+  + Create tags in refs/releases/ directory (ldv).
+- gear-update-archive:
+  + Fix old source removal (ldv).
+  + Fix check for untracked or modified files (legion).
+  + Implement top directory update (legion).
+  + Fix destination directory validation (legion).
+  + Fix typos (vsu).
+- gear-hsh-build:
+  + more flexible hasher support (raorn).
+  + also pass --repo option to hasher (raorn).
+  + honor "target" option from hasher config (raorn).
+  + use $GIT_DIR/$CWD if no repositories given (raorn).
+- Makefile:
+  + Specify the program source for man pages (vsu).
+  + Remove boldface from the NAME section of man pages (vsu).
+- gear.1.inc:
+  + Document operating modes of gear (vsu).
+  + Document current limitations of gear (vsu).
+- gear-commit.1.inc:
+  + Fix short description (ldv).
+- gear-update-archive.1.inc, gear-update-directory.1.inc:
+  + Fix typos (vsu).
+
 * Fri Sep 08 2006 Dmitry V. Levin <ldv@altlinux.org> 1.0.2-alt1
 - gear:
   + New option: --update-spec (legion).
