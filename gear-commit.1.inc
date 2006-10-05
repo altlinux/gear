@@ -1,4 +1,6 @@
 .\" Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+.\" Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
+.\" Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 .\"
 .\" Additional documentation for the gear-commit command.
 .\"
@@ -17,7 +19,7 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-\fBgear\-commit\fR \- invoke \fBgit\-commit\fR using last changelog entry from spec file as commit message
+gear\-commit \- invoke git\-commit using last changelog entry from spec file as commit message
 
 [OPTIONS]
 .TP
@@ -41,4 +43,3 @@ Specifies a commit-ish git object where to look for spec file.
 [SEE ALSO]
 .BR gear (1),
 .BR git-commit (1).
-

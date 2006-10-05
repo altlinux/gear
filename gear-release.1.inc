@@ -1,4 +1,6 @@
 .\" Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+.\" Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
+.\" Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 .\"
 .\" Additional documentation for the gear-release command.
 .\"
@@ -17,7 +19,7 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-\fBgear-release\fR \- creates a release tag for the project
+gear-release \- creates a release tag for the project
 
 [ENVIRONMENT]
 .TP

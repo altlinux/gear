@@ -1,5 +1,8 @@
 #
 # Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+# Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
+# Copyright (C) 2006  Sir Raorn <raorn@altlinux.org>
+# Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 #
 # Makefile for the gear project.
 #
@@ -31,7 +34,7 @@ mandir = $(datadir)/man
 man1dir = $(mandir)/man1
 DESTDIR =
 
-HELP2MAN1 = env PATH=":$$PATH" help2man -N -s1
+HELP2MAN1 = env PATH=":$$PATH" help2man -N -s1 -S '$(PROJECT) $(VERSION)'
 INSTALL = install
 LN_S = ln -s
 MKDIR_P = mkdir -p

@@ -1,4 +1,5 @@
 .\" Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+.\" Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 .\"
 .\" Additional documentation for the gear-srpmimport command.
 .\"
@@ -17,7 +18,7 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-\fBgear-srpmimport\fR \- Incrementally import source packages to git repository
+gear-srpmimport \- Incrementally import source packages to git repository
 
 [ENVIRONMENT]
 .TP
