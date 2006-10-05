@@ -168,7 +168,8 @@ fi
 trap exit_handler HUP INT QUIT TERM EXIT
 
 # Remove obsolete source
-find "$destdir" -mindepth 1 -maxdepth 1 ! -path "./.git" -print |xargs -r rm $verbose -rf --
+find "$destdir" -mindepth 1 -maxdepth 1 ! -name '.git' -print0 |
+	xargs -r0 rm $verbose -rf --
 [ "$destdir" = "." ] || rmdir $verbose -- "$destdir"
 
 # Copy new sources
