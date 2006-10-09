@@ -185,21 +185,31 @@ subst_spec_keywords()
 	subst_key_in_vars '@release@' "$release" "$@"
 }
 
-subst_NVR_from_spec()
+subst_NVR_from_spec_file()
 {
 	local spec="$1" && shift
 
 	local spec_name= spec_version= spec_release=
 
 	if [ -n "$spec" ]; then
-		cat_blob "$main_tree_id" "$spec" >"$workdir/spec"
-		get_NVR_from_spec "$workdir/spec"
+		get_NVR_from_spec "$spec"
 	fi
 	[ -n "$spec_name" ] || spec_name="$pkg_name"
 	[ -n "$spec_version" ] || spec_version="$pkg_version"
 	[ -n "$spec_release" ] || spec_release="$pkg_release"
 
 	subst_spec_keywords "$spec_name" "$spec_version" "$spec_release" "$@"
+}
+
+subst_NVR_from_spec()
+{
+	local spec="$1" && shift
+
+	if [ -n "$spec" ]; then
+		cat_blob "$main_tree_id" "$spec" >"$workdir/spec"
+		spec="$workdir/spec"
+	fi
+	subst_NVR_from_spec_file "$spec" "$@"
 }
 
 get_tar_name()
