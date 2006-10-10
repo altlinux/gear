@@ -136,7 +136,7 @@ destdir="${destdir#$topdir/}"
 [ "$destdir" = "${destdir#/}" ] ||
 	fatal "$destdir: directory out of \`$topdir' tree."
 
-[ -n "$destdir" ] || destdir="."
+[ -n "$destdir" ] && destdir="${destdir%/}" || destdir="."
 
 git-rm -n "$destdir" >/dev/null
 
