@@ -183,5 +183,8 @@ case "$srctype" in
 esac
 [ -d "$destdir" ] ||
 	fatal "$destdir: result of extraction is not a directory"
-git-rm $verbose "$destdir"
-git-add $verbose "$destdir"
+
+git-ls-files -z "$destdir" |
+	git-update-index --remove --force-remove -z --stdin
+git-ls-files -z --others --modified "$destdir" |
+	git-update-index --add ${verbose:+--verbose} -z --stdin
