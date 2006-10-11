@@ -120,7 +120,7 @@ done
 	show_usage 'Too many arguments.'
 
 source="$(readlink -ev "$1")"; shift
-destdir="$(readlink -ev "$1")/"; shift
+destdir="$(readlink -ev "$1")"; shift
 
 [ "$source" != "$destdir" ] ||
 	fatal "\`$source' and \`$destdir' are the same place"
@@ -131,6 +131,7 @@ destdir="$(readlink -ev "$1")/"; shift
 # Move to topdir
 cd "$(git-rev-parse --show-cdup)"
 topdir="$(readlink -ev .)"
+destdir="$destdir/"
 destdir="${destdir#$topdir/}"
 
 [ "$destdir" = "${destdir#/}" ] ||
