@@ -343,6 +343,22 @@ is_ancestor_commit()
 	[ -z "${bases##* $ancestor *}" ] || return 1
 }
 
+check_tag_name()
+{
+	local name="$1" && shift
+
+	[ -n "$name" ] ||
+		rules_error 'Empty tag name is not allowed'
+	[ -n "${name##/*}" ] ||
+		rules_error "Invalid tag name \"$name\": initial '/' is not allowed"
+	[ -n "${name%%*/}" ] ||
+		rules_error "Invalid tag name \"$name\": trailing '/' is not allowed"
+	[ -n "${name##*[][*?^~:@[:space:]]*}" ] ||
+		rules_error "Invalid tag name \"$name\": invalid characters found"
+	git-check-ref-format "tags/$name" ||
+		rules_error "Invalid tag name \"$name\""
+}
+
 def_spec_pattern='*.spec'
 spec_pattern="$def_spec_pattern"
 find_specfile_in_cwd()
