@@ -494,9 +494,8 @@ subst_key()
 		check_name "$key_name" "$key_value"
 		quoted="$(quote_sed_regexp "$key_value")"
 		var_value="$(printf %s "$var_value" |sed "s/$key_name/$quoted/g")"
+		eval "$var_name=\"$(quote_shell_arg "$var_value")\""
 	fi
-
-	eval "$var_name=\"$(quote_shell_arg "$var_value")\""
 }
 
 subst_key_in_vars()
