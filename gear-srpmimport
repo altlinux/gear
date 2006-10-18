@@ -120,7 +120,7 @@ optimize_rules()
 		done >"$tmp"
 	sed -ne 's/^[^:]\+: \([^ ]\+ .*\|[^ .]\+$\)/&/p' "$rules" >>"$tmp"
 	mv "$tmp" "$rules"
-	git-add $verbose "$rules"
+	git-update-index --add ${verbose:+--verbose} -- "$rules"
 }
 
 untar()
@@ -194,10 +194,11 @@ untar()
 				printf '%s: %s name=%s base=%s\n' "$method_tar" "$tar_dir" "$tar_name" "$base"
 			fi
 		fi |sed "s/${quoted:-@version@}/@version@/g" >>"$gear_rules"
-		git-add $verbose "$tar_dir"
+		git-ls-files -z --others --modified -- "$tar_dir" | \
+			git-update-index --add ${verbose:+--verbose} -z --stdin
 	else
 		printf '%s: %s\n' "$method_copy" "$f" >>"$gear_rules"
-		git-add $verbose "$f"
+		git-update-index --add ${verbose:+--verbose} -- "$f"
 	fi
 }
 
@@ -245,7 +246,7 @@ import()
 			continue
 		fi
 		if [ "$f" = "$spec" ]; then
-			git-add $verbose "$f"
+			git-update-index --add ${verbose:+--verbose} -- "$f"
 			continue
 		fi
 		if [ "$f" = "$gear_rules" ]; then
@@ -266,7 +267,7 @@ import()
 				;;
 			*)
 				printf 'copy: %s\n' "$f" >>"$gear_rules"
-				git-add $verbose "$f"
+				git-update-index --add ${verbose:+--verbose} -- "$f"
 				;;
 		esac
 	done
