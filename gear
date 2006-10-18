@@ -27,15 +27,22 @@
 #  directive: args
 #
 #  Valid directives are:
-#  spec, copy, gzip, bzip2, exclude, tar, tar.gz, tar.bz2
+#    spec, tags, copy, diff, diff.gz, diff.bz2, gzip, bzip2, exclude,
+#    tar, tar.gz, tar.bz2
 #
 #  Each directive has own args syntax:
 #  spec: path_to_file
+#  tags: path_to_directory
 #  (copy|gzip|bzip2): glob_pattern..
 #  (copy|gzip|bzip2)?: glob_pattern..
 #  exclude: glob_pattern..
-#  tar(|.gz|.bz2): path_to_directory [options]
-#  tar(|.gz|.bz2)?: path_to_directory [options]
+#  tar(|.gz|.bz2): tree_path [options]
+#  tar(|.gz|.bz2)?: tree_path [options]
+#  diff(|.gz|.bz2): old_tree_path new_tree_path options
+#  diff(|.gz|.bz2)?: old_tree_path new_tree_path options
+#
+#  tree_path may be a plain path or commit:path, where commit is specified
+#  by tag name (keywords may be used) or full SHA-1.
 #
 #  Valid tar options are:
 #    name=archive_name  - tar archive name, may reference to keywords;
@@ -43,9 +50,18 @@
 #                         to the files in the generated tar archive.
 #    spec=path_to_file  - path to specfile which defines keywords;
 #  Valid tar keywords are:
-#    @dir@ - basename(path_to_directory);
+#    @dir@ - basename(path(tree_path));
 #    @name@, @version@, @release@.
 #  Default tar archive name is @dir@-@version@.
+#
+#  Valid diff options are:
+#    name=diff_name     - diff name, may reference to keywords;
+#    spec=path_to_file  - path to specfile which defines keywords;
+#  Valid diff keywords are:
+#    @old_dir@ - basename(path(old_tree_path));
+#    @new_dir@ - basename(path(new_tree_path));
+#    @name@, @version@, @release@.
+#  Default diff name is @new_dir@-@version@-@release@.patch.
 
 . gear-sh-functions
 
@@ -87,7 +103,7 @@ Options:
   --export-dir=DIRNAME      write source files to specified directory;
   --describe                describe package as "%{NAME} %{VERSION} %{RELEASE}";
   -r, --rules=FILENAME      name of file with rules, default is .$PROG-rules;
-  -t, --tree-ish=ID         tree, commit or tag object name;
+  -t, --tree-ish=ID         COMMIT[:PATH] specifying the tree to process;
   -q, --quiet               try to be more quiet;
   -v, --verbose             print a message for each action;
   -V, --version             print program version and exit;
@@ -105,47 +121,39 @@ exit_handler()
 {
 	local rc=$?
 	trap - EXIT
-	[ -z "$tmpdir" ] ||
-		rm -rf -- "$tmpdir"
 	if [ -n "$need_git_reset" ]; then
 		git-reset --soft HEAD^ &&
 			verbose "Reverted temporary commit."
+	[ -z "$tmpdir" ] ||
+		rm -rf -- "$tmpdir"
 	fi
 	exit $rc
 }
 
-subst_key()
+compress_file()
 {
-	local var_name="$1" && shift
-	local key_name="$1" && shift
-	local key_value="$1" && shift
+	local cmd="$1" && shift
+	local file="$1" && shift
 
-	local quoted var_value
-	eval "var_value=\"\$$var_name\""
-
-	if [ "$var_value" != "${var_value#*$key_name*}" ]; then
-		check_name "$key_name" "$key_value"
-		quoted="$(quote_sed_regexp "$key_value")"
-		var_value="$(printf %s "$var_value" |sed "s/$key_name/$quoted/g")"
-	fi
-
-	eval "$var_name=\"$(quote_shell_arg "$var_value")\""
+	case "$cmd" in
+		gzip|*.gz)
+			gzip -9 "$file"
+			;;
+		bzip2|*.bz2)
+			bzip2 -9 "$file"
+			;;
+	esac
 }
 
-subst_keywords()
+subst_NVR_from_spec()
 {
-	local var="$1" && shift
-	local dir="$1" && shift
-	local name="$1" && shift
-	local version="$1" && shift
-	local release="$1" && shift
+	local spec="$1" && shift
 
-	subst_key "$var" '@dir@' "$dir"
-	subst_key "$var" '@name@' "$name"
-	subst_key "$var" '@version@' "$version"
-	subst_key "$var" '@release@' "$release"
-
-	eval check_name "$var" "\"\$$var\""
+	if [ -n "$spec" ]; then
+		cat_blob "$main_tree_id" "$spec" >"$workdir/spec"
+		spec="$workdir/spec"
+	fi
+	subst_NVR_from_spec_file "$spec" "$@"
 }
 
 get_tar_name()
@@ -161,7 +169,7 @@ get_tar_name()
 	# Special non-empty marker.
 	tar_base=' '
 
-	local opt quoted spec= spec_name= spec_version= spec_release=
+	local opt spec=
 
 	for opt; do
 		case "$opt" in
@@ -177,25 +185,23 @@ get_tar_name()
 		esac
 	done
 
-	if [ -n "$spec" ]; then
-		cat_blob "$tree_id" "$spec" >"$workdir/spec"
-		spec_name="$(sed '/^name:[[:space:]]*/I!d;s///;q' "$workdir/spec")"
-		spec_version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$workdir/spec")"
-		spec_release="$(sed '/^release:[[:space:]]*/I!d;s///;q' "$workdir/spec")"
-	fi
-	[ -n "$spec_name" ] || spec_name="$pkg_name"
-	[ -n "$spec_version" ] || spec_version="$pkg_version"
-	[ -n "$spec_release" ] || spec_release="$pkg_release"
-
-	subst_keywords tar_name "$dir" "$spec_name" "$spec_version" "$spec_release"
+	local subst_vars="tar_name tar_tree"
 	[ -z "$tar_base" -o "$tar_base" = ' ' ] ||
-		subst_keywords tar_base "$dir" "$spec_name" "$spec_version" "$spec_release"
+		subst_vars="$subst_vars tar_base"
+
+	subst_key_in_vars '@dir@' "$dir" $subst_vars
+	subst_NVR_from_spec "$spec" $subst_vars
+
+	check_name "tar name" "$tar_name"
+	[ -n "${subst_vars##*tar_base*}" ] ||
+		check_name "tar base" "$tar_base"
 }
 
 make_tar()
 {
 	local optional="$1" && shift
 	local cmd="$1" && shift
+	local tree="$1" && shift
 	local dir="$1" && shift
 	local name="$1" && shift
 	tar_base="$1" && shift
@@ -203,29 +209,11 @@ make_tar()
 	[ "$tar_base" != ' ' ] ||
 		tar_base="$name"
 
-	local id
-	if [ "$dir" = . ]; then
-		id="$tree_id"
-	else
-		local dir_name base_name quoted rc=0
-		dir_name="$(dirname -- "$dir")"
-		base_name="$(basename -- "$dir")"
-		tree="$(traverse_tree "$tree_id" "$dir_name" "$optional")" ||
-			rc=$?
-		if [ "$rc" = 1 ]; then exit 1
-		elif [ "$rc" != 0 ]; then return 0
-		fi
-		quoted="$(quote_sed_regexp "$base_name")"
-		id="$(git-ls-tree "$tree" "$base_name" |
-			sed -ne 's/^[^[:space:]]\+[[:space:]]\+tree[[:space:]]\+\([^[:space:]]\+\)[[:space:]]\+'"$quoted"'$/\1/p')"
-		if [ -z "$id" ]; then
-			if [ "$optional" = 1 ]; then
-				return 0
-			else
-				rules_error "tree $dir not found in $tree"
-			fi
-		fi
-
+	local id rc=0
+	id="$(traverse_tree "$tree" "$dir" "$optional")" ||
+		rc=$?
+	if [ "$rc" = 1 ]; then exit 1
+	elif [ "$rc" != 0 ]; then return 0
 	fi
 
 	if [ -z "$tar_base" ]; then
@@ -234,14 +222,7 @@ make_tar()
 		git-tar-tree "$id" "$tar_base" >"$outdir/$name.tar"
 	fi
 	verbose "Extracted \"$name.tar\" tarball."
-	case "$cmd" in
-		tar.gz)
-			gzip -9 "$outdir/$name.tar"
-			;;
-		tar.bz2)
-			bzip2 -9 "$outdir/$name.tar"
-			;;
-	esac
+	compress_file "$cmd" "$outdir/$name.tar"
 }
 
 make_archive()
@@ -251,11 +232,111 @@ make_archive()
 		rules_error "No dirname specified"
 	local optional="$1" && shift
 	local cmd="$1" && shift
-	local dir_name="$1" && shift
+	local tree_path="$1" && shift
 
-	check_path dirname "$dir_name"
+	tree_path="$(parse_tree_path dirname "$tree_path")" || return 1
+	local dir_name="${tree_path#*:}"
+	tar_tree="${tree_path%%:*}"
+
 	get_tar_name "$(basename -- "$dir_name")" "$@"
-	make_tar "$optional" "$cmd" "$dir_name" "$tar_name" "$tar_base"
+
+	tar_tree="$(resolve_tree_base_name "$tar_tree")" || return 1
+	make_tar "$optional" "$cmd" "$tar_tree" "$dir_name" "$tar_name" "$tar_base"
+}
+
+get_diff_name()
+{
+	local old_dir="$1" && shift
+	local new_dir="$1" && shift
+
+	[ "$old_dir" != '.' ] || old_dir=
+	[ "$new_dir" != '.' ] || new_dir=
+
+	if [ -z "$new_dir" ]; then
+		diff_name='@name@-@version@-@release@.patch'
+	else
+		diff_name='@new_dir@-@version@-@release@.patch'
+	fi
+
+	local opt spec=
+
+	for opt; do
+		case "$opt" in
+			spec=*) spec="${opt#spec=}"
+				check_path specfile "$spec"
+				;;
+			name=*) diff_name="${opt#name=}"
+				;;
+			*) rules_error "Unrecognized option: $opt"
+				;;
+		esac
+	done
+
+	local subst_vars="diff_name diff_old_tree diff_new_tree"
+	subst_key_in_vars '@old_dir@' "$old_dir" $subst_vars
+	subst_key_in_vars '@new_dir@' "$new_dir" $subst_vars
+	subst_NVR_from_spec "$spec" $subst_vars
+}
+
+make_diff()
+{
+	local optional="$1" && shift
+	local cmd="$1" && shift
+	local old_tree="$1" && shift
+	local old_dir="$1" && shift
+	local new_tree="$1" && shift
+	local new_dir="$1" && shift
+	local name="$1" && shift
+
+	local old_id new_id rc
+
+	rc=0
+	old_id="$(traverse_tree "$old_tree" "$old_dir" "$optional")" ||
+		rc=$?
+	if [ "$rc" = 1 ]; then exit 1
+	elif [ "$rc" != 0 ]; then return 0
+	fi
+
+	rc=0
+	new_id="$(traverse_tree "$new_tree" "$new_dir" "$optional")" ||
+		rc=$?
+	if [ "$rc" = 1 ]; then exit 1
+	elif [ "$rc" != 0 ]; then return 0
+	fi
+
+	git-diff-tree --patch-with-stat "$old_id" "$new_id" >"$outdir/$name"
+	verbose "Extracted \"$name\" diff."
+	compress_file "$cmd" "$outdir/$name"
+}
+
+make_difference()
+{
+	# format: "$optional cmd old_dir new_dir options.."
+	[ $# -ge 4 ] ||
+		rules_error "No old_dir or new_dir specified"
+	local optional="$1" && shift
+	local cmd="$1" && shift
+	local old_dir="$1" && shift
+	local new_dir="$1" && shift
+
+	old_dir="$(parse_tree_path dirname "$old_dir")" ||
+		rules_error "Invalid old_dir specified"
+	diff_old_tree="${old_dir%%:*}"
+	old_dir="${old_dir#*:}"
+
+	new_dir="$(parse_tree_path dirname "$new_dir")" ||
+		rules_error "Invalid new_dir specified"
+	diff_new_tree="${new_dir%%:*}"
+	new_dir="${new_dir#*:}"
+
+	get_diff_name "$(basename -- "$old_dir")" "$(basename -- "$new_dir")" "$@"
+
+	diff_old_tree="$(resolve_tree_base_name "$diff_old_tree")" ||
+		rules_error "Invalid old tree"
+	diff_new_tree="$(resolve_tree_base_name "$diff_new_tree")" ||
+		rules_error "Invalid new tree"
+
+	make_diff "$optional" "$cmd" "$diff_old_tree" "$old_dir" "$diff_new_tree" "$new_dir" "$diff_name"
 }
 
 copy_by_pattern()
@@ -272,7 +353,7 @@ copy_by_pattern()
 		local dir_name base_name rc=0
 		dir_name="$(dirname "$pattern")"
 		base_name="$(basename "$pattern")"
-		tree="$(traverse_tree "$tree_id" "$dir_name" "$optional")" ||
+		tree="$(traverse_tree "$main_tree_id" "$dir_name" "$optional")" ||
 			rc=$?
 		if [ "$rc" = 1 ]; then exit 1
 		elif [ "$rc" != 0 ]; then return 0
@@ -304,14 +385,7 @@ copy_by_pattern()
 			verbose "Extracted \"$name\" by pattern \"$pattern\"."
 			[ -n "${mode%%*7??}" ] ||
 				chmod a+x "$outdir/$name"
-			case "$cmd" in
-				gzip)
-					gzip -9 "$outdir/$name"
-					;;
-				bzip2)
-					bzip2 -9 "$outdir/$name"
-					;;
-			esac
+			compress_file "$cmd" "$outdir/$name"
 			found=1
 		done <"$workdir/blobs"
 		[ -n "$found" -o "$optional" = 1 ] ||
@@ -360,12 +434,16 @@ parse_rules()
 				;;
 		esac
 		case "$cmd" in
-			spec|exclude)
+			spec|exclude|tags)
 				continue
 				;;
 			tar|tar.gz|tar.bz2)
 				make_archive "$optional" "$cmd" $options ||
 					rules_error "Failed to make archive"
+				;;
+			diff|diff.gz|diff.bz2)
+				make_difference "$optional" "$cmd" $options ||
+					rules_error "Failed to make diff"
 				;;
 			copy|gzip|bzip2)
 				copy_by_pattern "$optional" "$cmd" $options ||
@@ -391,8 +469,9 @@ outdir=
 describe=
 do_commit=
 rules=".$PROG-rules"
+tag_dir_default=".$PROG-tags"
 tar_compress=--gzip
-tree_id=HEAD
+main_tree_id=HEAD
 while :; do
 	case "$1" in
 		--) shift; break
@@ -400,7 +479,7 @@ while :; do
 		--no-compress) tar_compress=
 			;;
 		--commit) do_commit=1
-			[ "$tree_id" = HEAD ] ||
+			[ "$main_tree_id" = HEAD ] ||
 				show_usage 'Options --commit and --tree-ish are mutually exclusive.'
 			;;
 		--bzip2) tar_compress=--bzip2
@@ -429,8 +508,8 @@ while :; do
 			;;
 		-r|--rules) shift; rules="$1"
 			;;
-		-t|--tree-ish) shift; tree_id="$1"
-			[ -z "$do_commit" -o "$tree_id" = HEAD ] ||
+		-t|--tree-ish) shift; main_tree_id="$1"
+			[ -z "$do_commit" -o "$main_tree_id" = HEAD ] ||
 				show_usage 'Options --commit and --tree-ish are mutually exclusive.'
 			;;
 		-h|--help) show_help
@@ -470,15 +549,13 @@ git_dir="$(git-rev-parse --git-dir)"
 git_dir="$(readlink -ev "$git_dir")"
 
 # Check given tree-ish.
-type="$(git-cat-file -t "$tree_id")" ||
-	fatal "$tree_id: Invalid tree-ish object"
-case "$type" in
-	tag|commit|tree)
-		;;
-	*)
-		fatal "$type: Invalid tree-ish type"
-		;;
-esac
+main_commit_id="${main_tree_id%%:*}"
+main_commit_sha1="$(get_commit_sha1 "$main_commit_id")" ||
+	fatal "Invalid commit \"$main_commit_id\""
+main_tree_sha1="$(get_object_sha1 "$main_tree_id")" ||
+	fatal "Invalid tree \"$main_tree_id\""
+git-cat-file -e "$main_tree_sha1^{tree}" ||
+	fatal "Invalid tree \"$main_tree_id\""
 
 if [ -n "$update_spec" ]; then
 	[ -n "$rpmbuild" -a -z "${GIT_DIR:-}" ] ||
@@ -508,6 +585,14 @@ if [ -n "$describe" ]; then
 	exit 0
 fi
 
+# Create a temporary object directory for extracting stored tags.
+orig_object_dir="${GIT_OBJECT_DIRECTORY-"$git_dir/objects"}"
+mkdir -p "$tmpdir/objects/info"
+printf %s\\n "$orig_object_dir" >"$tmpdir/objects/info/alternates"
+GIT_OBJECT_DIRECTORY="$tmpdir/objects"
+export GIT_OBJECT_DIRECTORY
+
+find_tags
 parse_rules
 
 install -pm644 "$workdir/specfile" "$outdir/${specfile##*/}"

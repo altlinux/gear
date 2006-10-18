@@ -24,7 +24,7 @@
 
 specfile=
 rules="${RULES:-.gear-rules}"
-tree_id=${TREE_ID:-HEAD}
+main_tree_id=${TREE_ID:-HEAD}
 commitlog=
 
 workdir=
@@ -70,7 +70,7 @@ elif [ "$*" != "${*#--spec[= ]}" ]; then
 	esac
 	[ -f "$specfile" -o -z "$specfile" ] ||
 	    fatal "$specfile: file not available"
-elif git-cat-file -t "$tree_id" >/dev/null 2>&1; then
+elif git-cat-file -t "$main_tree_id" >/dev/null 2>&1; then
 	trap exit_handler HUP INT QUIT TERM EXIT
 	workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
 
@@ -80,7 +80,7 @@ elif git-cat-file -t "$tree_id" >/dev/null 2>&1; then
 
 	rm -rf -- "$workdir"
 	trap - HUP INT QUIT TERM EXIT
-	unset rules tree_id workdir
+	unset rules main_tree_id workdir
 else
 	cd "$(git-rev-parse --show-cdup)"
 	specfile="$(set +f; find_specfile_in_cwd '' *)" ||:
