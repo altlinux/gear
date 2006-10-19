@@ -42,6 +42,7 @@ Usage: $PROG [Options] <src-$srctype> <dst-directory>
 Update subdirectory from source $srctype.
 
 Options: ${archive_help:+$archive_help}
+  --ignore-exclude    ignore .gitignore and .git/info/exclude;
   -f,--force          remove files from the <dst-directory>
                       even if untracked or modified files found;
   -v,--verbose        print a message for each action;
@@ -87,13 +88,16 @@ exit_handler()
 	exit $rc
 }
 
-TEMP=`getopt -n $PROG -o f,t:,v,V,h -l force,tardir:,verbose,version,help -- "$@"` || show_usage
+TEMP=`getopt -n $PROG -o f,t:,v,V,h -l ignore-exclude,force,tardir:,verbose,version,help -- "$@"` || show_usage
 eval set -- "$TEMP"
 
 force=
 tardir=
+ignore_exclude=
 while :; do
 	case "$1" in
+	    --ignore-exclude) ignore_exclude=1
+		;;
 	    -f|--force) force=1
 		;;
 	    -t|--tardir) shift
@@ -185,7 +189,12 @@ esac
 [ -d "$destdir" ] ||
 	fatal "$destdir: result of extraction is not a directory"
 
-git-ls-files -z "$destdir" |
-	git-update-index --remove --force-remove -z --stdin
-git-ls-files -z --others --modified "$destdir" |
-	git-update-index --add ${verbose:+--verbose} -z --stdin
+if [ -n "$ignore_exclude" ]; then
+	git-ls-files -z "$destdir" |
+		git-update-index --remove --force-remove -z --stdin
+	git-ls-files -z --others --modified "$destdir" |
+		git-update-index --add ${verbose:+--verbose} -z --stdin
+else
+	git-rm $verbose "$destdir"
+	git-add $verbose "$destdir"
+fi
