@@ -124,9 +124,9 @@ exit_handler()
 	if [ -n "$need_git_reset" ]; then
 		git-reset --soft HEAD^ &&
 			verbose "Reverted temporary commit."
+	fi
 	[ -z "$tmpdir" ] ||
 		rm -rf -- "$tmpdir"
-	fi
 	exit $rc
 }
 
