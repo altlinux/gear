@@ -82,7 +82,7 @@ exit_handler()
 		mkdir -p -- "$destdir"
 		cd "$destdir"
 		git-checkout-index -a
-		info "unable to unpack new archive"
+		msg_info "unable to unpack new archive"
 	fi
 	exit $rc
 }

@@ -88,7 +88,7 @@ exit_handler()
 		if [ -n "$cleanup_repo" ]; then
 			rm -rf $verbose -- "$prefix/$repo"
 		else
-			info "You may add \`\`rpm file:$prefix/$repo $target hasher'' to your sources.list"
+			msg_info "You may add \`\`rpm file:$prefix/$repo $target hasher'' to your sources.list"
 		fi
 	fi
 	exit $rc
@@ -171,7 +171,7 @@ for git_repo in $repos; do
 	fi
 	[ -d "$git_dir" ] || continue
 	git_dir="$(readlink -ev "$git_dir")"
-	info "Building $git_dir${git_tree:+ with tag $git_tree}..."
+	msg_info "Building $git_dir${git_tree:+ with tag $git_tree}..."
 	export GIT_DIR="$git_dir"
 	run_command gear $quiet $verbose ${git_tree:+--tree="$git_tree"} --hasher -- "$hasher" $quiet $verbose "$@" --target="$target" --repo="$repo" -- "$prefix"
 	save_IFS="$IFS"

@@ -24,7 +24,7 @@
 PROG="${0##*/}"
 PROG_VERSION='@VERSION@'
 
-info()
+msg_info()
 {
 	printf %s\\n "$PROG: $*" >&2
 }
@@ -40,12 +40,12 @@ verbose=
 verbose()
 {
 	[ -n "$verbose" ] || return 0
-	info "$@"
+	msg_info "$@"
 }
 
 show_usage()
 {
-	[ -z "$*" ] || info "$*"
+	[ -z "$*" ] || msg_info "$*"
 	echo "Try \`$PROG --help' for more information." >&2
 	exit 1
 }
@@ -63,7 +63,7 @@ rules_info()
 {
 	local lineno_text=
 	[ -z "$lineno" ] || lineno_text=" line $lineno"
-	info "$rules$lineno_text: $*"
+	msg_info "$rules$lineno_text: $*"
 }
 
 # quote argument for sed regexp.
@@ -452,9 +452,9 @@ find_specfile_in_cwd()
 			break
 	done
 	if [ -z "$spec" ]; then
-		info "${prefix}Spec file not found."
+		msg_info "${prefix}Spec file not found."
 	elif [ -n "$many_specs" ]; then
-		info "${prefix}Too many spec files - ignored all."
+		msg_info "${prefix}Too many spec files - ignored all."
 		spec=
 	fi
 
