@@ -1,5 +1,5 @@
 Name: gear
-Version: 1.0.3
+Version: 1.1.0
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -40,6 +40,27 @@ See %_docdir/%name-%version/QUICKSTART.ru_RU.KOI8-R for details.
 %doc QUICKSTART*
 
 %changelog
+* Wed Nov 22 2006 Dmitry V. Levin <ldv@altlinux.org> 1.1.0-alt1
+- gear, gear-commit, gear-sh-functions.in:
+  Reworked to implement .gear-rules "tags:" directive and
+  .gear-tags directory support (vsu, raorn).
+- gear-update-tag:
+  New utility, updates list of stored tags
+  in the package repository (vsu).
+- gear-update-archive:
+  Avoid loss of source files due to .gitignore (vsu).
+- gear-release:
+  Removed unneeded utility, the idea of release tags
+  seems to be dead-end (ldv).
+- Renamed info() to msg_info() to avoid ambiguity and
+  unwanted package requirements (ldv).
+- QUICKSTART.ru_RU.KOI8-R: Fix typos (#10229).
+- gear-srpmimport:
+  Removed implicit requirement for --branch (ldv, #10274).
+- gear:
+  Added keyword substitution in directory name (ldv, #10091).
+  Replaced deprecated "git-tar-tree" with "git-archive --format=tar" (ldv).
+
 * Thu Oct 05 2006 Dmitry V. Levin <ldv@altlinux.org> 1.0.3-alt1
 - Update copyright information.
 - Add fresh git-core to package requirements.
