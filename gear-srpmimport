@@ -288,7 +288,7 @@ TEMP=`getopt -n $PROG -o h,q,v,V -l branch:,import-only,no-untar,rules:,spec-pat
 	show_usage
 eval set -- "$TEMP"
 
-branch_import=
+branch_import=srpms
 import_only=
 no_untar=
 read_from_stdin=
@@ -336,14 +336,6 @@ fi
 GIT_DIR="$(git-rev-parse --git-dir)"
 GIT_DIR="$(readlink -ev "$GIT_DIR")"
 export GIT_DIR
-
-if [ -n "$branch_import" ]; then
-	# Check given branch name
-	[ -f "$GIT_DIR/refs/heads/$branch_import" ] ||
-		fatal "$branch_import: branch not found"
-else
-	branch_import=srpms
-fi
 
 branch_orig="$(git-symbolic-ref HEAD)"
 head_orig="$(git-rev-parse --verify HEAD 2>/dev/null ||:)"
