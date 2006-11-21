@@ -13,8 +13,8 @@ Source: %name-%version.tar
 # due to gear-srpmimport.
 Requires: faketime
 
-# due to gear-release.
-Requires: git-core >= 0:1.4.2.1-alt2
+# due to git-archive.
+Requires: git-core >= 0:1.4.3
 
 # hasher>=1.0.30 supports tar packages made by gear utility.
 Conflicts: hasher < 0:1.0.30
