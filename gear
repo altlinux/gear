@@ -220,11 +220,7 @@ make_tar()
 	elif [ "$rc" != 0 ]; then return 0
 	fi
 
-	if [ -z "$tar_base" ]; then
-		git-tar-tree "$id" >"$outdir/$name.tar"
-	else
-		git-tar-tree "$id" "$tar_base" >"$outdir/$name.tar"
-	fi
+	git-archive --format=tar ${tar_base:+--prefix="$tar_base"/} "$id" >"$outdir/$name.tar"
 	verbose "Extracted \"$name.tar\" tarball."
 	compress_file "$cmd" "$outdir/$name.tar"
 }
