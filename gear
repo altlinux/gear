@@ -158,10 +158,10 @@ subst_NVR_from_spec()
 
 get_tar_name()
 {
-	local dir="$1" && shift
+	local dir="$dir_name"
 
-	if [ "$dir" = . ]; then
-		dir=
+	[ "$dir" != . ] || dir=
+	if [ -z "$dir" ]; then
 		tar_name='@name@-@version@'
 	else
 		tar_name='@dir@-@version@'
@@ -189,9 +189,13 @@ get_tar_name()
 	[ -z "$tar_base" -o "$tar_base" = ' ' ] ||
 		subst_vars="$subst_vars tar_base"
 
+	subst_NVR_from_spec "$spec" dir $subst_vars
 	subst_key_in_vars '@dir@' "$dir" $subst_vars
-	subst_NVR_from_spec "$spec" $subst_vars
 
+	if [ -n "$dir" -a "$dir" != "$dir_name" ]; then
+		check_name "dir name" "$dir"
+		dir_name="$dir"
+	fi
 	check_name "tar name" "$tar_name"
 	[ -n "${subst_vars##*tar_base*}" ] ||
 		check_name "tar base" "$tar_base"
@@ -238,7 +242,7 @@ make_archive()
 	local dir_name="${tree_path#*:}"
 	tar_tree="${tree_path%%:*}"
 
-	get_tar_name "$(basename -- "$dir_name")" "$@"
+	get_tar_name "$@"
 
 	tar_tree="$(resolve_tree_base_name "$tar_tree")" || return 1
 	make_tar "$optional" "$cmd" "$tar_tree" "$dir_name" "$tar_name" "$tar_base"
