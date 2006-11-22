@@ -28,7 +28,7 @@
 #
 #  Valid directives are:
 #    spec, tags, copy, diff, diff.gz, diff.bz2, gzip, bzip2, exclude,
-#    tar, tar.gz, tar.bz2
+#    tar, tar.gz, tar.bz2, zip
 #
 #  Each directive has own args syntax:
 #  spec: path_to_file
@@ -38,14 +38,16 @@
 #  exclude: glob_pattern..
 #  tar(|.gz|.bz2): tree_path [options]
 #  tar(|.gz|.bz2)?: tree_path [options]
+#  zip: tree_path [options]
+#  zip?: tree_path [options]
 #  diff(|.gz|.bz2): old_tree_path new_tree_path options
 #  diff(|.gz|.bz2)?: old_tree_path new_tree_path options
 #
 #  tree_path may be a plain path or commit:path, where commit is specified
 #  by tag name (keywords may be used) or full SHA-1.
 #
-#  Valid tar options are:
-#    name=archive_name  - tar archive name, may reference to keywords;
+#  Valid tar and zip options are:
+#    name=archive_name  - archive name, may reference to keywords;
 #    base=base_name     - when specified it is added as a leading path
 #                         to the files in the generated tar archive.
 #    spec=path_to_file  - path to specfile which defines keywords;
@@ -203,6 +205,7 @@ get_tar_name()
 
 make_tar()
 {
+	local format="$1" && shift
 	local optional="$1" && shift
 	local cmd="$1" && shift
 	local tree="$1" && shift
@@ -220,16 +223,17 @@ make_tar()
 	elif [ "$rc" != 0 ]; then return 0
 	fi
 
-	git-archive --format=tar ${tar_base:+--prefix="$tar_base"/} "$id" >"$outdir/$name.tar"
-	verbose "Extracted \"$name.tar\" tarball."
-	compress_file "$cmd" "$outdir/$name.tar"
+	git-archive --format="$format" ${tar_base:+--prefix="$tar_base"/} "$id" >"$outdir/$name.$format"
+	verbose "Extracted \"$name.$format\" archive."
+	compress_file "$cmd" "$outdir/$name.$format"
 }
 
 make_archive()
 {
-	# format: "$optional cmd dirname options.."
-	[ $# -ge 3 ] ||
+	# format: "format $optional cmd dirname options.."
+	[ $# -ge 4 ] ||
 		rules_error "No dirname specified"
+	local format="$1" && shift
 	local optional="$1" && shift
 	local cmd="$1" && shift
 	local tree_path="$1" && shift
@@ -241,7 +245,7 @@ make_archive()
 	get_tar_name "$@"
 
 	tar_tree="$(resolve_tree_base_name "$tar_tree")" || return 1
-	make_tar "$optional" "$cmd" "$tar_tree" "$dir_name" "$tar_name" "$tar_base"
+	make_tar "$format" "$optional" "$cmd" "$tar_tree" "$dir_name" "$tar_name" "$tar_base"
 }
 
 get_diff_name()
@@ -438,7 +442,11 @@ parse_rules()
 				continue
 				;;
 			tar|tar.gz|tar.bz2)
-				make_archive "$optional" "$cmd" $options ||
+				make_archive "tar" "$optional" "$cmd" $options ||
+					rules_error "Failed to make archive"
+				;;
+			zip)
+				make_archive "zip" "$optional" "$cmd" $options ||
 					rules_error "Failed to make archive"
 				;;
 			diff|diff.gz|diff.bz2)
