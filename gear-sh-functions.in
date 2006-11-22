@@ -24,7 +24,7 @@
 PROG="${0##*/}"
 PROG_VERSION='@VERSION@'
 
-info()
+msg_info()
 {
 	printf %s\\n "$PROG: $*" >&2
 }
@@ -40,12 +40,12 @@ verbose=
 verbose()
 {
 	[ -n "$verbose" ] || return 0
-	info "$@"
+	msg_info "$@"
 }
 
 show_usage()
 {
-	[ -z "$*" ] || info "$*"
+	[ -z "$*" ] || msg_info "$*"
 	echo "Try \`$PROG --help' for more information." >&2
 	exit 1
 }
@@ -63,7 +63,7 @@ rules_info()
 {
 	local lineno_text=
 	[ -z "$lineno" ] || lineno_text=" line $lineno"
-	info "$rules$lineno_text: $*"
+	msg_info "$rules$lineno_text: $*"
 }
 
 # quote argument for sed regexp.
@@ -88,30 +88,67 @@ quote_shell_arg()
 	printf %s "$out"
 }
 
+is_hex_sha1()
+{
+	[ "${#1}" -eq 40 ] || return 1
+
+	# "${1##*[![:xdigit:]]*}" does not work in ash
+	[ -n "${1##*[!0123456789abcdefABCDEF]*}" ] || return 1
+
+	return 0
+}
+
+get_object_sha1()
+{
+	local name="$1" && shift
+
+	local sha1
+	sha1="$(git-rev-parse --verify "$name")" || return 1
+
+	# Verify that we really got a SHA-1 (git-rev-parse --verify accepts
+	# things like ^COMMIT and returns ^SHA1 for them).
+	is_hex_sha1 "$sha1" || return 1
+
+	printf %s "$sha1"
+}
+
+get_commit_sha1()
+{
+	local name="$1" && shift
+
+	local sha1
+	sha1="$(get_object_sha1 "$name")" || return 1
+	git-rev-parse --verify "$sha1^0" || return 1
+}
+
+tree_entry_name()
+{
+	local tree="$1" && shift
+	local path="$1" && shift
+
+	if [ -z "${path#.}" ]; then
+		printf %s "$tree"
+	elif [ -z "${tree##*:*}" ]; then
+		printf %s "$tree/$path"
+	else
+		printf %s "$tree:$path"
+	fi
+}
+
 traverse_tree()
 {
 	local tree="$1" && shift
 	local path="$1" && shift
 	local optional="$1" && shift
 
-	set -- `printf %s "$path" |tr -s / ' '`
-	local dir id quoted
-	for dir; do
-		[ "$dir" != . ] ||
-			continue
-		quoted="$(quote_sed_regexp "$dir")"
-		id="$(git-ls-tree "$tree" "$dir" |
-			sed -ne 's/^[^[:space:]]\+[[:space:]]\+tree[[:space:]]\+\([^[:space:]]\+\)[[:space:]]\+'"$quoted"'$/\1/p')"
-		if [ -z "$id" ]; then
-			if [ "$optional" = 1 ]; then
-				return 2
-			else
-				rules_error "tree $dir not found in $tree"
-			fi
-		fi
-		tree="$id"
-	done
-	printf %s "$tree"
+	local id="$(tree_entry_name "$tree" "$path")"
+	if git-cat-file tree "$id" >/dev/null 2>&1; then
+		printf %s "$id"
+	elif [ "$optional" = 1 ]; then
+		return 2
+	else
+		rules_error "tree \"$path\" not found in \"$tree\""
+	fi
 }
 
 # fetch blob by id+name.
@@ -120,22 +157,9 @@ cat_blob()
 	local tree="$1" && shift
 	local name="$1" && shift
 
-	local dir_name base_name
-	dir_name="$(dirname -- "$name")"
-	base_name="$(basename -- "$name")"
-	tree="$(traverse_tree "$tree" "$dir_name" 0)" ||
-		rules_error "blob $name not found"
-
-	# fetch blob from given tree.
-	local blob quoted
-	quoted="$(quote_sed_regexp "$base_name")"
-	blob="$(git-ls-tree "$tree" "$base_name" |
-		sed -ne 's/^[^[:space:]]\+[[:space:]]\+blob[[:space:]]\+\([^[:space:]]\+\)[[:space:]]\+'"$quoted"'$/\1/p')"
-
-	[ -n "$blob" ] ||
-		rules_error "blob $base_name not found in $tree"
-
-	git-cat-file blob "$blob"
+	local id="$(tree_entry_name "$tree" "$name")"
+	git-cat-file blob "$id" ||
+		rules_error "blob \"$name\" not found in \"$tree\""
 }
 
 check_path()
@@ -164,8 +188,48 @@ check_name()
 }
 
 workdir=
-tree_id=
+main_tree_id=
 rules=
+find_rules()
+{
+	if [ -f "$workdir/rules" ]; then
+		return 0
+	elif [ -n "$(git-ls-tree "$main_tree_id" "$rules")" ]; then
+		cat_blob "$main_tree_id" "$rules" >"$workdir/rules"
+	else
+		: >"$workdir/rules"
+	fi
+}
+
+get_filename_from_rules()
+{
+	local directive="$1" && shift
+	local name="$1" && shift
+
+	find_rules
+	[ -s "$workdir/rules" ] || return 0
+
+	local file="$(sed -ne "s/^$directive:[[:space:]]\\+\\([^[:space:]]\\+\\)/\\1/p" "$workdir/rules")"
+	[ -n "$file" ] || return 0
+
+	[ `printf %s "$file" |wc -l` -le 0 ] ||
+		rules_error "More than one $name specified"
+	check_path "$name" "$file"
+	printf %s "$file"
+}
+
+spec_name=
+spec_version=
+spec_release=
+get_NVR_from_spec()
+{
+	local spec="$1" && shift
+
+	spec_name="$(sed '/^name:[[:space:]]*/I!d;s///;q' "$spec")"
+	spec_version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$spec")"
+	spec_release="$(sed '/^release:[[:space:]]*/I!d;s///;q' "$spec")"
+}
+
 specfile=
 pkg_name=
 pkg_version=
@@ -173,28 +237,198 @@ pkg_release=
 find_specfile()
 {
 	# first try specfile defined in $rules if any.
-	if [ -n "$(git-ls-tree "$tree_id" "$rules")" ]; then
-		cat_blob "$tree_id" "$rules" >"$workdir/rules"
-		# format: "spec: filename"
-		specfile="$(sed -ne 's/^spec:[[:space:]]\+\([^[:space:]]\+\)/\1/p' "$workdir/rules")"
-		[ `printf %s "$specfile" |wc -l` -le 0 ] ||
-			rules_error "Too many specfiles specified"
-		[ -z "$specfile" ] ||
-			check_path specfile "$specfile"
-	fi
+	specfile="$(get_filename_from_rules spec specfile)"
+
 	# second try specfile in toplevel tree.
 	if [ -z "$specfile" ]; then
-		specfile="$(git-ls-tree "$tree_id" |
+		specfile="$(git-ls-tree "$main_tree_id" |
 			sed -ne 's/^[^[:space:]]\+[[:space:]]\+blob[[:space:]]\+[^[:space:]]\+[[:space:]]\+\([^/[:space:]]\+\.spec\)$/\1/p')"
 		[ `printf %s "$specfile" |wc -l` -le 0 ] ||
 			fatal "Too many specfiles found${GIT_DIR:+ in $GIT_DIR}"
 	fi
 	[ -n "$specfile" ] ||
 		fatal "No specfiles found${GIT_DIR:+ in $GIT_DIR}"
-	cat_blob "$tree_id" "$specfile" >"$workdir/specfile"
-	pkg_name="$(sed '/^name:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
-	pkg_version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
-	pkg_release="$(sed '/^release:[[:space:]]*/I!d;s///;q' "$workdir/specfile")"
+	cat_blob "$main_tree_id" "$specfile" >"$workdir/specfile"
+
+	local spec_name spec_version spec_release
+	get_NVR_from_spec "$workdir/specfile"
+	pkg_name="$spec_name"
+	pkg_version="$spec_version"
+	pkg_release="$spec_release"
+}
+
+tag_dir=
+tag_dir_default=
+find_tags()
+{
+	# first try tag directory defined in rules if any.
+	tag_dir="$(get_filename_from_rules tags "tag directory")"
+
+	# second try tag directory in toplevel tree.
+	if [ -z "$tag_dir" ] && [ -n "$tag_dir_default" ]; then
+		local id type
+		id="$(tree_entry_name "$main_tree_id" "$tag_dir_default/list")"
+		type="$(git-cat-file -t "$id" 2>/dev/null)" || type=
+		if [ "$type" = "blob" ]; then
+			tag_dir="$tag_dir_default"
+		fi
+	fi
+
+	if [ -n "$tag_dir" ]; then
+		cat_blob "$main_tree_id" "$tag_dir/list" >"$workdir/tags"
+	else
+		: >"$workdir/tags"
+	fi
+}
+
+tag_list_lineno=
+tag_list_error()
+{
+	local lineno_text=
+	[ -z "$tag_list_lineno" ] || lineno_text=" line $tag_list_lineno"
+	fatal "$tag_dir/list$lineno_text: $*"
+}
+
+lookup_tag()
+{
+	local tag_list_file="$1" && shift
+	local requested_tag_name="$1" && shift
+	local variable="$1" && shift
+
+	local sha1 name
+	tag_list_lineno=0
+	while read -r sha1 name; do
+		tag_list_lineno="$((tag_list_lineno+1))"
+		if [ "$name" = "$requested_tag_name" ]; then
+			eval "$variable=\"$(quote_shell_arg "$sha1")\""
+			return 0
+		fi
+	done <"$tag_list_file"
+
+	return 1
+}
+
+extract_stored_tag_chain()
+{
+	local sha1="$1" && shift
+
+	local id type real_sha1 next
+	id="$(tree_entry_name "$main_tree_id" "$tag_dir/$sha1")"
+	type="$(git-cat-file -t "$id" 2>/dev/null)" || type=
+	if [ "$type" = "blob" ]; then
+		next="$(git-cat-file blob "$id" | sed -ne '1s/^object \(.*\)$/\1/p')" ||
+			tag_list_error "Bad stored tag $sha1: parse failed"
+		is_hex_sha1 "$next" ||
+			tag_list_error "Bad stored tag $sha1: invalid format"
+		real_sha1="$(git-cat-file blob "$id" | git-hash-object -t tag -w --stdin)" ||
+			tag_list_error "Bad stored tag $sha1: extract failed"
+		[ "$real_sha1" = "$sha1" ] ||
+			tag_list_error "Bad stored tag $sha1: hash mismatch (got $real_sha1)"
+		extract_stored_tag_chain "$next"
+	elif [ -n "$type" ]; then
+		tag_list_error "Bad stored tag $sha1: type=$type"
+	else
+		printf %s "$sha1"
+	fi
+}
+
+is_ancestor_commit()
+{
+	local ancestor="$1" && shift
+	local descendant="$1" && shift
+
+	local bases
+	bases=" $(git-merge-base "$descendant" "$ancestor" | tr '\n' ' ') " ||
+		return 1
+	[ -z "${bases##* $ancestor *}" ] || return 1
+}
+
+check_tag_name()
+{
+	local name="$1" && shift
+
+	[ -n "$name" ] ||
+		rules_error 'Empty tag name is not allowed'
+	[ -n "${name##/*}" ] ||
+		rules_error "Invalid tag name \"$name\": initial '/' is not allowed"
+	[ -n "${name%%*/}" ] ||
+		rules_error "Invalid tag name \"$name\": trailing '/' is not allowed"
+	[ -n "${name##*[][*?^~:@[:space:]]*}" ] ||
+		rules_error "Invalid tag name \"$name\": invalid characters found"
+	git-check-ref-format "tags/$name" ||
+		rules_error "Invalid tag name \"$name\""
+}
+
+main_commit_sha1=
+resolve_commit_name()
+{
+	local name="$1" && shift
+
+	local result found_commit type final_sha1
+	if is_hex_sha1 "$name"; then
+		result="$name"
+		found_commit="$name"
+	else
+		check_tag_name "$name"
+		lookup_tag "$workdir/tags" "$name" result ||
+			rules_error "Name \"$name\" not found in tag list"
+		is_hex_sha1 "$result" ||
+			tag_list_error "Invalid SHA-1 \"$result\" for name \"$name\""
+		found_commit="$(extract_stored_tag_chain "$result")" ||
+			tag_list_error "Broken tag chain for name \"$name\""
+	fi
+
+	type="$(git-cat-file -t "$found_commit")" ||
+		rules_error "Name \"$name\" specifies a nonexistent object $found_commit"
+	if [ "$type" = "tag" ]; then
+		rules_error "Tag object $found_commit for name \"$name\" is not stored"
+	elif [ "$type" != "commit" ]; then
+		rules_error "Name \"$name\" specifies a $type, not a commit"
+	fi
+
+	# Clean up possible upper/lower case differences in raw SHA-1 ids
+	final_sha1="$(git-rev-parse --verify "$found_commit")" ||
+		rules_error "Name \"$name\" resolved to invalid object ID \"$found_commit\""
+
+	# Ensure than $final_sha1 is an ancestor of $main_commit_sha1
+	is_ancestor_commit "$final_sha1" "$main_commit_sha1" ||
+		rules_error "Name \"$name\" resolved to $final_sha1, which is not an ancestor of commit $main_commit_sha1"
+
+	printf %s "$result"
+}
+
+resolve_tree_base_name()
+{
+	local name="$1" && shift
+
+	if [ "$name" = '.' ]; then
+		printf %s "$main_tree_id"
+	else
+		resolve_commit_name "$name"
+	fi
+}
+
+parse_tree_path()
+{
+	local name="$1" && shift
+	local value="$1" && shift
+
+	[ -n "$value" ] ||
+		rules_error "Empty $name specified"
+
+	local path
+	if [ -z "${value##*:*}" ]; then
+		[ -n "${value%%:*}" ] ||
+			rules_error "Empty commit name in $name specified"
+		path="${value#*:}"
+		[ -n "$path" ] ||
+			rules_error "Empty path in $name specified"
+	else
+		path="$value"
+		value=".:$value"
+	fi
+	check_path "$name" "$path"
+	printf %s "$value"
 }
 
 def_spec_pattern='*.spec'
@@ -218,9 +452,9 @@ find_specfile_in_cwd()
 			break
 	done
 	if [ -z "$spec" ]; then
-		info "${prefix}Spec file not found."
+		msg_info "${prefix}Spec file not found."
 	elif [ -n "$many_specs" ]; then
-		info "${prefix}Too many spec files - ignored all."
+		msg_info "${prefix}Too many spec files - ignored all."
 		spec=
 	fi
 
@@ -245,4 +479,59 @@ opt_check_dir()
 		[ -d "$value" -a -x "$value" ] ||
 		fatal "$1: $2: Directory not available"
 	printf %s "$value"
+}
+
+subst_key()
+{
+	local var_name="$1" && shift
+	local key_name="$1" && shift
+	local key_value="$1" && shift
+
+	local quoted var_value
+	eval "var_value=\"\$$var_name\""
+
+	if [ "$var_value" != "${var_value#*$key_name*}" ]; then
+		check_name "$key_name" "$key_value"
+		quoted="$(quote_sed_regexp "$key_value")"
+		var_value="$(printf %s "$var_value" |sed "s/$key_name/$quoted/g")"
+		eval "$var_name=\"$(quote_shell_arg "$var_value")\""
+	fi
+}
+
+subst_key_in_vars()
+{
+	local key_name="$1" && shift
+	local key_value="$1" && shift
+
+	local variable
+	for variable; do
+		subst_key "$variable" "$key_name" "$key_value"
+	done
+}
+
+subst_spec_keywords()
+{
+	local name="$1" && shift
+	local version="$1" && shift
+	local release="$1" && shift
+
+	subst_key_in_vars '@name@' "$name" "$@"
+	subst_key_in_vars '@version@' "$version" "$@"
+	subst_key_in_vars '@release@' "$release" "$@"
+}
+
+subst_NVR_from_spec_file()
+{
+	local spec="$1" && shift
+
+	local spec_name= spec_version= spec_release=
+
+	if [ -n "$spec" ]; then
+		get_NVR_from_spec "$spec"
+	fi
+	[ -n "$spec_name" ] || spec_name="$pkg_name"
+	[ -n "$spec_version" ] || spec_version="$pkg_version"
+	[ -n "$spec_release" ] || spec_release="$pkg_release"
+
+	subst_spec_keywords "$spec_name" "$spec_version" "$spec_release" "$@"
 }

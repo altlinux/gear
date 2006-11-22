@@ -1,0 +1,585 @@
+#!/bin/sh -efu
+#
+# Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+# Copyright (C) 2006  Sir Raorn <raorn@altlinux.org>
+# Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
+# Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
+#
+# Update list of stored tags in the package repository.
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+
+. gear-sh-functions
+
+workdir=
+exit_handler()
+{
+	local rc=$?
+	trap - EXIT
+	[ -z "$workdir" ] || rm -rf -- "$workdir"
+	exit $rc
+}
+
+print_version()
+{
+	cat <<EOF
+$PROG version $PROG_VERSION
+Written by Sergey Vlasov <vsu@altlinux.org>
+
+Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+Copyright (C) 2006  Sir Raorn <raorn@altlinux.org>
+Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
+Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+	exit
+}
+
+show_help()
+{
+	cat <<EOF
+$PROG - update list of stored tags in the package repository
+
+Usage: $PROG [options] <name> [<value>]
+or:    $PROG [options] --all [--clean]
+or:    $PROG [options] --clean
+or:    $PROG [options] --delete <name>
+
+Options:
+  -a, --all                 update all tags used in rules;
+  -c, --clean               delete tags not used in rules;
+  -d, --delete              delete the specified tag;
+  -r, --rules=FILENAME      name of file with rules, default is .gear-rules;
+  -v, --verbose             print a message for each action;
+  -V, --version             print program version and exit;
+  -h, --help                show this text and exit.
+
+Report bugs to http://bugs.altlinux.ru/
+
+EOF
+	exit
+}
+
+check_tag_name_from_command_line()
+{
+	local name="$1" && shift
+
+	local rules="command line" lineno=
+	check_tag_name "$name"
+}
+
+used_tag_names=' '
+add_used_tree()
+{
+	local tree="$1" && shift
+
+	[ "$tree" != '.' ] || return 0
+	if is_hex_sha1 "$tree"; then
+		return 0
+	fi
+	check_tag_name "$tree"
+	[ -n "${used_tag_names##* $tree *}" ] || return 0
+	used_tag_names="$used_tag_names$tree "
+}
+
+find_tags_in_tar_options()
+{
+	local tar_tree_path="$1" && shift
+
+	tar_tree_path="$(parse_tree_path dirname "$tar_tree_path")" || return 1
+	local tar_dir="${tar_tree_path#*:}"
+	local tar_tree="${tar_tree_path%%:*}"
+	if [ "$tar_dir" = '.' ]; then
+		tar_dir=
+	else
+		tar_dir="$(basename -- "$tar_dir")"
+	fi
+
+	local opt spec=
+	for opt; do
+		case "$opt" in
+			spec=*) spec="${opt#spec=}"
+				check_path specfile "$spec"
+				;;
+			name=*|base=*)
+				;;
+			*) rules_info "Unrecognized option \"$opt\" ignored"
+				;;
+		esac
+	done
+
+	subst_key_in_vars '@dir@' "$tar_dir" tar_tree
+	subst_NVR_from_spec_file "$spec" tar_tree
+
+	add_used_tree "$tar_tree"
+}
+
+find_tags_in_diff_options()
+{
+	local old_tree_path="$1" && shift
+	local new_tree_path="$1" && shift
+
+	old_tree_path="$(parse_tree_path 'old dir' "$old_tree_path")" ||
+		return 1
+	local old_dir="${old_tree_path#*:}"
+	local old_tree="${old_tree_path%%:*}"
+	if [ "$old_dir" = '.' ]; then
+		old_dir=
+	else
+		old_dir="$(basename -- "$old_dir")"
+	fi
+
+	new_tree_path="$(parse_tree_path 'new dir' "$new_tree_path")" ||
+		return 1
+	local new_dir="${new_tree_path#*:}"
+	local new_tree="${new_tree_path%%:*}"
+	if [ "$new_dir" = '.' ]; then
+		new_dir=
+	else
+		new_dir="$(basename -- "$new_dir")"
+	fi
+
+	local opt spec=
+	for opt; do
+		case "$opt" in
+			spec=*) spec="${opt#spec=}"
+				check_path specfile "$spec"
+				;;
+			name=*)
+				;;
+			*) rules_info "Unrecognized option \"$opt\" ignored"
+				;;
+		esac
+	done
+
+	subst_key_in_vars '@old_dir@' "$old_dir" old_tree new_tree
+	subst_key_in_vars '@new_dir@' "$new_dir" old_tree new_tree
+	subst_NVR_from_spec_file "$spec" old_tree new_tree
+
+	add_used_tree "$old_tree"
+	add_used_tree "$new_tree"
+}
+
+find_tags_in_rules()
+{
+	lineno=0
+	local cmd options
+	while read -r cmd options; do
+		lineno="$((lineno+1))"
+		case "$cmd" in
+			""|\#*)
+				continue
+				;;
+			*\?:)
+				cmd="${cmd%\?:}"
+				;;
+			*:)
+				cmd="${cmd%:}"
+				;;
+			*)
+				rules_info "Unrecognized rule ignored"
+				continue
+				;;
+		esac
+		case "$cmd" in
+			spec|tags|copy|gzip|bzip2|exclude)
+				continue
+				;;
+			tar|tar.gz|tar.bz2)
+				find_tags_in_tar_options $options
+				;;
+			diff|diff.gz|diff.bz2)
+				find_tags_in_diff_options $options
+				;;
+			*)
+				rules_info "Unrecognized directive \"$cmd\" ignored"
+				;;
+		esac
+	done <"$workdir/rules"
+	lineno=
+}
+
+used_stored_tags=' '
+mark_used_stored_tags()
+{
+	local sha1="$1" && shift
+
+	[ -n "${used_stored_tags##* $sha1 *}" ] ||
+		return 0
+
+	local real_sha1 next
+	if [ -s "$tag_dir/$sha1" ]; then
+		next="$(sed -ne '1s/^object \(.*\)$/\1/p' <"$tag_dir/$sha1")" ||
+			tag_list_error "Bad stored tag $sha1: parse failed"
+		is_hex_sha1 "$next" ||
+			tag_list_error "Bad stored tag $sha1: invalid format"
+		real_sha1="$(git-hash-object -t tag "$tag_dir/$sha1")" ||
+			tag_list_error "Bad stored tag $sha1: hash failed"
+		[ "$real_sha1" = "$sha1" ] ||
+			tag_list_error "Bad stored tag $sha1: hash mismatch (got $real_sha1)"
+		used_stored_tags="$used_stored_tags$sha1 "
+		mark_used_stored_tags "$next"
+	fi
+}
+
+list_stored_tags()
+{
+	local sha1 name used_stored_tags=' '
+	tag_list_lineno=0
+	while read -r sha1 name; do
+		tag_list_lineno="$((tag_list_lineno+1))"
+		is_hex_sha1 "$sha1" ||
+			tag_list_error "Invalid SHA-1 value \"$sha1\""
+		mark_used_stored_tags "$sha1"
+	done <"$workdir/list"
+	printf %s "$used_stored_tags"
+}
+
+new_stored_tags=' '
+store_tag_chain()
+{
+	local sha1="$1" && shift
+
+	[ -n "${new_stored_tags##* $sha1 *}" ] ||
+		return 0
+
+	local type next
+	type="$(git-cat-file -t "$sha1")" ||
+		fatal "Object $sha1 does not exist"
+	if [ "$type" = "commit" ]; then
+		return 0
+	elif [ "$type" = "tag" ]; then
+		next="$(git-cat-file tag "$sha1" | sed -ne '1s/^object \(.*\)$/\1/p')" ||
+			fatal "Cannot parse tag $sha1"
+		is_hex_sha1 "$next" ||
+			fatal "Tag $sha1 has invalid format"
+		git-cat-file tag "$sha1" >"$tmp_tag_dir/$sha1" ||
+			fatal "Cannot store tag $sha1"
+		new_stored_tags="$new_stored_tags$sha1 "
+		store_tag_chain "$next"
+	else
+		fatal "Object $sha1 is not a tag or commit"
+	fi
+}
+
+add_new_stored_tags()
+{
+	local sha1
+
+	for sha1 in $new_stored_tags; do
+		if cmp -s -- "$tag_dir/$sha1" "$tmp_tag_dir/$sha1"; then
+			# Make sure that the tag is really added to the index
+			git-update-index --add -- "$tag_dir/$sha1"
+		else
+			cp -f -- "$tmp_tag_dir/$sha1" "$tag_dir/$sha1"
+			git-update-index --add -- "$tag_dir/$sha1"
+			verbose "Added $tag_dir/$sha1"
+		fi
+	done
+}
+
+update_tag_list()
+{
+	if cmp -s -- "$workdir/list" "$tag_dir/list"; then
+		# Make sure that the tag list is really added to the index
+		git-update-index --add -- "$tag_dir/list"
+	else
+		cp -f -- "$workdir/list" "$tag_dir/list"
+		git-update-index --add -- "$tag_dir/list"
+		verbose "Updated $tag_dir/list"
+	fi
+}
+
+clean_unused_stored_tags()
+{
+	local sha1 new_stored_tags
+
+	new_stored_tags="$(list_stored_tags)"
+	for sha1 in $old_stored_tags; do
+		if [ -n "${new_stored_tags##* $sha1 *}" ]; then
+			rm -f -- "$tag_dir/$sha1"
+			git-update-index --remove -- "$tag_dir/$sha1"
+			verbose "Deleted $tag_dir/$sha1"
+		fi
+	done
+}
+
+allowed_commits=
+get_allowed_commits()
+{
+	allowed_commits="$(git-rev-parse --verify HEAD 2>/dev/null ||: )"
+
+	if [ -s "$git_dir/MERGE_HEAD" ]; then
+		local sha1 lineno=0
+		while read -r sha1; do
+			lineno=$((lineno+1))
+			[ -n "$sha1" ] || continue
+			is_hex_sha1 "$sha1" ||
+				fatal "$git_dir/MERGE_HEAD line $lineno: invalid SHA-1 \"$sha1\""
+			allowed_commits="$allowed_commits $sha1"
+		done <"$git_dir/MERGE_HEAD"
+	fi
+}
+
+is_commit_allowed()
+{
+	local commit="$1" && shift
+
+	local allowed
+	for allowed in $allowed_commits; do
+		if is_ancestor_commit "$commit" "$allowed"; then
+			return 0
+		fi
+	done
+	return 1
+}
+
+update_tag()
+{
+	local tag_name="$1" && shift
+	local tag_value="$1" && shift
+
+	local commit sha1 name found=
+	commit="$(get_commit_sha1 "$tag_value")"
+	is_commit_allowed "$commit" ||
+		fatal "Commit $commit for tag \"$tag_name\" is not an ancestor of current HEAD or commits to be merged"
+
+	: >"$workdir/new_list"
+	tag_list_lineno=0
+	while read -r sha1 name; do
+		tag_list_lineno="$((tag_list_lineno+1))"
+		if [ "$name" = "$tag_name" ]; then
+			if [ "$sha1" = "$tag_value" ]; then
+				verbose "Tag \"$tag_name\" unchanged"
+			else
+				verbose "Updated tag \"$tag_name\""
+				verbose "  from $sha1"
+				verbose "  to   $tag_value"
+			fi
+			found=1
+			sha1="$tag_value"
+		fi
+		printf %s\\n "$sha1 $name" >>"$workdir/new_list"
+	done <"$workdir/list"
+	if [ -z "$found" ]; then
+		printf %s\\n "$tag_value $tag_name" >>"$workdir/new_list"
+		verbose "Added tag \"$tag_name\""
+		verbose "  for $tag_value"
+	fi
+	mv -f -- "$workdir/new_list" "$workdir/list"
+	store_tag_chain "$tag_value"
+}
+
+delete_tag()
+{
+	local tag_name="$1" && shift
+
+	: >"$workdir/new_list"
+	local sha1 name found=
+	tag_list_lineno=0
+	while read -r sha1 name; do
+		tag_list_lineno="$((tag_list_lineno+1))"
+		if [ "$name" = "$tag_name" ]; then
+			verbose "Deleted tag \"$tag_name\""
+			found=1
+		else
+			printf %s\\n "$sha1 $name" >>"$workdir/new_list"
+		fi
+	done <"$workdir/list"
+	[ -n "$found" ] ||
+		fatal "Tag \"$tag_name\" not found"
+	mv -f -- "$workdir/new_list" "$workdir/list"
+}
+
+update_used_tags()
+{
+	local tag_name tag_value
+
+	for tag_name in $used_tag_names; do
+		tag_value="$(get_object_sha1 "$tag_name")" ||
+			fatal "Tag \"$tag_name\" not found"
+		get_commit_sha1 "$tag_value" >/dev/null ||
+			fatal "Tag \"$tag_name\" does not point to a commit"
+		update_tag "$tag_name" "$tag_value"
+	done
+}
+
+delete_unused_tags()
+{
+	: >"$workdir/new_list"
+	local sha1 name
+	tag_list_lineno=0
+	while read -r sha1 name; do
+		tag_list_lineno="$((tag_list_lineno+1))"
+		if [ -n "${used_tag_names##* $name *}" ]; then
+			verbose "Deleted unused tag \"$name\""
+		else
+			printf %s\\n "$sha1 $name" >>"$workdir/new_list"
+		fi
+	done <"$workdir/list"
+	mv -f -- "$workdir/new_list" "$workdir/list"
+}
+
+TEMP=`getopt -n "$PROG" -o a,c,d,r:v,h,V -l all,clean,delete,rules:,verbose,help,version -- "$@"` ||
+	show_usage
+eval set -- "$TEMP"
+
+specfile=
+rules=".gear-rules"
+tag_dir_default=".gear-tags"
+all=
+clean=
+delete=
+verbose=
+while :; do
+	case "$1" in
+		--) shift; break
+			;;
+		-a|--all) all=1
+			;;
+		-c|--clean) clean=1
+			;;
+		-d|--delete) delete=1
+			;;
+		-r|--rules) shift; rules="$1"
+			;;
+		-v|--verbose) verbose=1
+			;;
+		-h|--help) show_help
+			;;
+		-V|--version) print_version
+			;;
+		*) fatal "Unrecognized option: $1"
+			;;
+	esac
+	shift
+done
+
+git_dir="$(git-rev-parse --git-dir)" || exit $?
+
+tag_name=
+tag_value=
+if [ -n "$all$clean" ]; then
+	# No arguments with --all or --clean.
+	[ "$#" -eq 0 ] ||
+		show_usage 'Too many arguments'
+	[ -z "$delete" ] ||
+		show_usage '--delete cannot be used with --all or --clean'
+elif [ -n "$delete" ]; then
+	# 1 argument when deleting a tag.
+	[ "$#" -ge 1 ] ||
+		show_usage 'Not enough arguments'
+	[ "$#" -eq 1 ] ||
+		show_usage 'Too many arguments'
+
+	tag_name="$1"
+	shift
+	check_tag_name_from_command_line "$tag_name"
+else
+	# 1 or 2 arguments when updating a single tag.
+	[ "$#" -ge 1 ] ||
+		show_usage 'Not enough arguments'
+
+	tag_name="$1"
+	shift
+	check_tag_name_from_command_line "$tag_name"
+
+	if [ "$#" -ge 1 ]; then
+		tag_value="$1"
+		shift
+		[ -n "$tag_value" ] ||
+			show_usage 'Empty tag value is not allowed'
+
+		[ "$#" -eq 0 ] ||
+			show_usage 'Too many arguments'
+	fi
+fi
+
+if [ -n "$tag_name" ] && [ -z "$delete" ]; then
+	if [ -z "$tag_value" ]; then
+		tag_value="$(get_object_sha1 refs/tags/"$tag_name")" ||
+			fatal "Invalid tag \"$tag_name\""
+	else
+		sha1="$(get_object_sha1 "$tag_value")" ||
+			fatal "Invalid object \"$tag_value\""
+		tag_value="$sha1"
+	fi
+	tag_commit="$(get_commit_sha1 "$tag_value")" ||
+		fatal "Object $tag_value does not point to a commit"
+fi
+
+tmpdir="$(mktemp -dt "$PROG.XXXXXXXX")"
+trap exit_handler HUP PIPE INT QUIT TERM EXIT
+workdir="$tmpdir/work"
+mkdir "$workdir"
+tmp_tag_dir="$tmpdir/tags"
+mkdir "$tmp_tag_dir"
+
+if [ -s "$rules" ]; then
+	cat -- "$rules" >"$workdir/rules"
+else
+	: >"$workdir/rules"
+fi
+
+tag_dir="$(get_filename_from_rules tags "tag directory")"
+[ -n "$tag_dir" ] ||
+	tag_dir="$tag_dir_default"
+mkdir -p -- "$tag_dir"
+
+if [ -s "$tag_dir/list" ]; then
+	cat -- "$tag_dir/list" >"$workdir/list"
+else
+	: >"$workdir/list"
+fi
+
+old_stored_tags="$(list_stored_tags)"
+get_allowed_commits
+
+if [ -n "$delete" ]; then
+	delete_tag "$tag_name"
+elif [ -n "$tag_name" ]; then
+	update_tag "$tag_name" "$tag_value"
+else
+	specfile="$(get_filename_from_rules spec specfile)"
+	if [ -n "$specfile" ]; then
+		[ -s "$specfile" ] ||
+			rules_error "Bad spec file \"$specfile\" specified in rules"
+	else
+		specfile="$(set +f; find_specfile_in_cwd '' *)"
+	fi
+
+	if [ -n "$specfile" ]; then
+		get_NVR_from_spec "$specfile"
+		pkg_name="$spec_name"
+		pkg_version="$spec_version"
+		pkg_release="$spec_release"
+	fi
+
+	find_tags_in_rules
+
+	if [ -n "$all" ]; then
+		update_used_tags
+	fi
+
+	if [ -n "$clean" ]; then
+		delete_unused_tags
+	fi
+fi
+
+add_new_stored_tags
+update_tag_list
+clean_unused_stored_tags

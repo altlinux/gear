@@ -46,7 +46,7 @@ Committing initial tree deadbeefdeadbeefdeadbeefdeadbeefdeadbeef
 gear-srpmimport: Imported foobar-1.0-alt1.src.rpm
 gear-srpmimport: Created master branch
 
-$ ls -log
+$ ls -Alog
 -rw-r--r-- 1 6637 Aug 12 34:56 .git
 -rw-r--r-- 1 6637 Aug 12 34:56 .gear-rules
 -rw-r--r-- 1 6637 Aug 12 34:56 foobar.spec
@@ -74,8 +74,8 @@ tar.gz: foobar-plugins name=foobar-plugins base=
 Создание gear-репозитория на основе готового git-репозитория.
 =============================================================
 
-1) Создайть и добавить в git-репозиторий spec-файл.
-2) Создайть и добавить в git-репозиторий файл с правилами `.gear-rules'.
+1) Создать и добавить в git-репозиторий spec-файл.
+2) Создать и добавить в git-репозиторий файл с правилами `.gear-rules'.
 
 
 Сборка пакета из gear-репозитория при помощи hasher(7).
