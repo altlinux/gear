@@ -60,6 +60,8 @@ See %_docdir/%name-%version/QUICKSTART.ru_RU.KOI8-R for details.
 - gear:
   Added keyword substitution in directory name (ldv, #10091).
   Replaced deprecated "git-tar-tree" with "git-archive --format=tar" (ldv).
+- gear-upload:
+  New utility to ease initial upload of git repositories to git.alt (legion).
 
 * Thu Oct 05 2006 Dmitry V. Levin <ldv@altlinux.org> 1.0.3-alt1
 - Update copyright information.
