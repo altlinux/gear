@@ -1,0 +1,123 @@
+#!/bin/sh -efu
+#
+# Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+
+. gear-sh-functions
+
+show_help()
+{
+	cat <<EOF
+
+Usage: $PROG [Options] <repository> <refspec>
+
+$PROG upload a new git repository to git.alt.
+
+Options:
+  -q,--quiet          try to be more quiet;
+  -v,--verbose        print a message for each action;
+  -V,--version        print program version and exit;
+  -h,--help           show this text and exit.
+
+Report bugs to http://bugs.altlinux.ru/
+
+EOF
+	exit
+}
+
+print_version()
+{
+	cat <<EOF
+$PROG version $PROG_VERSION
+Written by Alexey Gladkov <legion@altlinux.org>
+
+Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+	exit
+}
+
+TEMP=`getopt -n $PROG -o q,v,V,h -l quiet,verbose,version,help -- "$@"` ||
+	show_usage
+eval set -- "$TEMP"
+
+while :; do
+	case "$1" in
+	    -q|--quiet) quiet=-q
+		;;
+	    -v|--verbose) verbose=-v
+		;;
+	    -V|--version) print_version
+	    	;;
+	    -h|--help) show_help
+		;;
+	    --) shift; break
+		;;
+	    *) fatal "unrecognized option: $1"
+		;;
+	esac
+	shift
+done
+
+GIT_DIR="$(git-rev-parse --git-dir)"
+GIT_DIR="$(readlink -ev "$GIT_DIR")"
+export GIT_DIR
+
+cd "${GIT_DIR%/.git}"
+
+repo="$1" && shift && [ -n "$repo" ] ||
+	fatal "Where do you want to push ?"
+
+case "$repo" in
+	rsync://*|https://*|http://*|ftp://*)
+		fatal "${repo#*://}: invalid protocol" ;;
+	ssh://|*:*) ;;
+	*) fatal "$repo: invalid repository" ;;
+esac
+
+remote_server="${repo#ssh://}"
+remote_server="${remote_server%%:*}"
+reponame="${repo##*/}"
+reponame="${reponame%.git}"
+
+remote_path="$(ssh "$remote_server" git-init-db "$reponame")"
+
+if [ -z "$remote_path" ]; then
+	remote_path="${repo#ssh://}"
+	remote_path="${remote_path#$remote_server:}"
+	remote_path="${remote_path%.git}.git"
+fi
+
+args=--all
+refspec=
+if [ "$#" -eq 1 ]; then
+	args=
+	refspec="$1"
+	shift
+fi
+
+if ! git-push $args "$remote_server:$remote_path" ${refspec:+"$refspec"}; then
+	ssh "$remote_server" git-rm-db "$reponame.git"
+	exit 1
+fi
+
+origin=".git/remotes/origin"
+if [ ! -f "$origin" ]; then
+	printf %s\\n "URL: $remote_server:$remote_path" > "$origin"
+	printf %s\\n "Push: ${refspec:-refs/heads/master:refs/heads/master}" >> "$origin"
+fi
