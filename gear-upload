@@ -23,7 +23,7 @@ show_help()
 {
 	cat <<EOF
 
-Usage: $PROG [Options] <repository> <refspec>
+Usage: $PROG [Options] <repository> [<refspec>]
 
 $PROG upload a new git repository to git.alt.
 
@@ -78,20 +78,21 @@ GIT_DIR="$(git-rev-parse --git-dir)"
 GIT_DIR="$(readlink -ev "$GIT_DIR")"
 export GIT_DIR
 
-cd "${GIT_DIR%/.git}"
-
 repo="$1" && shift && [ -n "$repo" ] ||
 	fatal "Where do you want to push ?"
 
 case "$repo" in
 	rsync://*|https://*|http://*|ftp://*)
-		fatal "${repo#*://}: invalid protocol" ;;
+		fatal "${repo%%://*}: invalid protocol" ;;
 	ssh://|*:*) ;;
 	*) fatal "$repo: invalid repository" ;;
 esac
 
-remote_server="${repo#ssh://}"
-remote_server="${remote_server%%:*}"
+remote_server="${remote#ssh://}"
+[ "$remote_server" != "$remote" ] &&
+	remote_server="${remote_server%%/*}" ||
+	remote_server="${remote_server%%:*}"
+
 reponame="${repo##*/}"
 reponame="${reponame%.git}"
 
@@ -99,7 +100,9 @@ remote_path="$(ssh "$remote_server" git-init-db "$reponame")"
 
 if [ -z "$remote_path" ]; then
 	remote_path="${repo#ssh://}"
-	remote_path="${remote_path#$remote_server:}"
+	[ "$remote_path" != "$repo" ] &&
+		remote_path="/${remote_path#*/}" ||
+		remote_path="${remote_path#*:}"
 	remote_path="${remote_path%.git}.git"
 fi
 
@@ -116,7 +119,7 @@ if ! git-push $args "$remote_server:$remote_path" ${refspec:+"$refspec"}; then
 	exit 1
 fi
 
-origin=".git/remotes/origin"
+origin="$GIT_DIR/remotes/origin"
 if [ ! -f "$origin" ]; then
 	printf %s\\n "URL: $remote_server:$remote_path" > "$origin"
 	printf %s\\n "Push: ${refspec:-refs/heads/master:refs/heads/master}" >> "$origin"
