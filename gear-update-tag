@@ -24,12 +24,12 @@
 
 . gear-sh-functions
 
-workdir=
+tmpdir=
 exit_handler()
 {
 	local rc=$?
 	trap - EXIT
-	[ -z "$workdir" ] || rm -rf -- "$workdir"
+	[ -z "$tmpdir" ] || rm -rf -- "$tmpdir"
 	exit $rc
 }
 
