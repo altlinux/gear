@@ -49,8 +49,9 @@
 #  Valid tar and zip options are:
 #    name=archive_name  - archive name, may reference to keywords;
 #    base=base_name     - when specified it is added as a leading path
-#                         to the files in the generated tar archive.
+#                         to the files in the generated tar archive;
 #    spec=path_to_file  - path to specfile which defines keywords;
+#    suffix=suffix      - override default output file name suffix.
 #  Valid tar keywords are:
 #    @dir@ - basename(path(tree_path));
 #    @name@, @version@, @release@.
@@ -58,7 +59,7 @@
 #
 #  Valid diff options are:
 #    name=diff_name     - diff name, may reference to keywords;
-#    spec=path_to_file  - path to specfile which defines keywords;
+#    spec=path_to_file  - path to specfile which defines keywords.
 #  Valid diff keywords are:
 #    @old_dir@ - basename(path(old_tree_path));
 #    @new_dir@ - basename(path(new_tree_path));
@@ -140,9 +141,14 @@ compress_file()
 	case "$cmd" in
 		gzip|*.gz)
 			gzip -9 "$file"
+			printf "%s" "$file.gz"
 			;;
 		bzip2|*.bz2)
 			bzip2 -9 "$file"
+			printf "%s" "$file.bz2"
+			;;
+		*)
+			printf "%s" "$file"
 			;;
 	esac
 }
@@ -191,6 +197,8 @@ get_tar_name()
 				;;
 			base=*) tar_base="${opt#base=}"
 				;;
+			suffix=*) tar_suffix="${opt#suffix=}"
+				;;
 			*) rules_error "Unrecognized option: $opt"
 				;;
 		esac
@@ -221,6 +229,7 @@ make_tar()
 	local dir="$1" && shift
 	local name="$1" && shift
 	tar_base="$1" && shift
+	local suffix="$1" && shift
 
 	[ "$tar_base" != ' ' ] ||
 		tar_base="$name"
@@ -233,8 +242,13 @@ make_tar()
 	fi
 
 	git-archive --format="$format" ${tar_base:+--prefix="$tar_base"/} "$id" >"$outdir/$name.$format"
-	verbose "Extracted \"$name.$format\" archive."
-	compress_file "$cmd" "$outdir/$name.$format"
+	local archive_name
+	archive_name="$(compress_file "$cmd" "$outdir/$name.$format")"
+	if [ -n "$suffix" -a "$archive_name" != "$outdir/$name.$format" ]; then
+		mv "$archive_name" "$outdir/$name$suffix"
+		archive_name="$outdir/$name$suffix"
+	fi
+	verbose "Extracted \"${archive_name##*/}\" archive."
 }
 
 make_archive()
@@ -251,10 +265,11 @@ make_archive()
 	local dir_name="${tree_path#*:}"
 	tar_tree="${tree_path%%:*}"
 
+	local tar_suffix=
 	get_tar_name "$@"
 
 	tar_tree="$(resolve_tree_base_name "$tar_tree")" || return 1
-	make_tar "$format" "$optional" "$cmd" "$tar_tree" "$dir_name" "$tar_name" "$tar_base"
+	make_tar "$format" "$optional" "$cmd" "$tar_tree" "$dir_name" "$tar_name" "$tar_base" "$tar_suffix"
 }
 
 get_diff_name()
@@ -319,7 +334,7 @@ make_diff()
 
 	git-diff-tree --patch-with-stat "$old_id" "$new_id" >"$outdir/$name"
 	verbose "Extracted \"$name\" diff."
-	compress_file "$cmd" "$outdir/$name"
+	compress_file "$cmd" "$outdir/$name" > /dev/null
 }
 
 make_difference()
@@ -398,7 +413,7 @@ copy_by_pattern()
 			verbose "Extracted \"$name\" by pattern \"$pattern\"."
 			[ -n "${mode%%*7??}" ] ||
 				chmod a+x "$outdir/$name"
-			compress_file "$cmd" "$outdir/$name"
+			compress_file "$cmd" "$outdir/$name" > /dev/null
 			found=1
 		done <"$workdir/blobs"
 		[ -n "$found" -o "$optional" = 1 ] ||
