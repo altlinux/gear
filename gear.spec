@@ -1,5 +1,5 @@
 Name: gear
-Version: 1.1.0
+Version: 1.1.1
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -40,6 +40,11 @@ See %_docdir/%name-%version/QUICKSTART.ru_RU.KOI8-R for details.
 %doc QUICKSTART*
 
 %changelog
+* Sat Dec 09 2006 Dmitry V. Levin <ldv@altlinux.org> 1.1.1-alt1
+- gear-update-tag: Fix temporary directory removal (ldv).
+- gear-update-tag: Treat "zip" directive as "tar" (raorn).
+- gear: Implement suffix= option for tar-like rules (george).
+
 * Wed Nov 22 2006 Dmitry V. Levin <ldv@altlinux.org> 1.1.0-alt1
 - gear, gear-commit, gear-sh-functions.in:
   Reworked to implement .gear-rules "tags:" directive and
