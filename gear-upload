@@ -93,20 +93,23 @@ remote_server="${remote#ssh://}"
 	remote_server="${remote_server%%/*}" ||
 	remote_server="${remote_server%%:*}"
 
-reponame="${remote##*/}"
+remote_path="${remote#ssh://}"
+[ "$remote_path" != "$remote" ] &&
+	remote_path="/${remote_path#*/}" ||
+	remote_path="${remote_path#*:}"
+
+reponame="${remote_path##*/}"
 reponame="${reponame%.git}"
-subdir="${remote%%/$reponame.git}"
-subdir="${subdir##*/}"
 
-remote_path="$(ssh "$remote_server" git-init-db "$subdir/$reponame")"
+subdir="${remote_path%.git}"
+subdir="${subdir%/$reponame}"
+[ "${subdir%.git}" != "$reponame" ] &&
+	subdir="${subdir##*/}" ||
+	subdir=
 
-if [ -z "$remote_path" ]; then
-	remote_path="${remote#ssh://}"
-	[ "$remote_path" != "$remote" ] &&
-		remote_path="/${remote_path#*/}" ||
-		remote_path="${remote_path#*:}"
+remote_path="$(ssh "$remote_server" git-init-db "${subdir:+$subdir/}$reponame")"
+[ -n "$remote_path" ] ||
 	remote_path="${remote_path%.git}.git"
-fi
 
 args=--all
 refspec=
