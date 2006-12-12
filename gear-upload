@@ -95,8 +95,10 @@ remote_server="${remote#ssh://}"
 
 reponame="${remote##*/}"
 reponame="${reponame%.git}"
+subdir="${remote%%/$reponame.git}"
+subdir="${subdir##*/}"
 
-remote_path="$(ssh "$remote_server" git-init-db "$reponame")"
+remote_path="$(ssh "$remote_server" git-init-db "$subdir/$reponame")"
 
 if [ -z "$remote_path" ]; then
 	remote_path="${remote#ssh://}"
