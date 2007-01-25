@@ -78,14 +78,14 @@ GIT_DIR="$(git-rev-parse --git-dir)"
 GIT_DIR="$(readlink -ev "$GIT_DIR")"
 export GIT_DIR
 
-repo="$1" && shift && [ -n "$repo" ] ||
+remote="$1" && shift && [ -n "$remote" ] ||
 	fatal "Where do you want to push ?"
 
-case "$repo" in
+case "$remote" in
 	rsync://*|https://*|http://*|ftp://*)
-		fatal "${repo%%://*}: invalid protocol" ;;
+		fatal "${remote%%://*}: invalid protocol" ;;
 	ssh://|*:*) ;;
-	*) fatal "$repo: invalid repository" ;;
+	*) fatal "$remote: invalid repository" ;;
 esac
 
 remote_server="${remote#ssh://}"
@@ -93,18 +93,23 @@ remote_server="${remote#ssh://}"
 	remote_server="${remote_server%%/*}" ||
 	remote_server="${remote_server%%:*}"
 
-reponame="${repo##*/}"
+remote_path="${remote#ssh://}"
+[ "$remote_path" != "$remote" ] &&
+	remote_path="/${remote_path#*/}" ||
+	remote_path="${remote_path#*:}"
+
+reponame="${remote_path##*/}"
 reponame="${reponame%.git}"
 
-remote_path="$(ssh "$remote_server" git-init-db "$reponame")"
+subdir="${remote_path%.git}"
+subdir="${subdir%/$reponame}"
+[ "${subdir%.git}" != "$reponame" ] &&
+	subdir="${subdir##*/}" ||
+	subdir=
 
-if [ -z "$remote_path" ]; then
-	remote_path="${repo#ssh://}"
-	[ "$remote_path" != "$repo" ] &&
-		remote_path="/${remote_path#*/}" ||
-		remote_path="${remote_path#*:}"
+remote_path="$(ssh "$remote_server" git-init-db "${subdir:+$subdir/}$reponame")"
+[ -n "$remote_path" ] ||
 	remote_path="${remote_path%.git}.git"
-fi
 
 args=--all
 refspec=
