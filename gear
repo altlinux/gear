@@ -580,6 +580,9 @@ fi
 git_dir="$(git-rev-parse --git-dir)"
 git_dir="$(readlink -ev "$git_dir")"
 
+# Chdir to toplevel directory if necessary.
+cd "$(git-rev-parse --show-cdup)"
+
 # Check given tree-ish.
 main_commit_id="${main_tree_id%%:*}"
 main_commit_sha1="$(get_commit_sha1 "$main_commit_id")" ||
@@ -633,9 +636,8 @@ verbose "Extracted \"${specfile##*/}\" specfile."
 if [ -n "$rpmbuild" ]; then
 	run_command "$@" --define "_specdir $outdir" --define "_sourcedir $outdir" "$outdir/${specfile##*/}"
 	if [ -n "$update_spec" ]; then
-		cdup="$(git-rev-parse --show-cdup |tr -d '\n')"
-		cmp -s "$outdir/${specfile##*/}" "$cdup$specfile" && rc=0 || rc="$?"
-		[ "$rc" -ne 1 ] || cp $verbose -f -- "$outdir/${specfile##*/}" "$cdup$specfile"
+		cmp -s "$outdir/${specfile##*/}" "$specfile" && rc=0 || rc="$?"
+		[ "$rc" -ne 1 ] || cp $verbose -f -- "$outdir/${specfile##*/}" "$specfile"
 	fi
 else
 	[ -z "$hasher" ] ||
