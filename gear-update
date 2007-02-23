@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 #
-# Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
+# Copyright (C) 2006-2007  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 #
@@ -23,26 +23,19 @@
 
 . gear-sh-functions
 
-srctype=archive
-archive_help=
-case "${PROG##*-}" in
-	archive)
-		srctype=archive
-		archive_help="
-  -t,--tardir=NAME    define tar archive directory name;"
-		;;
-	directory) srctype=directory ;;
-esac
-
-show_help()
-{
+show_help() {
 	cat <<EOF
-Usage: $PROG [Options] <src-$srctype> <dst-directory>
+Usage: $PROG [Options] <source> [<subdirectory>]
 
-Update subdirectory from source $srctype.
+Utility to update subdirectory from source. Current directory
+will be updated if second argument is not specified.
 
-Options: ${archive_help:+$archive_help}
+Options:
+
   --ignore-exclude    ignore .gitignore and .git/info/exclude;
+  -s,--subdir=DIR     define directory name in archive;
+  -t,--type=TYPE      define type of souece. It may on
+                      of items: 'dir', 'tar' or 'zip';
   -f,--force          remove files from the <dst-directory>
                       even if untracked or modified files found;
   -v,--verbose        print a message for each action;
@@ -55,19 +48,60 @@ EOF
 	exit
 }
 
-print_version()
-{
+print_version() {
 	cat <<EOF
 $PROG version $PROG_VERSION
 Written by Alexey Gladkov <legion@altlinux.org>
 
-Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
+Copyright (C) 2006-2007  Alexey Gladkov <legion@altlinux.org>
 Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
 Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
 	exit
+}
+
+subdir=
+source_type=
+get_type_by_source() {
+	local mimetype="$(file -biz "$source" |tr [:upper:] [:lower:])"
+	case "${mimetype#application/x-}" in
+		not-regular-file)
+			[ ! -d "$source" ] || source_type="dir"
+			;;
+		tar*)	source_type="tar" ;;
+		zip)	source_type="zip" ;;
+	esac
+}
+
+validate_subdir() {
+	local source_lscmd= n quoted_subdir
+	case "$source_type" in
+		tar) source_lscmd="tar -tf"    ;;
+		zip) source_lscmd="zipinfo -1" ;;
+		dir) subdir="$source" ;;
+		*) fatal "$source_type: unknown source type" ;;
+	esac
+	[ -n "$subdir" ] ||
+		subdir="$($source_lscmd "$source" |sed -e 's#\(\([./]\+\)\?[^/]\+\)/.*#\1#g' |sort -u)"
+
+	n="$(printf %s\\n "$subdir" |wc -l)"
+	[ "$n" -le 1 ] || fatal "too many subdirectories: $(printf %s "$subdir" |tr \\n \ )"
+	[ "$n" -eq 1 ] || fatal "$source: directory not found"
+
+	[ -n "$source_lscmd" ] || return 0
+
+	quoted_subdir="$(quote_sed_regexp "$subdir")"
+	$source_lscmd "$source" |grep -qs "^$quoted_subdir/\?\$" ||
+		fatal "$source: directory not found in archive"
+}
+
+check_destdir() {
+	[ "$#" -eq 2 ] ||
+		fatal "check_destdir: more arguments required"
+	[ "$2" != "." -o ! -d "$2/.git" -o ! -d "$1/.git" ] ||
+		fatal "$dstdir/.git: unable to replace git direstory"
 }
 
 workdir=
@@ -79,7 +113,12 @@ exit_handler()
 	[ -z "$workdir" ] || rm -rf -- "$workdir"
 	if [ "$rc" -gt 0 ]; then
 		# Rollback actions
-		[ ! -e "$destdir" ] || rm -rf -- "$destdir"
+		if [ -d "$destdir" ]; then
+			find "$destdir" -mindepth 1 -maxdepth 1 ! -name '.git' -print0 |
+				xargs -r0 rm $verbose -rf --
+		else
+			rm $verbose -f -- "$destdir"
+		fi
 		mkdir -p -- "$destdir"
 		cd "$destdir"
 		git-checkout-index -a
@@ -88,11 +127,10 @@ exit_handler()
 	exit $rc
 }
 
-TEMP=`getopt -n $PROG -o f,t:,v,V,h -l ignore-exclude,force,tardir:,verbose,version,help -- "$@"` || show_usage
+TEMP=`getopt -n $PROG -o f,t:,s:,v,V,h -l ignore-exclude,force,type:,subdir:,verbose,version,help -- "$@"` || show_usage
 eval set -- "$TEMP"
 
 force=
-tardir=
 ignore_exclude=
 while :; do
 	case "$1" in
@@ -100,14 +138,14 @@ while :; do
 		;;
 	    -f|--force) force=1
 		;;
-	    -t|--tardir) shift
-		[ "$srctype" = "archive" ] && tardir="$1" ||
-		    fatal "unrecognized option: $1"
+	    -t|--type) shift; source_type="$1"
+		;;
+	    -s|--subdir) shift; subdir="$1"
 		;;
 	    -v|--verbose) verbose=-v
 		;;
 	    -V|--version) print_version
-	    	;;
+		;;
 	    -h|--help) show_help
 		;;
 	    --) shift; break
@@ -118,17 +156,12 @@ while :; do
 	shift
 done
 
-[ "$#" -ge 2 ] ||
-	show_usage 'Not enough arguments.'
-[ "$#" -eq 2 ] ||
-	show_usage 'Too many arguments.'
-
+[ "$#" -ge 1 ] || show_usage 'Not enough arguments.'
 source="$(readlink -ev "$1")"; shift
-destdir="$(readlink -ev "$1")"; shift
+destdir="$(readlink -ev "${1:-.}")"
 
 [ "$source" != "$destdir" ] ||
 	fatal "\`$source' and \`$destdir' are the same place"
-
 [ -d "$destdir" ] ||
 	fatal "$destdir: directory not available"
 
@@ -140,50 +173,43 @@ destdir="${destdir#$topdir/}"
 
 [ "$destdir" = "${destdir#/}" ] ||
 	fatal "$destdir: directory out of \`$topdir' tree."
-
 [ -n "$destdir" ] && destdir="${destdir%/}" || destdir="."
-
-git-rm -n "$destdir" >/dev/null
+git-rm -n -r "$destdir" >/dev/null
 
 if [ -z "$force" ]; then
-	out="$(git diff --name-only -- "$destdir"; git-ls-files --directory --others --exclude-per-directory=.gitignore -- "$destdir")"
+	out="$(git diff --name-only -- "$destdir";
+		git-ls-files --directory --others --exclude-per-directory=.gitignore -- "$destdir")"
 	[ -z "$out" ] || fatal "$destdir: untracked or modified files found"
 fi
 
-if [ "$srctype" = "archive" ]; then
-	if [ -n "$tardir" ]; then
-		quoted_tardir="$(quote_sed_regexp "$tardir")"
-		tar -tf "$source" |grep -qs "^$quoted_tardir\(/\|\$\)" ||
-			fatal "tar archive directory not found"
-	else
-		tardir="$(tar -tf "$source"|cut -d\/ -f1 |sort -u)"
-	fi
-
-	n="$(printf %s\\n "$tardir" |wc -l)"
-	if [ "$n" -gt 1 ]; then
-		fatal "too many tar archive directories: $(printf %s\\n "$tardir" |tr \\n \ )"
-	elif [ "$n" -lt 1 ]; then
-		fatal "tar archive directory not found"
-	fi
-fi
+[ -n "$source_type" ] || get_type_by_source
+validate_subdir
 
 # Trap for rollback
 trap exit_handler HUP INT QUIT TERM EXIT
 
 # Remove obsolete source
-find "$destdir" -mindepth 1 -maxdepth 1 ! -name '.git' -print0 |
+find "$destdir" -mindepth 1 -maxdepth 1 \! -name '.git' -print0 |
 	xargs -r0 rm $verbose -rf --
 [ "$destdir" = "." ] || rmdir $verbose -- "$destdir"
 
 # Copy new sources
-case "$srctype" in
-	archive)
+case "$source_type" in
+	tar)
 		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
-		printf %s\\n "$tardir/" |tar -T- -C "$workdir" -xf "$source"
-		mv -f -- "$workdir/$tardir" "$destdir"
+		printf %s\\n "$subdir/" |tar -T- -C "$workdir" -xf "$source"
+		check_destdir "$workdir/$subdir" "$destdir"
+		mv -f -- "$workdir/$subdir" "$destdir"
 		;;
-	directory)
-		cp -a -- "$source" "$destdir"
+	zip)
+		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
+		unzip "$source" "$subdir/*" -d "$workdir"
+		check_destdir "$workdir/$subdir" "$destdir"
+		mv -f -- "$workdir/$subdir" "$destdir"
+		;;
+	dir)
+		check_destdir "$subdir" "$destdir"
+		cp -a -- "$subdir" "$destdir"
 		;;
 esac
 [ -d "$destdir" ] ||
@@ -195,6 +221,6 @@ if [ -n "$ignore_exclude" ]; then
 	git-ls-files -z --others --modified "$destdir" |
 		git-update-index --add ${verbose:+--verbose} -z --stdin
 else
-	git-rm $verbose "$destdir"
+	git-rm -f -r "$destdir"
 	git-add $verbose "$destdir"
 fi
