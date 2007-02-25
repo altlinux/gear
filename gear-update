@@ -63,20 +63,39 @@ EOF
 	exit
 }
 
-subdir=
 source_type=
 get_type_by_source()
 {
-	local mimetype="$(file -biz "$source" |tr [:upper:] [:lower:])"
-	case "${mimetype#application/x-}" in
-		not-regular-file)
-			[ ! -d "$source" ] || source_type="dir"
+	if [ -d "$source" ]; then
+		source_type=dir
+		return
+	fi
+
+	local file_type
+	file_type="$(file -b "$source")"
+	case "$file_type" in
+		*tar\ archive*)
+			source_type=tar
+			return
 			;;
-		tar*)	source_type="tar" ;;
-		zip)	source_type="zip" ;;
+		*Zip\ archive*)
+			source_type=zip
+			return
+			;;
 	esac
+
+	file_type="$(file -bz "$source")"
+	case "$file_type" in
+		*tar\ archive*)
+			source_type=tar
+			return
+			;;
+	esac
+
+	fatal "$source: unrecognized source type: $file_type"
 }
 
+subdir=
 validate_subdir()
 {
 	local source_lscmd= n quoted_subdir
