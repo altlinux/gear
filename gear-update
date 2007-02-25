@@ -248,7 +248,7 @@ case "$source_type" in
 		;;
 	zip)
 		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
-		unzip "$source" "$subdir/*" -d "$workdir"
+		unzip -q "$source" "$subdir/*" -d "$workdir"
 		validate_destdir "$workdir/$subdir" "$destdir"
 		mv -f -- "$workdir/$subdir" "$destdir"
 		;;
