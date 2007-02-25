@@ -27,7 +27,6 @@ show_help()
 {
 	cat <<EOF
 $PROG - update subdirectory from source directory or archive file.
-If second argument is not given, then current directory will be updated.
 
 Usage: $PROG [Options] <source> [<subdirectory>]
 
@@ -192,9 +191,13 @@ while :; do
 	shift
 done
 
-[ "$#" -ge 1 ] || show_usage 'Not enough arguments.'
+[ "$#" -ge 2 ] ||
+	show_usage 'Not enough arguments.'
+[ "$#" -eq 2 ] ||
+	show_usage 'Too many arguments.'
+
 source="$(readlink -ev "$1")"; shift
-destdir="$(readlink -ev "${1:-.}")"; shift
+destdir="$(readlink -ev "$1")"; shift
 canon_destdir="$destdir"
 
 [ "$source" != "$destdir" ] ||
