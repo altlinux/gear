@@ -4,7 +4,7 @@
 # Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 #
-# gear-update updates subdirectory from source archive/directory.
+# gear-update updates subdirectory from source directory or archive file.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,19 +26,18 @@
 show_help()
 {
 	cat <<EOF
-Usage: $PROG [Options] <source> [<subdirectory>]
+$PROG - update subdirectory from source directory or archive file.
+If second argument is not given, then current directory will be updated.
 
-Utility to update subdirectory from source. Current directory
-will be updated if second argument is not specified.
+Usage: $PROG [Options] <source> [<subdirectory>]
 
 Options:
 
   --ignore-exclude    ignore .gitignore and .git/info/exclude;
-  -s,--subdir=DIR     define directory name in archive;
-  -t,--type=TYPE      define type of souece. It may on
-                      of items: 'dir', 'tar' or 'zip';
-  -f,--force          remove files from the <dst-directory>
-                      even if untracked or modified files found;
+  -s,--subdir=DIR     extract specified directory name from archive;
+  -t,--type=TYPE      define source type: 'dir', 'tar' or 'zip';
+  -f,--force          remove files from <subdirectory> even
+                      if untracked or modified files found;
   -v,--verbose        print a message for each action;
   -V,--version        print program version and exit;
   -h,--help           show this text and exit.
