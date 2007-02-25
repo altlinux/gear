@@ -47,7 +47,7 @@ or:    $PROG [options] --stdin
 Options:
   --branch=BRANCH           branch name where to import (default is "srpms");
   --import-only             do not perform a checkout after importing;
-  --no-untar                do not unpack source tarballs;
+  --no-unpack               do not unpack source archives;
   --rules=FILENAME          gear rules filename (default is ".gear-rules");
   --spec-pattern=PATTERN    specfile pattern list (default is "*.spec");
   --stdin                   read source package names from stdin;
@@ -131,7 +131,7 @@ untar()
 	method_tar="$1" && shift
 	method_copy="$1" && shift
 
-	if [ -z "$no_untar" -a -z "${f%%*.tar}" ]; then
+	if [ -z "$no_unpack" -a -z "${f%%*.tar}" ]; then
 		local tarlist
 		tarlist="$(tar -tf "$f")"
 		# Avoid unpacking archives with paths containing /../
@@ -284,13 +284,13 @@ import()
 	msg_info "Imported $srpm"
 }
 
-TEMP=`getopt -n $PROG -o h,q,v,V -l branch:,import-only,no-untar,rules:,spec-pattern:,stdin,help,quiet,verbose,version -- "$@"` ||
+TEMP=`getopt -n $PROG -o h,q,v,V -l branch:,import-only,no-unpack,no-untar,rules:,spec-pattern:,stdin,help,quiet,verbose,version -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
 branch_import=srpms
 import_only=
-no_untar=
+no_unpack=
 read_from_stdin=
 gear_rules=".gear-rules"
 while :; do
@@ -301,7 +301,7 @@ while :; do
 			;;
 		--import-only) import_only=1
 			;;
-		--no-untar) no_untar=1
+		--no-unpack|--no-untar) no_unpack=1
 			;;
 		--rules) shift; gear_rules="$1"
 			;;
