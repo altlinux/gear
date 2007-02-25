@@ -145,11 +145,12 @@ exit_handler()
 {
 	local rc=$?
 	trap - EXIT
-	[ -z "$workdir" ] || rm -rf -- "$workdir"
+	[ -z "$workdir" ] ||
+		rm -rf -- "$workdir"
 	if [ "$rc" -gt 0 ]; then
 		# Rollback actions
 		if [ -d "$destdir" ]; then
-			find "$destdir" -mindepth 1 -maxdepth 1 ! -name '.git' -print0 |
+			find "$destdir" -mindepth 1 -maxdepth 1 \! -name '.git' -print0 |
 				xargs -r0 rm $verbose -rf --
 		else
 			rm $verbose -f -- "$destdir"
@@ -157,7 +158,7 @@ exit_handler()
 		mkdir -p -- "$destdir"
 		cd "$destdir"
 		git-checkout-index -a
-		msg_info "unable to unpack new archive"
+		msg_info "failed to update target directory"
 	fi
 	exit $rc
 }
