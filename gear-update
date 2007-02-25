@@ -119,12 +119,16 @@ validate_subdir()
 		fatal "$source: directory not found in archive"
 }
 
-check_destdir()
+canon_destdir=
+validate_destdir()
 {
 	[ "$#" -eq 2 ] ||
-		fatal "check_destdir: more arguments required"
-	[ "$2" != "." -o ! -d "$2/.git" -o ! -d "$1/.git" ] ||
-		fatal "$dstdir/.git: unable to replace git direstory"
+		fatal "validate_destdir: invalid ($#) number of arguments"
+	local src_dir="$1"; shift
+	local dst_dir="$1"; shift
+	if [ "$dst_dir" = '.' -a -d '.git' -a -d "$src_dir/.git" ]; then
+		fatal "$canon_destdir/.git: Cowardly refusing to replace git directory"
+	fi
 }
 
 workdir=
@@ -181,12 +185,13 @@ done
 
 [ "$#" -ge 1 ] || show_usage 'Not enough arguments.'
 source="$(readlink -ev "$1")"; shift
-destdir="$(readlink -ev "${1:-.}")"
+destdir="$(readlink -ev "${1:-.}")"; shift
+canon_destdir="$destdir"
 
 [ "$source" != "$destdir" ] ||
 	fatal "\`$source' and \`$destdir' are the same place"
 [ -d "$destdir" ] ||
-	fatal "$destdir: directory not available"
+	fatal "$destdir: not a directory"
 
 # Move to topdir
 cd "$(git-rev-parse --show-cdup)"
@@ -221,17 +226,17 @@ case "$source_type" in
 	tar)
 		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
 		printf %s\\n "$subdir/" |tar -T- -C "$workdir" -xf "$source"
-		check_destdir "$workdir/$subdir" "$destdir"
+		validate_destdir "$workdir/$subdir" "$destdir"
 		mv -f -- "$workdir/$subdir" "$destdir"
 		;;
 	zip)
 		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
 		unzip "$source" "$subdir/*" -d "$workdir"
-		check_destdir "$workdir/$subdir" "$destdir"
+		validate_destdir "$workdir/$subdir" "$destdir"
 		mv -f -- "$workdir/$subdir" "$destdir"
 		;;
 	dir)
-		check_destdir "$subdir" "$destdir"
+		validate_destdir "$subdir" "$destdir"
 		cp -a -- "$subdir" "$destdir"
 		;;
 esac
