@@ -122,7 +122,7 @@ validate_subdir()
 
 	local quoted_subdir
 	quoted_subdir="$(quote_sed_regexp "$subdir")"
-	$source_ls_cmd "$source" |grep -qs "^$quoted_subdir/\?\$" ||
+	$source_ls_cmd "$source" |grep -qs "^$quoted_subdir\(/\|\$\)" ||
 		fatal "$source: directory \`$subdir' not found in archive"
 }
 
