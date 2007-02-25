@@ -98,25 +98,33 @@ get_type_by_source()
 subdir=
 validate_subdir()
 {
-	local source_lscmd= n quoted_subdir
+	[ "$source_type" != dir ] ||
+		return 0
+
+	local source_ls_cmd
 	case "$source_type" in
-		tar) source_lscmd="tar -tf"    ;;
-		zip) source_lscmd="zipinfo -1" ;;
-		dir) subdir="$source" ;;
+		tar) source_ls_cmd='tar -tf'    ;;
+		zip) source_ls_cmd='zipinfo -1 --' ;;
 		*) fatal "$source_type: unknown source type" ;;
 	esac
+
+	if [ -z "$subdir" ]; then
+		subdir="$($source_ls_cmd "$source")"
+		subdir="$(printf %s "$subdir" |
+			  sed 's#\(\([./]\+\)\?[^/]\+\)/.*#\1#g' |
+			  grep '^[^[:space:]]' |
+			  sort -u)"
+	fi
+
 	[ -n "$subdir" ] ||
-		subdir="$($source_lscmd "$source" |sed -e 's#\(\([./]\+\)\?[^/]\+\)/.*#\1#g' |sort -u)"
+		fatal "$source: subdirectory not found"
+	[ `printf %s "$subdir" |wc -l` -eq 0 ] ||
+		fatal "More than one subdirectory specified: $(printf %s "$subdir" |tr -s '[:space:]' ' ')"
 
-	n="$(printf %s\\n "$subdir" |wc -l)"
-	[ "$n" -le 1 ] || fatal "too many subdirectories: $(printf %s "$subdir" |tr \\n \ )"
-	[ "$n" -eq 1 ] || fatal "$source: directory not found"
-
-	[ -n "$source_lscmd" ] || return 0
-
+	local quoted_subdir
 	quoted_subdir="$(quote_sed_regexp "$subdir")"
-	$source_lscmd "$source" |grep -qs "^$quoted_subdir/\?\$" ||
-		fatal "$source: directory not found in archive"
+	$source_ls_cmd "$source" |grep -qs "^$quoted_subdir/\?\$" ||
+		fatal "$source: directory \`$subdir' not found in archive"
 }
 
 canon_destdir=
