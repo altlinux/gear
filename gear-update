@@ -23,7 +23,8 @@
 
 . gear-sh-functions
 
-show_help() {
+show_help()
+{
 	cat <<EOF
 Usage: $PROG [Options] <source> [<subdirectory>]
 
@@ -48,7 +49,8 @@ EOF
 	exit
 }
 
-print_version() {
+print_version()
+{
 	cat <<EOF
 $PROG version $PROG_VERSION
 Written by Alexey Gladkov <legion@altlinux.org>
@@ -64,7 +66,8 @@ EOF
 
 subdir=
 source_type=
-get_type_by_source() {
+get_type_by_source()
+{
 	local mimetype="$(file -biz "$source" |tr [:upper:] [:lower:])"
 	case "${mimetype#application/x-}" in
 		not-regular-file)
@@ -75,7 +78,8 @@ get_type_by_source() {
 	esac
 }
 
-validate_subdir() {
+validate_subdir()
+{
 	local source_lscmd= n quoted_subdir
 	case "$source_type" in
 		tar) source_lscmd="tar -tf"    ;;
@@ -97,7 +101,8 @@ validate_subdir() {
 		fatal "$source: directory not found in archive"
 }
 
-check_destdir() {
+check_destdir()
+{
 	[ "$#" -eq 2 ] ||
 		fatal "check_destdir: more arguments required"
 	[ "$2" != "." -o ! -d "$2/.git" -o ! -d "$1/.git" ] ||
