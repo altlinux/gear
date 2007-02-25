@@ -28,7 +28,7 @@ show_help()
 	cat <<EOF
 $PROG - update subdirectory from source directory or archive file.
 
-Usage: $PROG [Options] <source> [<subdirectory>]
+Usage: $PROG [Options] <source> <subdirectory>
 
 Options:
 
