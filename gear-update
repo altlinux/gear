@@ -214,9 +214,10 @@ destdir="${destdir#$topdir/}"
 git-rm -n -r "$destdir" >/dev/null
 
 if [ -z "$force" ]; then
-	out="$(git diff --name-only -- "$destdir";
-		git-ls-files --directory --others --exclude-per-directory=.gitignore -- "$destdir")"
-	[ -z "$out" ] || fatal "$destdir: untracked or modified files found"
+	out="$(git diff --name-only -- "$destdir" &&
+	       git ls-files --directory --others --exclude-per-directory=.gitignore -- "$destdir")"
+	[ -z "$out" ] ||
+		fatal "$destdir: untracked or modified files found"
 fi
 
 [ -n "$source_type" ] || get_type_by_source
