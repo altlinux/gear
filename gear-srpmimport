@@ -80,14 +80,16 @@ exit_handler()
 	exit $rc
 }
 
-# heuristically shorten tar directory name.
+# Heuristically shorten tar directory name.
 shorten_dir_name()
 {
 	local subdir="$1" name="$2" no_mv="$3" short
 	shift 3
 
-	short="$(printf %s "$name" |LC_COLLATE=C sed -e 's/\(-[0-9]\+\([.[:alpha:]]\+[.[:alnum:]]*\)\?\)\+$//')"
-	if [ -n "$short" -a "$short" != "$name" ] && [ ! -e "$short" ]; then
+	short="$(printf %s "$name" |
+		 LC_COLLATE=C sed -e 's/\(-[0-9]\+\([.[:alpha:]]\+[.[:alnum:]]*\)\?\)\+$//')"
+	if [ -n "$short" -a "$short" != "$name" ] &&
+	   [ ! -e "$short" ]; then
 		[ -n "$no_mv" ] ||
 			mv "$subdir/$name" "$subdir/$short"
 		name="$short"
@@ -136,11 +138,10 @@ untar()
 		tarlist="$(tar -tf "$f")"
 		# Avoid unpacking archives with paths containing /../
 		printf %s "$tarlist" |egrep -qs '^\.\.(/|$)|/\.\.(/|$)' ||
-			# Prefix leading "/" with ".", strip leading "./"
 			tar_dir="$(printf %s "$tarlist" |
-				   tr -s / |
-				   sed 's|^/|.&|' |
-				   sed 's|^\(\./\)\+||g' |
+				   tr -s / |			# squeeze slashes
+				   sed 's|^/|.&|' |		# prefix leading slash with dot
+				   sed 's|^\(\./\)\+||g' |	# strip leading "./"
 				   sed -n 's|^\([^/]\+\)\(/.*\)\?$|\1|p' |
 				   LC_COLLATE=C sort -u)"
 	fi
@@ -148,6 +149,7 @@ untar()
 		local base= short subdir unpack_into_subdir= tar_name="${f%.tar}"
 		if [ "$tar_dir" != "$(printf %s "$tar_dir" |LC_COLLATE=C tr -d '[:space:]')" ] ||
 		   [ -n "$(printf %s "$tar_dir" |LC_COLLATE=C tr -d -- '-[:alnum:]_.,+')" ]; then
+			# more than one subdir or funny dir name
 			unpack_into_subdir=1
 			tar_dir="$tar_name"
 		else
@@ -158,7 +160,7 @@ untar()
 		chmod -Rf u+rwX,go-w "$subdir"
 		rm "$f"
 
-		# Heuristics.
+		# Apply heuristics.
 		tar_dir="$(shorten_dir_name "$subdir" "$tar_dir" "$unpack_into_subdir")"
 
 		# Avoid file names clash.
@@ -166,8 +168,11 @@ untar()
 			mv "$subdir/$tar_dir" "$subdir/$tar_name"
 			tar_dir="$(shorten_dir_name "$subdir" "$tar_name" "$unpack_into_subdir")"
 		fi
+
 		if [ -e "$tar_dir" ]; then
-			mv "$subdir/$tar_dir" "$subdir/$tar_name.tar"
+			# Heuristics failed.
+			[ -n "$unpack_into_subdir" ] ||
+				mv "$subdir/$tar_dir" "$subdir/$tar_name.tar"
 			tar_dir="$tar_name.tar"
 		fi
 
