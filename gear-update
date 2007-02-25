@@ -97,8 +97,12 @@ get_type_by_source()
 subdir=
 validate_subdir()
 {
-	[ "$source_type" != dir ] ||
+	if [ "$source_type" = dir ]; then
+		[ -z "$subdir" -o "$subdir" = "$source" ] ||
+			fatal "Invalid subdir \`$subdir' for directory source \`$source'"
+		subdir="$source"
 		return 0
+	fi
 
 	local source_ls_cmd
 	case "$source_type" in
