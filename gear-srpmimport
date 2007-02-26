@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 #
-# Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+# Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 #
 # Incrementally import source packages to git repository.
@@ -28,7 +28,7 @@ print_version()
 $PROG version $PROG_VERSION
 Written by Dmitry V. Levin <ldv@altlinux.org>
 
-Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
 Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -83,15 +83,12 @@ exit_handler()
 # Heuristically shorten tar directory name.
 shorten_dir_name()
 {
-	local subdir="$1" name="$2" no_mv="$3" short
-	shift 3
-
+	local name="$1"; shift
+	local short
 	short="$(printf %s "$name" |
-		 LC_COLLATE=C sed -e 's/\(-[0-9]\+\([.[:alpha:]]\+[.[:alnum:]]*\)\?\)\+$//')"
+		 LC_COLLATE=C sed -e 's/\(-[[:alpha:]]*[0-9]\+\([.[:alpha:]]\+[.[:alnum:]]*\)\?\)\+$//')"
 	if [ -n "$short" -a "$short" != "$name" ] &&
 	   [ ! -e "$short" ]; then
-		[ -n "$no_mv" ] ||
-			mv "$subdir/$name" "$subdir/$short"
 		name="$short"
 	fi
 
@@ -125,86 +122,236 @@ optimize_rules()
 	git-update-index --add ${verbose:+--verbose} -- "$rules"
 }
 
-untar()
+write_copy_rule()
 {
-	local f version method_tar method_copy tar_dir=
-	f="$1" && shift
-	version="$1" && shift
-	method_tar="$1" && shift
-	method_copy="$1" && shift
+	local method="$1"; shift
 
-	if [ -z "$no_unpack" -a -z "${f%%*.tar}" ]; then
-		local tarlist
-		tarlist="$(tar -tf "$f")"
-		# Avoid unpacking archives with paths containing /../
-		printf %s "$tarlist" |egrep -qs '^\.\.(/|$)|/\.\.(/|$)' ||
-			tar_dir="$(printf %s "$tarlist" |
-				   tr -s / |			# squeeze slashes
-				   sed 's|^/|.&|' |		# prefix leading slash with dot
-				   sed 's|^\(\./\)\+||g' |	# strip leading "./"
-				   sed -n 's|^\([^/]\+\)\(/.*\)\?$|\1|p' |
-				   LC_COLLATE=C sort -u)"
+	printf '%s: %s\n' "$method" "$*" >>"$gear_rules"
+	git-update-index --add ${verbose:+--verbose} -- "$@"
+}
+
+spec_version=
+import_tree()
+{
+	local method_tree="$1"; shift
+	local method_copy="$1"; shift
+	local f="$1"; shift
+
+	if [ -n "$no_unpack" ]; then
+		# If archive unpacking is disabled, then store it as a file.
+		import_file 1 "$method_copy" "$f"
+		return
 	fi
-	if [ -n "$tar_dir" ]; then
-		local base= short subdir unpack_into_subdir= tar_name="${f%.tar}"
-		if [ "$tar_dir" != "$(printf %s "$tar_dir" |LC_COLLATE=C tr -d '[:space:]')" ] ||
-		   [ -n "$(printf %s "$tar_dir" |LC_COLLATE=C tr -d -- '-[:alnum:]_.,+')" ]; then
-			# more than one subdir or funny dir name
-			unpack_into_subdir=1
-			tar_dir="$tar_name"
-		else
-			base="$tar_dir"
-		fi
-		subdir="$(mktemp -d subdir.XXXXXX)"
-		tar -x -C "$subdir" -f "$f"
-		chmod -Rf u+rwX,go-w "$subdir"
-		rm "$f"
 
-		# Apply heuristics.
-		tar_dir="$(shorten_dir_name "$subdir" "$tar_dir" "$unpack_into_subdir")"
+	# Define archive list command and related parameters.
+	local source_ls_cmd arch_basename method_pack rule_suffix=
+	case "$method_tree" in
+		tar)
+			source_ls_cmd='tar -tf'
+			case "$method_copy" in
+				bzip2) method_pack=tar.bz2 ;;
+				gzip) method_pack=tar.gz ;;
+				*) method_pack=tar ;;
+			esac
+			case "$f" in
+				*.tar)
+					arch_basename="${f%.tar}"
+					[ "$method_pack" = tar ] ||
+						rule_suffix=' suffix=.tar'
+					;;
+				*.tar.bz2)
+					arch_basename="${f%.tar.bz2}"
+					[ "$method_pack" = tar.bz2 ] ||
+						rule_suffix=' suffix=.tar.bz2'
+					;;
+				*.tar.gz)
+					arch_basename="${f%.tar.gz}"
+					[ "$method_pack" = tar.gz ] ||
+						rule_suffix=' suffix=.tar.gz'
+					;;
+				*.tbz)
+					arch_basename="${f%.tbz}"
+					rule_suffix=' suffix=.tbz'
+					;;
+				*.tbz2)
+					arch_basename="${f%.tbz2}"
+					rule_suffix=' suffix=.tbz2'
+					;;
+				*.tgz)
+					arch_basename="${f%.tgz}"
+					rule_suffix=' suffix=.tgz'
+					;;
+				*)
+					arch_basename="$f"
+					rule_suffix=' suffix='
+					;;
+			esac
+			;;
+		zip)
+			source_ls_cmd='zipinfo -1 --'
+			method_pack=zip
+			case "$f" in
+				*.zip)	arch_basename="${f%.zip}"
+					;;
+				*)	arch_basename="$f"
+					rule_suffix=' suffix='
+					;;
+			esac
+			;;
+		*) fatal "import_tree: $method_tree: unrecognized method"
+			;;
+	esac
 
-		# Avoid file names clash.
-		if [ -e "$tar_dir" -a -z "$unpack_into_subdir" ]; then
-			mv "$subdir/$tar_dir" "$subdir/$tar_name"
-			tar_dir="$(shorten_dir_name "$subdir" "$tar_name" "$unpack_into_subdir")"
-		fi
+	# Fetch archive list.
+	local tree_list
+	if ! tree_list="$($source_ls_cmd "$f")" ||
+	   [ -z "$tree_list" ]; then
+		# If archive is empty or currupted, then store it as a file.
+		import_file 1 "$method_copy" "$f"
+		return
+	fi
 
-		if [ -e "$tar_dir" ]; then
-			# Heuristics failed.
-			[ -n "$unpack_into_subdir" ] ||
-				mv "$subdir/$tar_dir" "$subdir/$tar_name.tar"
-			tar_dir="$tar_name.tar"
-		fi
+	# Avoid unpacking archives with paths containing /../
+	local dir_name=
+	printf %s "$tree_list" |egrep -qs '^\.\.(/|$)|/\.\.(/|$)' ||
+		dir_name="$(printf %s "$tree_list" |
+			    tr -s / |			# squeeze slashes
+			    sed 's|^/|.&|' |		# prefix leading slash with dot
+			    sed 's|^\(\./\)\+||g' |	# strip leading "./"
+			    sed -n 's|^\([^/]\+\)\(/.*\)\?$|\1|p' |
+			    LC_COLLATE=C sort -u)"
+	if [ -z "$dir_name" ]; then
+		# If archive dirlist is empty, then store archive as a file.
+		import_file 1 "$method_copy" "$f"
+		return
+	fi
 
-		if [ -n "$unpack_into_subdir" ]; then
-			mv "$subdir" "$tar_dir"
-		else
-			mv "$subdir/$tar_dir" .
-			rmdir "$subdir"
-		fi
-
-		local quoted
-		quoted="$(quote_sed_regexp "$version")"
-
-		if [ "$tar_name" = "$base" ]; then
-			if [ "$tar_dir-$version" = "$tar_name" ]; then
-				printf '%s: %s\n' "$method_tar" "$tar_dir"
-			else
-				printf '%s: %s name=%s\n' "$method_tar" "$tar_dir" "$tar_name"
-			fi
-		else
-			if [ "$tar_dir-$version" = "$tar_name" ]; then
-				printf '%s: %s base=%s\n' "$method_tar" "$tar_dir" "$base"
-			else
-				printf '%s: %s name=%s base=%s\n' "$method_tar" "$tar_dir" "$tar_name" "$base"
-			fi
-		fi |sed "s/${quoted:-@version@}/@version@/g" >>"$gear_rules"
-		git-ls-files -z --others --modified -- "$tar_dir" | \
-			git-update-index --add ${verbose:+--verbose} -z --stdin
+	local base= subdir unpack_into_subdir=
+	if [ "$dir_name" != "$(printf %s "$dir_name" |LC_COLLATE=C tr -d '[:space:]')" ] ||
+	   [ -n "$(printf %s "$dir_name" |LC_COLLATE=C tr -d -- '-[:alnum:]_.,+')" ]; then
+		# More than one subdir or funny dir name.
+		unpack_into_subdir=1
+		dir_name="$arch_basename"
 	else
-		printf '%s: %s\n' "$method_copy" "$f" >>"$gear_rules"
-		git-update-index --add ${verbose:+--verbose} -- "$f"
+		base="$dir_name"
 	fi
+
+	local subdir
+	subdir="$(mktemp -d subdir.XXXXXX)"
+
+	case "$method_tree" in
+		tar) tar -x -C "$subdir" -f "$f" ;;
+		zip) unzip -q "$f" -d "$subdir" ;;
+	esac ||
+	{
+		# Archive is currupted, store it as a file.
+		chmod -Rf u+rwX "$subdir"
+		rm -rf "$subdir"
+		import_file 1 "$method_copy" "$f"
+		return
+	}
+	chmod -Rf u+rwX,go-w "$subdir"
+	rm "$f"
+
+	# Apply heuristics to shorten directory name.
+	local short_name
+	short_name="$(shorten_dir_name "$dir_name")"
+
+	# Avoid file names clashes.
+	if [ -e "$short_name" -a "$dir_name" != "$arch_basename" ]; then
+		# Try to shorten archive name.
+		short_name="$(shorten_dir_name "$arch_basename")"
+	fi
+
+	if [ -e "$short_name" ]; then
+		# Shorten heuristics failed, try with full directory name.
+		short_name="$dir_name"
+		if [ -e "$short_name" -a "$dir_name" != "$arch_basename" ]; then
+			# Try with full archive name.
+			short_name="$arch_basename"
+		fi
+	fi
+
+	if [ -e "$short_name" ]; then
+		# Full name also clashes, so fall back to file name.
+		short_name="$f"
+	fi
+
+	# Move temporary directory to final place.
+	if [ -n "$unpack_into_subdir" ]; then
+		mv "$subdir" "$short_name"
+	else
+		mv "$subdir/$dir_name" "$short_name"
+		rmdir "$subdir"
+	fi
+	dir_name="$short_name"
+
+	local quoted rule_base= rule_name=
+	quoted="$(quote_sed_regexp "$spec_version")"
+
+	[ "$dir_name-$spec_version" = "$arch_basename" ] ||
+		rule_name=" name=$arch_basename"
+
+	[ "$arch_basename" = "$base" ] ||
+		rule_base=" base=$base"
+
+	printf '%s: %s%s%s%s\n' "$method_pack" "$dir_name" "$rule_name" "$rule_base" "$rule_suffix" |
+		sed "s/${quoted:-@version@}/@version@/g" >>"$gear_rules"
+
+	git-ls-files -z --others --modified -- "$dir_name" |
+		git-update-index --add ${verbose:+--verbose} -z --stdin
+}
+
+import_file()
+{
+	local no_unpack="$1"; shift
+	local method="$1"; shift
+
+	if [ "$method" = copy ]; then
+		write_copy_rule copy "$@"
+		return
+	fi
+
+	local f="$1"; shift
+
+	# If archive unpacking is enabled, then
+	# look for file type inside compressed file.
+	local file_type=
+	[ -n "$no_unpack" ] ||
+		file_type="$(file -bz -- "$f")" ||:
+
+	case "$file_type" in
+		*tar\ archive*)
+			import_tree tar "$method" "$f"
+			;;
+		*)
+			case "$f,$method" in
+				*.bz2,bzip2)
+					# if target file exists or uncompression fails,
+					# then just copy file as is.
+					if [ ! -e "${f%.bz2}" ] && bunzip2 "$f"; then
+						write_copy_rule bzip2 "${f%.bz2}"
+					else
+						write_copy_rule copy "$f"
+					fi
+					;;
+				*.gz,gzip)
+					# if target file exists or uncompression fails,
+					# then just copy file as is.
+					if [ ! -e "${f%.gz}" ] && gunzip "$f"; then
+						write_copy_rule gzip "${f%.gz}"
+					else
+						write_copy_rule copy "$f"
+					fi
+					;;
+				*)
+					# gear copy rules do not support file name
+					# transformation, so just copy it as is.
+					write_copy_rule copy "$f"
+					;;
+			esac
+			;;
+	esac
 }
 
 import()
@@ -236,7 +383,8 @@ import()
 	verbose "Unpacked ${srpm##*/}"
 
 	# Find specfile.
-	local spec= spec_version=
+	spec_version=
+	local spec=
 	if spec="$(find_specfile_in_cwd "${srpm##*/}: " ${filelist})"; then
 		[ -z "${spec##$def_spec_pattern}" -o -z "${spec%%$def_spec_pattern}" ] ||
 			printf 'spec: %s\n' "$spec" >>"$gear_rules"
@@ -258,21 +406,23 @@ import()
 			msg_info "$f: rules file $gear_rules ignored."
 			continue
 		fi
-		case "$f" in
-			*.tar)
-				untar "$f" "$spec_version" tar copy
+		local file_type
+		file_type="$(file -b -- "$f")"
+		case "$file_type" in
+			*tar\ archive*)
+				import_tree tar copy "$f"
 				;;
-			*.gz)
-				gunzip "$f"
-				untar "${f%.gz}" "$spec_version" tar.gz gzip
+			*Zip\ archive*)
+				import_tree zip copy "$f"
 				;;
-			*.bz2)
-				bunzip2 "$f"
-				untar "${f%.bz2}" "$spec_version" tar.bz2 bzip2
+			bzip2\ compressed*)
+				import_file "$no_unpack" bzip2 "$f"
+				;;
+			gzip\ compressed*)
+				import_file "$no_unpack" gzip "$f"
 				;;
 			*)
-				printf 'copy: %s\n' "$f" >>"$gear_rules"
-				git-update-index --add ${verbose:+--verbose} -- "$f"
+				import_file "$no_unpack" copy "$f"
 				;;
 		esac
 	done
