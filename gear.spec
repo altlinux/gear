@@ -1,5 +1,5 @@
 Name: gear
-Version: 1.1.1
+Version: 1.2.0
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -40,6 +40,22 @@ See %_docdir/%name-%version/QUICKSTART.ru_RU.KOI8-R for details.
 %doc QUICKSTART*
 
 %changelog
+* Wed Feb 28 2007 Dmitry V. Levin <ldv@altlinux.org> 1.2.0-alt1
+- gear-update: New utility, replaces gear-update-archive and
+  gear-update-directory (legion, ldv).
+- gear-upload: Move to separate package, girar-utils (ldv).
+- gear: Chdir to toplevel directory early (ldv).
+- gear-srpmimport (ldv):
+  + Chdir to toplevel directory early.
+  + If --quiet option given, do commit and merge quietly.
+  + Rename --no-untar option to --no-unpack.
+  + Rewrite archive importer:
+    - Use file(1) to recognize file types
+      instead of suffix-based switch.
+    - Handle zip archives.
+    - Support arbitrary archive names.
+- QUICKSTART.ru_RU.KOI8-R: Mention ~/.gitconfig (azol).
+
 * Sat Dec 09 2006 Dmitry V. Levin <ldv@altlinux.org> 1.1.1-alt1
 - gear-update-tag: Fix temporary directory removal (ldv).
 - gear-update-tag: Treat "zip" directive as "tar" (raorn).
