@@ -1,5 +1,5 @@
-.\" Copyright (C) 2006  Alexey Glagkov <legion@altlinux.org>
-.\" Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+.\" Copyright (C) 2006-2007  Alexey Glagkov <legion@altlinux.org>
+.\" Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
 .\" Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 .\"
 .\" This file is free software; you can redistribute it and/or modify
