@@ -23,7 +23,7 @@
 
 PROJECT = gear
 VERSION = $(shell sed '/^Version: */!d;s///;q' gear.spec)
-PROGRAMS = gear gear-commit gear-hsh-build gear-srpmimport gear-update gear-update-tag gear-upload
+PROGRAMS = gear gear-commit gear-hsh-build gear-srpmimport gear-update gear-update-tag
 MAN1PAGES = $(PROGRAMS:=.1)
 TARGETS = gear-sh-functions $(MAN1PAGES)
 
