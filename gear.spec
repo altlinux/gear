@@ -1,5 +1,5 @@
 Name: gear
-Version: 1.2.0
+Version: 1.2.1
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -40,6 +40,9 @@ See %_docdir/%name-%version/QUICKSTART.ru_RU.KOI8-R for details.
 %doc QUICKSTART*
 
 %changelog
+* Sun Mar 04 2007 Dmitry V. Levin <ldv@altlinux.org> 1.2.1-alt1
+- gear: Fixed suffix support (ldv, #11008).
+
 * Wed Feb 28 2007 Dmitry V. Levin <ldv@altlinux.org> 1.2.0-alt1
 - gear-update: New utility, replaces gear-update-archive and
   gear-update-directory (legion, ldv).
