@@ -28,8 +28,8 @@ $ cd foobar
 
 2) Создать новый git-репозиторий:
 
-$ git-init-db
-defaulting to local storage area
+$ git init
+Initialized empty Git repository in .git/
 
 $ ls -dlog .*
 drwxr-xr-x 4 4096 Aug 12 34:56 .
