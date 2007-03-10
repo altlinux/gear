@@ -97,23 +97,17 @@ $ gear --hasher -- hsh ~/build --no-sisyphus-check=gpg,packager
 $ gear-commit -a
 
 Прежде чем сделать первый commit, не забудьте сконфигурировать ваш адрес.
-Это можно сделать глобально несколькими способами, например,
-прописав соответствующие значения в ~/.gitconfig
+Это можно сделать глобально несколькими способами, например, прописав
+соответствующие значения в ~/.gitconfig:
 
-[user]
-	name = "Your Name"
-	email = "<login>@altlinux.org"
+$ git config --global user.name 'Your Name'
+$ git config --global user.email '<login>@altlinux.org'
 
-либо определив переменные окружения
-GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, GIT_COMMITTER_NAME и GIT_COMMITTER_EMAIL,
+Для отдельно взятого git-репозитория сконфигурировать адрес можно, прописав
+соответствующие значения в .git/config этого git-репозитория:
 
-Для отдельно взятого git-репозитория сконфигурировать адрес можно, добавив текст
-
-[user]
-	name = "Your Name"
-	email = "<login>@altlinux.org"
-
-в .git/config этого git-репозитория.
+$ git config user.name 'Your Name'
+$ git config user.email '<login>@altlinux.org'
 
 
 Ссылки
