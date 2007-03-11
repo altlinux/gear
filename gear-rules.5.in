@@ -189,7 +189,7 @@ Specifying a glob pattern which does not match any files in the tree
 is not an error.
 .IP
 When copying files from subdirectories of the main tree, the whole path
-includind the subdirectory name is matched against exclude patterns.
+including the subdirectory name is matched against exclude patterns.
 The \*(lq/\*(rq characters in the path are not treated as special and
 can be matched by wildcards.
 .
@@ -527,4 +527,4 @@ package are listed in the manual pages for these programs.
 .BR gear (1),
 .BR gear-srpmimport (1),
 .BR gear-update (1),
-.BR gear-update-tag (1)
+.BR gear-update-tag (1).
