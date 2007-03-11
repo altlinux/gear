@@ -125,7 +125,7 @@ exit_handler()
 	local rc=$?
 	trap - EXIT
 	if [ -n "$need_git_reset" ]; then
-		git-reset --soft HEAD^ &&
+		git reset --soft HEAD^ &&
 			verbose "Reverted temporary commit."
 	fi
 	[ -z "$tmpdir" ] ||
@@ -241,7 +241,7 @@ make_tar()
 	elif [ "$rc" != 0 ]; then return 0
 	fi
 
-	git-archive --format="$format" ${tar_base:+--prefix="$tar_base"/} "$id" >"$outdir/$name.$format"
+	git archive --format="$format" ${tar_base:+--prefix="$tar_base"/} "$id" >"$outdir/$name.$format"
 	local archive_name
 	archive_name="$(compress_file "$cmd" "$outdir/$name.$format")"
 	if [ -n "$suffix" -a "$archive_name" != "$outdir/$name$suffix" ]; then
@@ -332,7 +332,7 @@ make_diff()
 	elif [ "$rc" != 0 ]; then return 0
 	fi
 
-	git-diff-tree --patch-with-stat "$old_id" "$new_id" >"$outdir/$name"
+	git diff-tree --patch-with-stat "$old_id" "$new_id" >"$outdir/$name"
 	verbose "Extracted \"$name\" diff."
 	compress_file "$cmd" "$outdir/$name" > /dev/null
 }
@@ -386,7 +386,7 @@ copy_by_pattern()
 		if [ "$rc" = 1 ]; then exit 1
 		elif [ "$rc" != 0 ]; then return 0
 		fi
-		git-ls-tree "$tree" >"$workdir/blobs"
+		git ls-tree "$tree" >"$workdir/blobs"
 		echo >>"$workdir/blobs"
 		local mode otype id name found=
 		while read -r mode otype id name; do
@@ -409,7 +409,7 @@ copy_by_pattern()
 				  -n "${sample%%$ex_pattern}" ] ||
 				  	continue 2
 			done
-			git-cat-file blob "$id" >"$outdir/$name"
+			git cat-file blob "$id" >"$outdir/$name"
 			verbose "Extracted \"$name\" by pattern \"$pattern\"."
 			[ -n "${mode%%*7??}" ] ||
 				chmod a+x "$outdir/$name"
@@ -577,11 +577,11 @@ else
 fi
 
 # Save git directory for future use.
-git_dir="$(git-rev-parse --git-dir)"
+git_dir="$(git rev-parse --git-dir)"
 git_dir="$(readlink -ev "$git_dir")"
 
 # Chdir to toplevel directory if necessary.
-cd "$(git-rev-parse --show-cdup)"
+cd "$(git rev-parse --show-cdup)"
 
 # Check given tree-ish.
 main_commit_id="${main_tree_id%%:*}"
@@ -589,7 +589,7 @@ main_commit_sha1="$(get_commit_sha1 "$main_commit_id")" ||
 	fatal "Invalid commit \"$main_commit_id\""
 main_tree_sha1="$(get_object_sha1 "$main_tree_id")" ||
 	fatal "Invalid tree \"$main_tree_id\""
-git-cat-file -e "$main_tree_sha1^{tree}" ||
+git cat-file -e "$main_tree_sha1^{tree}" ||
 	fatal "Invalid tree \"$main_tree_id\""
 
 if [ -n "$update_spec" ]; then
@@ -607,7 +607,7 @@ if [ -z "$outdir" ]; then
 fi
 
 if [ -n "$do_commit" ]; then
-	if git-commit -a -m "Temporary commit by $PROG."; then
+	if git commit -a -m "Temporary commit by $PROG."; then
 		need_git_reset=1
 		verbose "Temporarily committed local changes."
 	fi

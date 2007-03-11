@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 #
-# Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+# Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006  Sir Raorn <raorn@altlinux.org>
 # Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
@@ -39,7 +39,7 @@ print_version()
 $PROG version $PROG_VERSION
 Written by Sergey Vlasov <vsu@altlinux.org>
 
-Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
 Copyright (C) 2006  Sir Raorn <raorn@altlinux.org>
 Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
@@ -227,7 +227,7 @@ mark_used_stored_tags()
 			tag_list_error "Bad stored tag $sha1: parse failed"
 		is_hex_sha1 "$next" ||
 			tag_list_error "Bad stored tag $sha1: invalid format"
-		real_sha1="$(git-hash-object -t tag "$tag_dir/$sha1")" ||
+		real_sha1="$(git hash-object -t tag "$tag_dir/$sha1")" ||
 			tag_list_error "Bad stored tag $sha1: hash failed"
 		[ "$real_sha1" = "$sha1" ] ||
 			tag_list_error "Bad stored tag $sha1: hash mismatch (got $real_sha1)"
@@ -258,16 +258,16 @@ store_tag_chain()
 		return 0
 
 	local type next
-	type="$(git-cat-file -t "$sha1")" ||
+	type="$(git cat-file -t "$sha1")" ||
 		fatal "Object $sha1 does not exist"
 	if [ "$type" = "commit" ]; then
 		return 0
 	elif [ "$type" = "tag" ]; then
-		next="$(git-cat-file tag "$sha1" | sed -ne '1s/^object \(.*\)$/\1/p')" ||
+		next="$(git cat-file tag "$sha1" | sed -ne '1s/^object \(.*\)$/\1/p')" ||
 			fatal "Cannot parse tag $sha1"
 		is_hex_sha1 "$next" ||
 			fatal "Tag $sha1 has invalid format"
-		git-cat-file tag "$sha1" >"$tmp_tag_dir/$sha1" ||
+		git cat-file tag "$sha1" >"$tmp_tag_dir/$sha1" ||
 			fatal "Cannot store tag $sha1"
 		new_stored_tags="$new_stored_tags$sha1 "
 		store_tag_chain "$next"
@@ -283,10 +283,10 @@ add_new_stored_tags()
 	for sha1 in $new_stored_tags; do
 		if cmp -s -- "$tag_dir/$sha1" "$tmp_tag_dir/$sha1"; then
 			# Make sure that the tag is really added to the index
-			git-update-index --add -- "$tag_dir/$sha1"
+			git update-index --add -- "$tag_dir/$sha1"
 		else
 			cp -f -- "$tmp_tag_dir/$sha1" "$tag_dir/$sha1"
-			git-update-index --add -- "$tag_dir/$sha1"
+			git update-index --add -- "$tag_dir/$sha1"
 			verbose "Added $tag_dir/$sha1"
 		fi
 	done
@@ -296,10 +296,10 @@ update_tag_list()
 {
 	if cmp -s -- "$workdir/list" "$tag_dir/list"; then
 		# Make sure that the tag list is really added to the index
-		git-update-index --add -- "$tag_dir/list"
+		git update-index --add -- "$tag_dir/list"
 	else
 		cp -f -- "$workdir/list" "$tag_dir/list"
-		git-update-index --add -- "$tag_dir/list"
+		git update-index --add -- "$tag_dir/list"
 		verbose "Updated $tag_dir/list"
 	fi
 }
@@ -312,7 +312,7 @@ clean_unused_stored_tags()
 	for sha1 in $old_stored_tags; do
 		if [ -n "${new_stored_tags##* $sha1 *}" ]; then
 			rm -f -- "$tag_dir/$sha1"
-			git-update-index --remove -- "$tag_dir/$sha1"
+			git update-index --remove -- "$tag_dir/$sha1"
 			verbose "Deleted $tag_dir/$sha1"
 		fi
 	done
@@ -321,7 +321,7 @@ clean_unused_stored_tags()
 allowed_commits=
 get_allowed_commits()
 {
-	allowed_commits="$(git-rev-parse --verify HEAD 2>/dev/null ||: )"
+	allowed_commits="$(git rev-parse --verify HEAD 2>/dev/null ||: )"
 
 	if [ -s "$git_dir/MERGE_HEAD" ]; then
 		local sha1 lineno=0
@@ -469,7 +469,7 @@ while :; do
 	shift
 done
 
-git_dir="$(git-rev-parse --git-dir)" || exit $?
+git_dir="$(git rev-parse --git-dir)" || exit $?
 
 tag_name=
 tag_value=

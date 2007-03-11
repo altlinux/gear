@@ -76,7 +76,7 @@ exit_handler()
 	rm -rf -- "$tmpdir"
 	# Recover HEAD.
 	[ "$branch_orig" = "refs/heads/$branch_import" ] ||
-		git-symbolic-ref HEAD "$branch_orig"
+		git symbolic-ref HEAD "$branch_orig"
 	exit $rc
 }
 
@@ -119,7 +119,7 @@ optimize_rules()
 		done >"$tmp"
 	sed -ne 's/^[^:]\+: \([^ ]\+ .*\|[^ .]\+$\)/&/p' "$rules" >>"$tmp"
 	mv "$tmp" "$rules"
-	git-update-index --add ${verbose:+--verbose} -- "$rules"
+	git update-index --add ${verbose:+--verbose} -- "$rules"
 }
 
 write_copy_rule()
@@ -127,7 +127,7 @@ write_copy_rule()
 	local method="$1"; shift
 
 	printf '%s: %s\n' "$method" "$*" >>"$gear_rules"
-	git-update-index --add ${verbose:+--verbose} -- "$@"
+	git update-index --add ${verbose:+--verbose} -- "$@"
 }
 
 spec_version=
@@ -298,8 +298,8 @@ import_tree()
 	printf '%s: %s%s%s%s\n' "$method_pack" "$dir_name" "$rule_name" "$rule_base" "$rule_suffix" |
 		sed "s/${quoted:-@version@}/@version@/g" >>"$gear_rules"
 
-	git-ls-files -z --others --modified -- "$dir_name" |
-		git-update-index --add ${verbose:+--verbose} -z --stdin
+	git ls-files -z --others --modified -- "$dir_name" |
+		git update-index --add ${verbose:+--verbose} -z --stdin
 }
 
 import_file()
@@ -399,7 +399,7 @@ import()
 			continue
 		fi
 		if [ "$f" = "$spec" ]; then
-			git-update-index --add ${verbose:+--verbose} -- "$f"
+			git update-index --add ${verbose:+--verbose} -- "$f"
 			continue
 		fi
 		if [ "$f" = "$gear_rules" ]; then
@@ -432,10 +432,10 @@ import()
 	local message
 	message="$(printf '%s\n\n%s\n' "$verrel" "$changelog")"
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
-		git-commit ${quiet:+-q} -a -m "$message" ${author:+--author "$author"}
+		git commit ${quiet:+-q} -a -m "$message" ${author:+--author "$author"}
 	verbose "Committed $name $verrel"
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
-		git-tag -a -m "$name $verrel" "$verrel" ||:
+		git tag -a -m "$name $verrel" "$verrel" ||:
 	msg_info "Imported $srpm"
 }
 
@@ -488,19 +488,19 @@ else
 		show_usage 'Not enough arguments.'
 fi
 
-GIT_DIR="$(git-rev-parse --git-dir)"
+GIT_DIR="$(git rev-parse --git-dir)"
 GIT_DIR="$(readlink -ev "$GIT_DIR")"
 export GIT_DIR
 
-branch_orig="$(git-symbolic-ref HEAD)"
-head_orig="$(git-rev-parse --verify HEAD 2>/dev/null ||:)"
+branch_orig="$(git symbolic-ref HEAD)"
+head_orig="$(git rev-parse --verify HEAD 2>/dev/null ||:)"
 
 unset GIT_INDEX_FILE ||:
 index_orig="$GIT_DIR/index"
 index_already_recovered=
 
 # Chdir to toplevel directory if necessary.
-cd "$(git-rev-parse --show-cdup)"
+cd "$(git rev-parse --show-cdup)"
 
 # Save current work directory.
 saved_cwd="$(/bin/pwd)"
@@ -513,7 +513,7 @@ workdir="$tmpdir/work"
 [ ! -f "$index_orig" ] ||
 	cp -p "$index_orig" "$tmpdir/index"
 
-git-symbolic-ref HEAD "refs/heads/$branch_import"
+git symbolic-ref HEAD "refs/heads/$branch_import"
 
 if [ -n "$read_from_stdin" ]; then
 	while read REPLY; do
@@ -527,21 +527,21 @@ fi
 
 # Merge after import.
 cd "$saved_cwd"
-head_new="$(git-rev-parse --verify HEAD 2>/dev/null ||:)"
+head_new="$(git rev-parse --verify HEAD 2>/dev/null ||:)"
 if [ "$head_orig" = "$head_new" ]; then
 	verbose "Nothing imported."
 elif [ -z "$import_only" ]; then
 	if [ -z "$head_orig" ]; then
-		git-update-ref "$branch_orig" "refs/heads/$branch_import"
+		git update-ref "$branch_orig" "refs/heads/$branch_import"
 		msg_info "Created ${branch_orig#refs/heads/} branch"
-		git-symbolic-ref HEAD "$branch_orig"
-		git-checkout -f
+		git symbolic-ref HEAD "$branch_orig"
+		git checkout -f
 		index_already_recovered=1
 	elif [ -n "$head_new" ]; then
-		git-symbolic-ref HEAD "$branch_orig"
-		git-checkout -f
+		git symbolic-ref HEAD "$branch_orig"
+		git checkout -f
 		index_already_recovered=1
-		git-pull ${quiet:+-n} . "refs/heads/$branch_import"
+		git pull ${quiet:+-n} . "refs/heads/$branch_import"
 		msg_info "Merged $branch_import branch into ${branch_orig#refs/heads/} branch"
 	fi
 fi

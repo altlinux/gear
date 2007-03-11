@@ -160,7 +160,7 @@ exit_handler()
 		fi
 		mkdir -p -- "$destdir"
 		cd "$destdir"
-		git-checkout-index -a
+		git checkout-index -a
 		msg_info 'failed to update target directory'
 	fi
 	exit $rc
@@ -210,7 +210,7 @@ canon_destdir="$destdir"
 	fatal "$destdir: not a directory"
 
 # Move to topdir
-cd "$(git-rev-parse --show-cdup)"
+cd "$(git rev-parse --show-cdup)"
 topdir="$(readlink -ev .)"
 
 # Make destdir relative.
@@ -221,7 +221,7 @@ destdir="${destdir#$topdir/}"
 [ -n "$destdir" ] &&
 	destdir="${destdir%/}" ||
 	destdir='.'
-git-rm -n -r "$destdir" >/dev/null
+git rm -n -r "$destdir" >/dev/null
 
 if [ -z "$force" ]; then
 	out="$(git diff --name-only -- "$destdir" &&
@@ -265,11 +265,11 @@ esac
 	fatal "$destdir: result of extraction is not a directory"
 
 if [ -n "$ignore_exclude" ]; then
-	git-ls-files -z "$destdir" |
-		git-update-index --remove --force-remove -z --stdin
-	git-ls-files -z --others --modified "$destdir" |
-		git-update-index --add ${verbose:+--verbose} -z --stdin
+	git ls-files -z "$destdir" |
+		git update-index --remove --force-remove -z --stdin
+	git ls-files -z --others --modified "$destdir" |
+		git update-index --add ${verbose:+--verbose} -z --stdin
 else
-	git-rm -f -r --cached "$destdir"
-	git-add $verbose "$destdir"
+	git rm -f -r --cached "$destdir"
+	git add $verbose "$destdir"
 fi

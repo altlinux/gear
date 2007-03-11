@@ -1,9 +1,9 @@
 #!/bin/sh -efu
 #
 # Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
-# Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+# Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
 #
-# git-commit wrapper for gear.
+# git commit wrapper for gear.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ $PROG version $PROG_VERSION
 Written by Alexey Gladkov <legion@altlinux.org>
 
 Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
-Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 EOF
@@ -70,19 +70,19 @@ elif [ "$*" != "${*#--spec[= ]}" ]; then
 	esac
 	[ -f "$specfile" -o -z "$specfile" ] ||
 	    fatal "$specfile: file not available"
-elif git-cat-file -t "$main_tree_id" >/dev/null 2>&1; then
+elif git cat-file -t "$main_tree_id" >/dev/null 2>&1; then
 	trap exit_handler HUP INT QUIT TERM EXIT
 	workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
 
 	# Get specfile from archive.
 	find_specfile
-	cd "$(git-rev-parse --show-cdup)"
+	cd "$(git rev-parse --show-cdup)"
 
 	rm -rf -- "$workdir"
 	trap - HUP INT QUIT TERM EXIT
 	unset rules main_tree_id workdir
 else
-	cd "$(git-rev-parse --show-cdup)"
+	cd "$(git rev-parse --show-cdup)"
 	specfile="$(set +f; find_specfile_in_cwd '' *)" ||:
 fi
 
@@ -95,4 +95,4 @@ $ch"
 	unset ch vr specfile
 fi
 
-exec git-commit ${commitlog:+-m "$commitlog" --edit} "$@"
+exec git commit ${commitlog:+-m "$commitlog" --edit} "$@"

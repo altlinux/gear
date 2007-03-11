@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 #
-# Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+# Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 #
@@ -103,9 +103,9 @@ get_object_sha1()
 	local name="$1" && shift
 
 	local sha1
-	sha1="$(git-rev-parse --verify "$name")" || return 1
+	sha1="$(git rev-parse --verify "$name")" || return 1
 
-	# Verify that we really got a SHA-1 (git-rev-parse --verify accepts
+	# Verify that we really got a SHA-1 (git rev-parse --verify accepts
 	# things like ^COMMIT and returns ^SHA1 for them).
 	is_hex_sha1 "$sha1" || return 1
 
@@ -118,7 +118,7 @@ get_commit_sha1()
 
 	local sha1
 	sha1="$(get_object_sha1 "$name")" || return 1
-	git-rev-parse --verify "$sha1^0" || return 1
+	git rev-parse --verify "$sha1^0" || return 1
 }
 
 tree_entry_name()
@@ -142,7 +142,7 @@ traverse_tree()
 	local optional="$1" && shift
 
 	local id="$(tree_entry_name "$tree" "$path")"
-	if git-cat-file tree "$id" >/dev/null 2>&1; then
+	if git cat-file tree "$id" >/dev/null 2>&1; then
 		printf %s "$id"
 	elif [ "$optional" = 1 ]; then
 		return 2
@@ -158,7 +158,7 @@ cat_blob()
 	local name="$1" && shift
 
 	local id="$(tree_entry_name "$tree" "$name")"
-	git-cat-file blob "$id" ||
+	git cat-file blob "$id" ||
 		rules_error "blob \"$name\" not found in \"$tree\""
 }
 
@@ -194,7 +194,7 @@ find_rules()
 {
 	if [ -f "$workdir/rules" ]; then
 		return 0
-	elif [ -n "$(git-ls-tree "$main_tree_id" "$rules")" ]; then
+	elif [ -n "$(git ls-tree "$main_tree_id" "$rules")" ]; then
 		cat_blob "$main_tree_id" "$rules" >"$workdir/rules"
 	else
 		: >"$workdir/rules"
@@ -241,7 +241,7 @@ find_specfile()
 
 	# second try specfile in toplevel tree.
 	if [ -z "$specfile" ]; then
-		specfile="$(git-ls-tree "$main_tree_id" |
+		specfile="$(git ls-tree "$main_tree_id" |
 			sed -ne 's/^[^[:space:]]\+[[:space:]]\+blob[[:space:]]\+[^[:space:]]\+[[:space:]]\+\([^/[:space:]]\+\.spec\)$/\1/p')"
 		[ `printf %s "$specfile" |wc -l` -le 0 ] ||
 			fatal "Too many specfiles found${GIT_DIR:+ in $GIT_DIR}"
@@ -268,7 +268,7 @@ find_tags()
 	if [ -z "$tag_dir" ] && [ -n "$tag_dir_default" ]; then
 		local id type
 		id="$(tree_entry_name "$main_tree_id" "$tag_dir_default/list")"
-		type="$(git-cat-file -t "$id" 2>/dev/null)" || type=
+		type="$(git cat-file -t "$id" 2>/dev/null)" || type=
 		if [ "$type" = "blob" ]; then
 			tag_dir="$tag_dir_default"
 		fi
@@ -314,13 +314,13 @@ extract_stored_tag_chain()
 
 	local id type real_sha1 next
 	id="$(tree_entry_name "$main_tree_id" "$tag_dir/$sha1")"
-	type="$(git-cat-file -t "$id" 2>/dev/null)" || type=
+	type="$(git cat-file -t "$id" 2>/dev/null)" || type=
 	if [ "$type" = "blob" ]; then
-		next="$(git-cat-file blob "$id" | sed -ne '1s/^object \(.*\)$/\1/p')" ||
+		next="$(git cat-file blob "$id" | sed -ne '1s/^object \(.*\)$/\1/p')" ||
 			tag_list_error "Bad stored tag $sha1: parse failed"
 		is_hex_sha1 "$next" ||
 			tag_list_error "Bad stored tag $sha1: invalid format"
-		real_sha1="$(git-cat-file blob "$id" | git-hash-object -t tag -w --stdin)" ||
+		real_sha1="$(git cat-file blob "$id" | git hash-object -t tag -w --stdin)" ||
 			tag_list_error "Bad stored tag $sha1: extract failed"
 		[ "$real_sha1" = "$sha1" ] ||
 			tag_list_error "Bad stored tag $sha1: hash mismatch (got $real_sha1)"
@@ -338,7 +338,7 @@ is_ancestor_commit()
 	local descendant="$1" && shift
 
 	local bases
-	bases=" $(git-merge-base "$descendant" "$ancestor" | tr '\n' ' ') " ||
+	bases=" $(git merge-base "$descendant" "$ancestor" | tr '\n' ' ') " ||
 		return 1
 	[ -z "${bases##* $ancestor *}" ] || return 1
 }
@@ -355,7 +355,7 @@ check_tag_name()
 		rules_error "Invalid tag name \"$name\": trailing '/' is not allowed"
 	[ -n "${name##*[][*?^~:@[:space:]]*}" ] ||
 		rules_error "Invalid tag name \"$name\": invalid characters found"
-	git-check-ref-format "tags/$name" ||
+	git check-ref-format "tags/$name" ||
 		rules_error "Invalid tag name \"$name\""
 }
 
@@ -378,7 +378,7 @@ resolve_commit_name()
 			tag_list_error "Broken tag chain for name \"$name\""
 	fi
 
-	type="$(git-cat-file -t "$found_commit")" ||
+	type="$(git cat-file -t "$found_commit")" ||
 		rules_error "Name \"$name\" specifies a nonexistent object $found_commit"
 	if [ "$type" = "tag" ]; then
 		rules_error "Tag object $found_commit for name \"$name\" is not stored"
@@ -387,7 +387,7 @@ resolve_commit_name()
 	fi
 
 	# Clean up possible upper/lower case differences in raw SHA-1 ids
-	final_sha1="$(git-rev-parse --verify "$found_commit")" ||
+	final_sha1="$(git rev-parse --verify "$found_commit")" ||
 		rules_error "Name \"$name\" resolved to invalid object ID \"$found_commit\""
 
 	# Ensure than $final_sha1 is an ancestor of $main_commit_sha1

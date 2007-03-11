@@ -151,7 +151,7 @@ while [ $# -gt 0 ]; do
 done
 
 [ -n "$repos" ] || {
-	repos="$(git-rev-parse --git-dir)"
+	repos="$(git rev-parse --git-dir)"
 	verbose "No repositories given, assuming $repos..."
 }
 
