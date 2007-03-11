@@ -1,5 +1,5 @@
 Name: gear
-Version: 1.2.1
+Version: 1.2.2
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -40,6 +40,15 @@ See %_docdir/%name-%version/QUICKSTART.ru_RU.KOI8-R for details.
 %doc QUICKSTART*
 
 %changelog
+* Sun Mar 11 2007 Dmitry V. Levin <ldv@altlinux.org> 1.2.2-alt1
+- Changed "git-COMMAND" style commands to "git COMMAND" style.
+- gear-update: Suppressed "git rm" output.
+- gear-update, gear-update-tag: Separated "git COMMAND"
+  command-line options from lists of files where appropriate.
+- QUICKSTART.ru_RU.KOI8-R:
+  + Reworded git config recommendations using "git config" commands.
+  + Updated examples.
+
 * Sun Mar 04 2007 Dmitry V. Levin <ldv@altlinux.org> 1.2.1-alt1
 - gear: Fixed suffix support (ldv, #11008).
 
