@@ -227,7 +227,7 @@ mark_used_stored_tags()
 			tag_list_error "Bad stored tag $sha1: parse failed"
 		is_hex_sha1 "$next" ||
 			tag_list_error "Bad stored tag $sha1: invalid format"
-		real_sha1="$(git hash-object -t tag "$tag_dir/$sha1")" ||
+		real_sha1="$(git hash-object -t tag -- "$tag_dir/$sha1")" ||
 			tag_list_error "Bad stored tag $sha1: hash failed"
 		[ "$real_sha1" = "$sha1" ] ||
 			tag_list_error "Bad stored tag $sha1: hash mismatch (got $real_sha1)"
