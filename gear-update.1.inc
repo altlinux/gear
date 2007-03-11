@@ -1,6 +1,6 @@
 .\" Copyright (C) 2006-2007  Alexey Glagkov <legion@altlinux.org>
 .\" Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
-.\" Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
+.\" Copyright (C) 2006-2007  Sergey Vlasov <vsu@altlinux.org>
 .\"
 .\" This file is free software; you can redistribute it and/or modify
 .\" it under the terms of the GNU General Public License as published by
@@ -28,4 +28,5 @@ environment variable is set then it specifies a path to use instead of
 the default for the base of the repository.
 
 [SEE ALSO]
-.BR gear (1).
+.BR gear (1),
+.BR gear-rules (5)

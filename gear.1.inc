@@ -1,5 +1,5 @@
 .\" Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
-.\" Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
+.\" Copyright (C) 2006-2007  Sergey Vlasov <vsu@altlinux.org>
 .\"
 .\" Additional documentation for the gear command.
 .\"
@@ -93,6 +93,7 @@ fields.
 \fBgit\-merge\fR.
 
 [SEE ALSO]
+.BR gear-rules (5),
 .BR gear-commit (1),
 .BR gear-srpmimport (1),
 .BR hsh (1),

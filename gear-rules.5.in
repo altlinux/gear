@@ -1,0 +1,530 @@
+.\" Copyright (C) 2007  Sergey Vlasov <vsu@altlinux.org>
+.\"
+.\" Documentation for the .gear-rules file format.
+.\"
+.\" This file is free software; you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation; either version 2 of the License, or
+.\" (at your option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+.
+.TH "GEAR-RULES" "5" "March 2007" "gear @VERSION@" "File Formats"
+.SH NAME
+gear-rules \- rule file for \fBgear\fR(1)
+.
+.
+.SH DESCRIPTION
+.
+The rule file specifies actions of
+.BR gear (1)
+required to extract source files from the package repository.
+.
+.
+.SH FORMAT
+.
+A rule file consists of 0 or more lines of the following format:
+.RS 4
+.PP
+.IB directive\^ :
+.IR arguments ...
+.RE
+.
+.PP
+Empty lines and lines beginning with \*(lq#\*(rq are ignored.
+Directive arguments are delimited by whitespace characters.
+Whitespace between the directive name and \*(lq:\*(rq is not allowed;
+whitespace between \*(lq:\*(rq and the first argument is required.
+There is no support for line continuation and quoting of special
+characters.
+.
+.
+.SH PATHS
+.
+Unless specified otherwise, all paths used in the rule file are
+relative to the
+.I main tree,
+which is a subtree of the
+.I main commit
+specified by the
+.B \-t
+option to
+.BR gear (1).
+Paths are not allowed to contain \*(lq..\*(rq, and therefore can refer
+only to objects inside the main tree.
+.PP
+However, some directives can accept a
+.IR tree_path ,
+which can be either a plain path relative to the main tree, or a path
+with an explicit base tree specification:
+.RS 4
+.PP
+.IB base_tree\^ : \^path_in_tree
+.RE
+.PP
+The
+.I base_tree
+part can be in one of the following forms:
+.RS 2
+.IP \(en 2
+A single period character \*(lq.\*(rq specifies the main tree.
+In most cases just omitting the \*(lq\fIbase_tree\^\fB:\fR\*(rq part
+gives the same effect; adding \*(lq.:\*(rq explicitly is required only
+if the
+.I path_in_tree
+part itself contains the \*(lq:\*(rq character.
+.IP \(en
+A full
+.SM SHA-1
+object name of a commit (40 hex characters) specifies the root tree of
+that commit.
+The specified commit must be an ancestor of the main commit.
+.IP \(en
+A name of a tag listed in the tag list specifies the root tree of the
+commit pointed to by the specified tag (directly or indirectly through
+a chain of tag objects).
+The specified commit must be an ancestor of the main commit, and all
+tag objects in the chain must be stored in the tag directory.
+.RE
+.PP
+The restrictions on references to other commits ensure that a correct
+git repository which contains the main commit also contains everything
+which is required to extract source files from the repository.
+.
+.
+.SH KEYWORDS
+.
+Arguments of some directives can contain keywords in the
+.BI @ keyword @
+format, which are replaced by real values before use.
+Values for keywords can be obtained from the main spec file or from
+other arguments of the same directive.
+.PP
+The following keywords are available in all directives which perform
+keyword replacement:
+.TP 12
+.B @name@
+Package name extracted from spec file.
+.TP
+.B @version@
+Package version extracted from spec file.
+.TP
+.B @release@
+Package release extracted from spec file.
+.PP
+Other keywords are specific to each directive.
+.
+.
+.SH DIRECTIVES
+.
+.TP
+.BI "spec: " path_to_file
+Specify path of the main spec file within the main tree.
+This directive may be omitted if the main spec file is the only file in
+the main tree which matches the
+.B *.spec
+glob pattern; in this case
+.BR gear (1)
+can find the spec file automatically.
+.
+.TP
+.BI "tags: " path_to_directory
+Specify another path of the directory with the list of named tags and
+stored tag objects instead of
+.BR .gear-tags .
+.
+.TP
+.BI "copy: " glob_pattern\fR...
+Copy files matching the specified glob patterns to the output
+directory, except files which match any of glob patterns specified by
+.B exclude
+directives.
+Every
+.I glob_pattern
+must match at least one file in the main tree.
+.IP
+Glob patterns specified in this directive may contain multiple directory
+components separated by \*(lq/\*(rq.
+Wildcards are interpreted only in the last component of the pattern.
+.
+.TP
+.BI "gzip: " glob_pattern\fR...
+.PD 0
+.TP
+.BI "bzip2: " glob_pattern\fR...
+.PD
+Like
+.BR copy ,
+but additionally compress the copied file with
+.BR gzip (1)
+or
+.BR bzip2 (1)
+and add the appropriate suffix to the copied file name.
+.
+.TP
+.BI "copy?: " glob_pattern\fR...
+.PD 0
+.TP
+.BI "gzip?: " glob_pattern\fR...
+.TP
+.BI "bzip2?: " glob_pattern\fR...
+.PD
+Like the corresponding directives without \*(lq?\*(rq, but unmatched
+patterns are ignored instead of causing errors.
+.
+.TP
+.BI "exclude: " glob_pattern\fR...
+Ignore files matching the specified glob patterns in all
+.BR copy -like
+directives.
+Affects all directives in the rule file irrespective of the order.
+Specifying a glob pattern which does not match any files in the tree
+is not an error.
+.IP
+When copying files from subdirectories of the main tree, the whole path
+includind the subdirectory name is matched against exclude patterns.
+The \*(lq/\*(rq characters in the path are not treated as special and
+can be matched by wildcards.
+.
+.TP
+.BI "tar: " "tree_path " \fR[ options \fR...]
+Create a
+.BR tar (1)
+archive of the tree specified by
+.IR tree_path .
+The specified tree must exist.
+.IP
+Valid options are:
+.RS
+.TP
+.BI spec= path_to_file
+Use another file instead of the main spec file to define keyword values.
+.TP
+.BI name= archive_name
+Set name of the tar archive.
+The
+.B .tar
+suffix is added automatically unless another suffix is specified by
+the
+.B suffix
+option.
+.IP
+The default value of this option is
+.BR @dir@\-@version@ ,
+unless the
+path part of
+.I tree_path
+is \*(lq.\*(rq, in which case the default is
+.BR @name@\-@version@ .
+.TP
+.BI base= base_name
+Add
+.I base_name
+as a leading path to all files in the generated archive.
+If this option is not specified, by default the archive name without
+the suffix (set by the
+.B name
+option) is used.
+.TP
+.BI suffix= suffix
+Add
+.I suffix
+to the archive file name instead of the default
+.B .tar
+suffix.
+.RE
+.IP
+Values of the
+.B name
+and
+.B base
+options and
+.I tree_path
+can contain keywords.
+In addition to the common keywords, the following keyword is supported:
+.RS
+.TP
+.B @dir@
+Expands to
+.RI basename(path( tree_path )).
+Not allowed when
+.RI path( tree_path )
+is \*(lq.\*(rq and must not be used in the path part of
+.IR tree_path .
+.RE
+.
+.TP
+.BI "tar.gz: " "tree_path " \fR[ options \fR...]
+.PD 0
+.TP
+.BI "tar.bz2: " "tree_path " \fR[ options \fR...]
+.PD
+Like
+.BR tar ,
+but additionally compress the generated tar archive with
+.BR gzip (1)
+or
+.BR bzip2 (1)
+and add the appropriate suffix to the archive file name (unless the
+.B suffix
+option is specified, which overrides both the
+.B .tar
+part and the suffix for the compression method).
+.
+.TP
+.BI "zip: " "tree_path " \fR[ options \fR...]
+Like
+.BR tar ,
+but create a
+.BR zip (1)
+archive instead of
+.BR tar (1)
+and add the
+.B .zip
+suffix to the archive file name instead of
+.BR .tar .
+.
+.TP
+.BI "tar?: " "tree_path " \fR[ options \fR...]
+.PD 0
+.TP
+.BI "tar.gz?: " "tree_path " \fR[ options \fR...]
+.TP
+.BI "tar.bz2?: " "tree_path " \fR[ options \fR...]
+.TP
+.BI "zip?: " "tree_path " \fR[ options \fR...]
+.PD
+Like the corresponding directives without \*(lq?\*(rq, but do not fail
+if the path specified in
+.I tree_path
+is not present in the tree.
+However, if
+.I tree_path
+specifies a non-default base tree, this tree still must be valid.
+.
+.TP
+.BI "diff: " "old_tree_path new_tree_path \fR[\fIoptions\fR...]"
+Create a diff in the unified format between trees specified by
+.I old_tree_path
+and
+.IR new_tree_path .
+Both trees must exist.
+.IP
+Valid options are:
+.RS
+.TP
+.BI spec= path_to_file
+Use another file instead of the main spec file to define keyword values.
+.TP
+.BI name= diff_name
+Set name of the generated diff file.
+The
+.B .patch
+suffix must be specified explicitly if required.
+.IP
+The default name is
+.BR @new_dir@\-@version@\-@release@.patch ,
+unless the path part of
+.I new_tree_path
+is \*(lq.\*(rq, in which case the default is
+.BR @name@\-@version@\-@release@.patch .
+.RE
+.IP
+Value of the
+.B name
+option and the base tree components of
+.I old_tree_path
+and
+.I new_tree_path
+can contain keywords.
+In addition to the common keywords, the following keywords are
+supported:
+.RS
+.TP
+.B @old_dir@
+Expands to
+.RI basename(path( old_tree_path )).
+Not allowed when
+.RI path( old_tree_path )
+is \*(lq.\*(rq.
+.TP
+.B @new_dir@
+Expands to
+.RI basename(path( new_tree_path )).
+Not allowed when
+.RI path( new_tree_path )
+is \*(lq.\*(rq.
+.RE
+.
+.TP
+.BI "diff.gz: " "old_tree_path new_tree_path \fR[\fIoptions\fR...]"
+.PD 0
+.TP
+.BI "diff.bz2: " "old_tree_path new_tree_path \fR[\fIoptions\fR...]"
+.PD
+Like
+.BR diff ,
+but additionally compress the generated diff file with
+.BR gzip (1)
+or
+.BR bzip2 (1)
+and add the appropriate suffix to the diff file name.
+.
+.TP
+.BI "diff?: " "old_tree_path new_tree_path \fR[\fIoptions\fR...]"
+.PD 0
+.TP
+.BI "diff.gz?: " "old_tree_path new_tree_path \fR[\fIoptions\fR...]"
+.TP
+.BI "diff.bz2?: " "old_tree_path new_tree_path \fR[\fIoptions\fR...]"
+.PD
+Like the corresponding directives without \*(lq?\*(rq, but do not fail
+if paths specified by
+.I old_tree_path
+or
+.I new_tree_path
+are not present in the tree.
+However, if
+.I old_tree_path
+or
+.I new_tree_path
+specify non-default base trees, these trees still must be valid.
+.PD 0
+.PP
+.PD
+.
+.
+.ne 5
+.SH EXAMPLES
+.
+.SS "Archive with modified sources"
+A simple rule file can contain just a single
+.B tar
+directive to archive everything in the tree:
+.RS 4
+.PP
+.ft CW
+.nf
+tar: .
+.fi
+.ft R
+.RE
+.PP
+If the project has a separate upstream, adding
+.B @release@
+to the archive name is recommended to make the name different from
+upstream:
+.RS 4
+.PP
+.ft CW
+.nf
+tar: . name=@name@\-@version@\-@release@
+.fi
+.ft R
+.RE
+.
+.SS "Archive with unmodified sources and patch with local modifications"
+If you prefer to create a tar archive with unmodified upstream sources
+and a separate patch with local modifications, you need to create a
+tag for the commit with upstream sources (or use the upstream tag if
+upstream also uses git), specify the tag name in the rule file and
+store this tag in the repository using
+.BR gear-update-tag (1).
+In this case the default archive name used by the
+.B tar
+directive should be correct, unless the package name or version format
+is different from upstream.
+.PP
+Usually the tag name can be based on the package version:
+.RS 4
+.PP
+.ft CW
+.nf
+tar: v@version@:.
+diff: v@version@:. .
+.fi
+.ft R
+.RE
+.PP
+(other tag naming conventions may be used, like
+.B @name@\-@version@
+or plain
+.BR @version@ ).
+However, if a prerelease version is packaged, parts like
+\*(lqpreN\*(rq or \*(lqrcN\*(rq should not be included in the package
+version, therefore the rule file will need some modifications for such
+versions.
+.
+.SS "Archive with unmodified sources and separate patch files"
+If you prefer to maintain patch files for local modifications instead
+of committing modified source files to the git repository, you can
+store unmodified upstream sources in a subdirectory of the main tree
+and put patch files directly into the main tree:
+.RS 4
+.PP
+.ft CW
+.nf
+tar: \fIpackage_name\fP
+copy: *.patch
+.fi
+.ft R
+.RE
+.PP
+This layout is used by
+.BR gear-srpmimport (1).
+The
+.BR gear-update (1)
+utility can be used to update sources stored in the git repository to
+a new upstream release.
+.PP
+If you don't like lots of patch files cluttering the main tree, you can
+move them into a subdirectory:
+.RS 4
+.PP
+.ft CW
+.nf
+tar: \fIpackage_name\fP
+copy: patches/*.patch
+.fi
+.ft R
+.RE
+.
+.
+.SH FILES
+.TP
+.B .gear-rules
+The default rule file used by
+.BR gear (1),
+.BR gear-srpmimport (1)
+and
+.BR gear-update-tag (1),
+unless another name is specified by the
+.BI \-\-rules= filename
+option.
+.
+.
+.SH AUTHOR
+.PP
+This manual page written by Sergey Vlasov <vsu@altlinux.org>.
+.PP
+Authors and contributors of the programs included in the
+.B gear
+package are listed in the manual pages for these programs.
+.
+.
+.SH SEE ALSO
+.PP
+.na
+.nh
+.tr -\(hy
+.BR gear (1),
+.BR gear-srpmimport (1),
+.BR gear-update (1),
+.BR gear-update-tag (1)

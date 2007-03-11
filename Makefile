@@ -2,7 +2,7 @@
 # Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006-2007  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006  Sir Raorn <raorn@altlinux.org>
-# Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
+# Copyright (C) 2006-2007  Sergey Vlasov <vsu@altlinux.org>
 #
 # Makefile for the gear project.
 #
@@ -25,12 +25,14 @@ PROJECT = gear
 VERSION = $(shell sed '/^Version: */!d;s///;q' gear.spec)
 PROGRAMS = gear gear-commit gear-hsh-build gear-srpmimport gear-update gear-update-tag
 MAN1PAGES = $(PROGRAMS:=.1)
-TARGETS = gear-sh-functions $(MAN1PAGES)
+MAN5PAGES = gear-rules.5
+TARGETS = gear-sh-functions $(MAN1PAGES) $(MAN5PAGES)
 
 bindir = /usr/bin
 datadir = /usr/share
 mandir = $(datadir)/man
 man1dir = $(mandir)/man1
+man5dir = $(mandir)/man5
 DESTDIR =
 
 HELP2MAN1 = env PATH=":$$PATH" help2man -N -s1 -S '$(PROJECT) $(VERSION)'
@@ -63,6 +65,8 @@ install: all
 	$(INSTALL) -p -m755 gear-sh-functions $(PROGRAMS) $(DESTDIR)$(bindir)/
 	$(MKDIR_P) -m755 $(DESTDIR)$(man1dir)
 	$(INSTALL) -p -m644 $(MAN1PAGES) $(DESTDIR)$(man1dir)/
+	$(MKDIR_P) -m755 $(DESTDIR)$(man5dir)
+	$(INSTALL) -p -m644 $(MAN5PAGES) $(DESTDIR)$(man5dir)/
 
 clean:
 	$(RM) $(TARGETS) *~

@@ -1,5 +1,5 @@
 .\" Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
-.\" Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
+.\" Copyright (C) 2006-2007  Sergey Vlasov <vsu@altlinux.org>
 .\"
 .\" Additional documentation for the gear-srpmimport command.
 .\"
@@ -30,5 +30,6 @@ the default for the base of the repository.
 
 [SEE ALSO]
 .BR gear (1),
+.BR gear-rules (5),
 .BR git (7),
 .BR rpm2cpio (8).

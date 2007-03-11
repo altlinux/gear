@@ -1,4 +1,4 @@
-.\" Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
+.\" Copyright (C) 2006-2007  Sergey Vlasov <vsu@altlinux.org>
 .\"
 .\" Additional documentation for the gear command.
 .\"
@@ -20,4 +20,5 @@
 gear-update-tag \- update list of stored tags in the package repository
 
 [SEE ALSO]
-.BR gear (1)
+.BR gear (1),
+.BR gear-rules (5)
