@@ -1,5 +1,5 @@
 Name: gear
-Version: 1.2.2
+Version: 1.2.3
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -40,6 +40,10 @@ See %_docdir/%name-%version/QUICKSTART.ru_RU.KOI8-R for details.
 %doc QUICKSTART*
 
 %changelog
+* Mon Mar 12 2007 Dmitry V. Levin <ldv@altlinux.org> 1.2.3-alt1
+- Added gear-rules(5) man page which describes the .gear-rules
+  file format (vsu).
+
 * Sun Mar 11 2007 Dmitry V. Levin <ldv@altlinux.org> 1.2.2-alt1
 - Changed "git-COMMAND" style commands to "git COMMAND" style.
 - gear-update: Suppressed "git rm" output.
