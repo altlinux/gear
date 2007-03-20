@@ -56,7 +56,12 @@ elif [ "$*" = '--help' ]; then
 	git-commit --help |
 		sed "s|\(/usr/bin/\)\?git-commit|$PROG [--spec=<file>]|g"
 	exit
-elif [ "$*" != "${*#--spec[= ]}" ]; then
+fi
+
+# Change to toplevel directory
+chdir_to_toplevel
+
+if [ "$*" != "${*#--spec[= ]}" ]; then
 	case "$1" in
 	    --spec=*) specfile="${1#*=}"
 		shift
@@ -76,13 +81,11 @@ elif git cat-file -t "$main_tree_id" >/dev/null 2>&1; then
 
 	# Get specfile from archive.
 	find_specfile
-	cd "$(git rev-parse --show-cdup)"
 
 	rm -rf -- "$workdir"
 	trap - HUP INT QUIT TERM EXIT
 	unset rules main_tree_id workdir
 else
-	cd "$(git rev-parse --show-cdup)"
 	specfile="$(set +f; find_specfile_in_cwd '' *)" ||:
 fi
 
