@@ -98,6 +98,15 @@ is_hex_sha1()
 	return 0
 }
 
+chdir_to_toplevel()
+{
+	local cdup
+	cdup="$(git rev-parse --show-cdup)"
+	[ -z "$cdup" ] ||
+		cd "$cdup" ||
+			fatal "Cannot chdir to $cdup, the toplevel of the working tree"
+}
+
 get_object_sha1()
 {
 	local name="$1" && shift
