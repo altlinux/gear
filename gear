@@ -580,8 +580,8 @@ fi
 git_dir="$(git rev-parse --git-dir)"
 git_dir="$(readlink -ev "$git_dir")"
 
-# Chdir to toplevel directory if necessary.
-cd "$(git rev-parse --show-cdup)"
+# Change to toplevel directory.
+chdir_to_toplevel
 
 # Check given tree-ish.
 main_commit_id="${main_tree_id%%:*}"

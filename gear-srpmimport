@@ -499,8 +499,8 @@ unset GIT_INDEX_FILE ||:
 index_orig="$GIT_DIR/index"
 index_already_recovered=
 
-# Chdir to toplevel directory if necessary.
-cd "$(git rev-parse --show-cdup)"
+# Change to toplevel directory
+chdir_to_toplevel
 
 # Save current work directory.
 saved_cwd="$(/bin/pwd)"

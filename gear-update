@@ -209,11 +209,11 @@ canon_destdir="$destdir"
 [ -d "$destdir" ] ||
 	fatal "$destdir: not a directory"
 
-# Move to topdir
-cd "$(git rev-parse --show-cdup)"
+# Change to toplevel directory
+chdir_to_toplevel
 topdir="$(readlink -ev .)"
 
-# Make destdir relative.
+# Make destdir relative
 destdir="$destdir/"
 destdir="${destdir#$topdir/}"
 [ "$destdir" = "${destdir#/}" ] ||
