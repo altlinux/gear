@@ -1,5 +1,5 @@
 Name: gear
-Version: 1.2.3
+Version: 1.2.4
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -40,6 +40,11 @@ See %_docdir/%name-%version/QUICKSTART.ru_RU.KOI8-R for details.
 %doc QUICKSTART*
 
 %changelog
+* Tue Apr 10 2007 Dmitry V. Levin <ldv@altlinux.org> 1.2.4-alt1
+- gear-sh-functions.in (chdir_to_toplevel): New function.
+- gear, gear-srpmimport, gear-update: Use chdir_to_toplevel().
+- gear-commit: Chdir to toplevel directory early.
+
 * Mon Mar 12 2007 Dmitry V. Levin <ldv@altlinux.org> 1.2.3-alt1
 - Added gear-rules(5) man page which describes the .gear-rules
   file format (vsu).
