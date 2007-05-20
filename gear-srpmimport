@@ -130,6 +130,22 @@ write_copy_rule()
 	git update-index --add ${verbose:+--verbose} -- "$@"
 }
 
+list_tar_toplevel_nondir()
+{
+	local f="$1"; shift
+
+	tar -tvf "$f" |
+		sed -ne 's/^[^d]\([^[:space:]]\+[[:space:]]\+\)\{5\}\([^/]\+\)$/\2/p'
+}
+
+list_zip_toplevel_nondir()
+{
+	local f="$1"; shift
+
+	zipinfo --h-t -- "$f" |
+		sed -ne 's/^[^d]\([^[:space:]]\+[[:space:]]\+\)\{8\}\([^/]\+\)$/\2/p'
+}
+
 spec_version=
 import_tree()
 {
@@ -144,10 +160,12 @@ import_tree()
 	fi
 
 	# Define archive list command and related parameters.
-	local source_ls_cmd arch_basename method_pack rule_suffix=
+	local source_ls_cmd source_ls_toplevel_nondir_cmd
+	local arch_basename method_pack rule_suffix=
 	case "$method_tree" in
 		tar)
 			source_ls_cmd='tar -tf'
+			source_ls_toplevel_nondir_cmd=list_tar_toplevel_nondir
 			case "$method_copy" in
 				bzip2) method_pack=tar.bz2 ;;
 				gzip) method_pack=tar.gz ;;
@@ -189,6 +207,7 @@ import_tree()
 			;;
 		zip)
 			source_ls_cmd='zipinfo -1 --'
+			source_ls_toplevel_nondir_cmd=list_zip_toplevel_nondir
 			method_pack=zip
 			case "$f" in
 				*.zip)	arch_basename="${f%.zip}"
@@ -228,8 +247,9 @@ import_tree()
 
 	local base= subdir unpack_into_subdir=
 	if [ "$dir_name" != "$(printf %s "$dir_name" |LC_COLLATE=C tr -d '[:space:]')" ] ||
-	   [ -n "$(printf %s "$dir_name" |LC_COLLATE=C tr -d -- '-[:alnum:]_.,+')" ]; then
-		# More than one subdir or funny dir name.
+	   [ -n "$(printf %s "$dir_name" |LC_COLLATE=C tr -d -- '-[:alnum:]_.,+')" ] ||
+	   [ -n "$($source_ls_toplevel_nondir_cmd "$f")" ]; then
+		# More than one subdir, funny dir name, or non-dir toplevel files.
 		unpack_into_subdir=1
 		dir_name="$arch_basename"
 	else
