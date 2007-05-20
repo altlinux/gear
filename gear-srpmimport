@@ -541,7 +541,9 @@ elif [ -z "$import_only" ]; then
 		git symbolic-ref HEAD "$branch_orig"
 		git checkout -f
 		index_already_recovered=1
-		git pull ${quiet:+-n} . "refs/heads/$branch_import"
-		msg_info "Merged $branch_import branch into ${branch_orig#refs/heads/} branch"
+		if [ "$branch_orig" != "refs/heads/$branch_import" ]; then
+			git pull ${quiet:+-n} . "refs/heads/$branch_import"
+			msg_info "Merged $branch_import branch into ${branch_orig#refs/heads/} branch"
+		fi
 	fi
 fi
