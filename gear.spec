@@ -1,5 +1,5 @@
 Name: gear
-Version: 1.2.4
+Version: 1.2.5
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -40,6 +40,11 @@ See %_docdir/%name-%version/QUICKSTART.ru_RU.KOI8-R for details.
 %doc QUICKSTART*
 
 %changelog
+* Sun May 20 2007 Dmitry V. Levin <ldv@altlinux.org> 1.2.5-alt1
+- gear-srpmimport:
+  + Do not perform a noop merge (#11721).
+  + Fixed import of archives with non-directory toplevel files.
+
 * Tue Apr 10 2007 Dmitry V. Levin <ldv@altlinux.org> 1.2.4-alt1
 - gear-sh-functions.in (chdir_to_toplevel): New function.
 - gear, gear-srpmimport, gear-update: Use chdir_to_toplevel().
