@@ -34,7 +34,8 @@ Options:
 
   --ignore-exclude    ignore .gitignore and .git/info/exclude;
   -s,--subdir=DIR     extract specified directory name from archive;
-  -t,--type=TYPE      define source type: 'dir', 'tar' or 'zip';
+  -t,--type=TYPE      define source type:
+                      'dir', 'tar', 'cpio', 'cpio.gz', 'cpio.bz2' or 'zip';
   -f,--force          remove files from <subdirectory> even
                       if untracked or modified files found;
   -v,--verbose        print a message for each action;
@@ -81,6 +82,10 @@ get_type_by_source()
 			source_type=zip
 			return
 			;;
+		*cpio\ archive*)
+			source_type=cpio
+			return
+			;;
 	esac
 
 	file_type="$(file -bz "$source")"
@@ -89,9 +94,40 @@ get_type_by_source()
 			source_type=tar
 			return
 			;;
+		*cpio\ archive*bzip2\ compressed\ data*)
+			source_type=cpio.bz2
+			return
+			;;
+		*cpio\ archive*gzip\ compressed\ data*)
+			source_type=cpio.gz
+			return
+			;;
 	esac
 
 	fatal "$source: unrecognized source type: $file_type"
+}
+
+cpio_unpack() {
+	local source compress subdir
+	source="$1"
+	subdir="$2"
+	case "$source_type" in
+		cpio.gz)  compress="gunzip -c" ;;
+		cpio.bz2) compress="bunzip2 -c" ;;
+		cpio)     compress="cat" ;;
+	esac
+	$compress "$source" |cpio --quiet -id "$subdir/*"
+}
+
+cpio_ls_cmd() {
+	local source compress
+	source="$1"
+	case "$source_type" in
+		cpio.gz)  compress="gunzip -c" ;;
+		cpio.bz2) compress="bunzip2 -c" ;;
+		cpio)     compress="cat" ;;
+	esac
+	$compress "$source" |cpio --quiet -t
 }
 
 subdir=
@@ -106,8 +142,9 @@ validate_subdir()
 
 	local source_ls_cmd
 	case "$source_type" in
-		tar) source_ls_cmd='tar -tf'    ;;
+		tar) source_ls_cmd='tar -tf' ;;
 		zip) source_ls_cmd='zipinfo -1 --' ;;
+		cpio*) source_ls_cmd='cpio_ls_cmd' ;;
 		*) fatal "$source_type: unknown source type" ;;
 	esac
 
@@ -254,6 +291,13 @@ case "$source_type" in
 		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
 		unzip -q "$source" "$subdir/*" -d "$workdir"
 		validate_destdir "$workdir/$subdir" "$destdir"
+		mv -f -- "$workdir/$subdir" "$destdir"
+		;;
+	cpio*)
+		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
+		cd "$workdir"
+		cpio_unpack "$source" "$subdir"
+		cd - >/dev/null
 		mv -f -- "$workdir/$subdir" "$destdir"
 		;;
 	dir)
