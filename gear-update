@@ -298,6 +298,7 @@ case "$source_type" in
 		cd "$workdir"
 		cpio_unpack "$source" "$subdir"
 		cd - >/dev/null
+		validate_destdir "$workdir/$subdir" "$destdir"
 		mv -f -- "$workdir/$subdir" "$destdir"
 		;;
 	dir)
