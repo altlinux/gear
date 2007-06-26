@@ -63,6 +63,7 @@ EOF
 	exit
 }
 
+source=
 source_type=
 get_type_by_source()
 {
@@ -74,6 +75,10 @@ get_type_by_source()
 	local file_type
 	file_type="$(file -b "$source")"
 	case "$file_type" in
+		*cpio\ archive*)
+			source_type=cpio
+			return
+			;;
 		*tar\ archive*)
 			source_type=tar
 			return
@@ -82,18 +87,10 @@ get_type_by_source()
 			source_type=zip
 			return
 			;;
-		*cpio\ archive*)
-			source_type=cpio
-			return
-			;;
 	esac
 
 	file_type="$(file -bz "$source")"
 	case "$file_type" in
-		*tar\ archive*)
-			source_type=tar
-			return
-			;;
 		*cpio\ archive*bzip2\ compressed\ data*)
 			source_type=cpio.bz2
 			return
@@ -102,32 +99,41 @@ get_type_by_source()
 			source_type=cpio.gz
 			return
 			;;
+		*tar\ archive*)
+			source_type=tar
+			return
+			;;
 	esac
 
 	fatal "$source: unrecognized source type: $file_type"
 }
 
-cpio_unpack() {
-	local source compress subdir
-	source="$1"
-	subdir="$2"
+cpio_unpack()
+{
+	local file="$1"; shift
+	local subdir="$1"; shift
+	local compress
+
 	case "$source_type" in
-		cpio.gz)  compress="gunzip -c" ;;
-		cpio.bz2) compress="bunzip2 -c" ;;
-		cpio)     compress="cat" ;;
+		cpio)     compress='cat' ;;
+		cpio.gz)  compress='gunzip -c' ;;
+		cpio.bz2) compress='bunzip2 -c' ;;
 	esac
-	$compress "$source" |cpio --quiet -id "$subdir/*"
+	$compress "$file" |cpio --quiet -id "$subdir/*"
 }
 
-cpio_ls_cmd() {
-	local source compress
-	source="$1"
+cpio_ls_cmd()
+{
+	local file="$1"; shift
+	local compress
+
 	case "$source_type" in
-		cpio.gz)  compress="gunzip -c" ;;
-		cpio.bz2) compress="bunzip2 -c" ;;
-		cpio)     compress="cat" ;;
+		cpio)     compress='cat' ;;
+		cpio.gz)  compress='gunzip -c' ;;
+		cpio.bz2) compress='bunzip2 -c' ;;
+
 	esac
-	$compress "$source" |cpio --quiet -t
+	$compress "$file" |cpio --quiet -t
 }
 
 subdir=
@@ -281,18 +287,6 @@ find "$destdir" -mindepth 1 -maxdepth 1 \! -name '.git' -print0 |
 
 # Copy new sources
 case "$source_type" in
-	tar)
-		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
-		tar -x -f "$source" -C "$workdir" -- "$subdir/"
-		validate_destdir "$workdir/$subdir" "$destdir"
-		mv -f -- "$workdir/$subdir" "$destdir"
-		;;
-	zip)
-		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
-		unzip -q "$source" "$subdir/*" -d "$workdir"
-		validate_destdir "$workdir/$subdir" "$destdir"
-		mv -f -- "$workdir/$subdir" "$destdir"
-		;;
 	cpio*)
 		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
 		cd "$workdir"
@@ -304,6 +298,18 @@ case "$source_type" in
 	dir)
 		validate_destdir "$subdir" "$destdir"
 		cp -a -- "$subdir" "$destdir"
+		;;
+	tar)
+		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
+		tar -x -f "$source" -C "$workdir" -- "$subdir/"
+		validate_destdir "$workdir/$subdir" "$destdir"
+		mv -f -- "$workdir/$subdir" "$destdir"
+		;;
+	zip)
+		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
+		unzip -q "$source" "$subdir/*" -d "$workdir"
+		validate_destdir "$workdir/$subdir" "$destdir"
+		mv -f -- "$workdir/$subdir" "$destdir"
 		;;
 esac
 [ -d "$destdir" ] ||
