@@ -26,7 +26,9 @@ VERSION = $(shell sed '/^Version: */!d;s///;q' gear.spec)
 PROGRAMS = gear gear-commit gear-hsh-build gear-srpmimport gear-update gear-update-tag
 MAN1PAGES = $(PROGRAMS:=.1)
 MAN5PAGES = gear-rules.5
-TARGETS = gear-sh-functions $(MAN1PAGES) $(MAN5PAGES)
+MANPAGES = $(MAN1PAGES) $(MAN5PAGES)
+HTMLPAGES = $(MANPAGES:=.html)
+TARGETS = gear-sh-functions $(MANPAGES)
 
 bindir = /usr/bin
 datadir = /usr/share
@@ -35,12 +37,13 @@ man1dir = $(mandir)/man1
 man5dir = $(mandir)/man5
 DESTDIR =
 
+CP = cp -a
 HELP2MAN1 = env PATH=":$$PATH" help2man -N -s1 -S '$(PROJECT) $(VERSION)'
 INSTALL = install
 LN_S = ln -s
+MAN2HTML = man2html -r
 MKDIR_P = mkdir -p
 TOUCH_R = touch -r
-CP = cp -a
 
 .PHONY:	all install clean
 
@@ -60,6 +63,18 @@ $(MAN7PAGES):
 %.1: % %.1.inc gear-sh-functions
 	$(HELP2MAN1) -i $@.inc ./$< >$@
 
+%.html: %
+	$(MAN2HTML) $< >$@
+	sed -i -e '/^Content-type: /d' -e '/^Time: /d' -e '/index\.html/d' \
+		-e 's|HREF="\.\./man./gear|HREF="gear|g' \
+		-e 's|<A HREF="\.\./man./[^/]\+\.html">\([^<]\+\)</A>|\1|g' \
+		-e 's|<A HREF="mailto:[^"]\+">\([^@<]\+@[^<]\+\)</A>|\1|' \
+		-e 's|\(@altlinux\)\.[a-z]\+|\1|' \
+		-e 's|.*\(man2html\).*|\1|' \
+		$@
+
+html: $(HTMLPAGES)
+
 install: all
 	$(MKDIR_P) -m755 $(DESTDIR)$(bindir)
 	$(INSTALL) -p -m755 gear-sh-functions $(PROGRAMS) $(DESTDIR)$(bindir)/
@@ -69,4 +84,4 @@ install: all
 	$(INSTALL) -p -m644 $(MAN5PAGES) $(DESTDIR)$(man5dir)/
 
 clean:
-	$(RM) $(TARGETS) *~
+	$(RM) $(TARGETS) $(HTMLPAGES) *~
