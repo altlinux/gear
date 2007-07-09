@@ -280,7 +280,7 @@ validate_subdir
 trap exit_handler HUP INT QUIT TERM EXIT
 
 # Remove $destdir
-find "$destdir" -mindepth 1 -maxdepth 1 \! -name '.git' -print0 |
+find "$destdir" -mindepth 1 -maxdepth 1 \! \( -name '.git' -o -name '.gear-rules' \) -print0 |
 	xargs -r0 rm $verbose -rf --
 [ "$destdir" = '.' ] ||
 	rmdir $verbose -- "$destdir"
