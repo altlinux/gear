@@ -173,6 +173,7 @@ validate_subdir()
 		fatal "$source: directory \`$subdir' not found in archive"
 }
 
+force=
 canon_destdir=
 validate_destdir()
 {
@@ -180,6 +181,8 @@ validate_destdir()
 		fatal "validate_destdir: invalid ($#) number of arguments"
 	local src_dir="$1"; shift
 	local dst_dir="$1"; shift
+	[ -z "$force" ] ||
+		return 0
 	if [ "$dst_dir" = '.' -a -d '.git' -a -d "$src_dir/.git" ]; then
 		fatal "$canon_destdir/.git: Cowardly refusing to replace git directory"
 	fi
@@ -231,7 +234,6 @@ exit_handler()
 TEMP=`getopt -n $PROG -o f,t:,s:,v,V,h -l ignore-exclude,force,type:,subdir:,verbose,version,help -- "$@"` || show_usage
 eval set -- "$TEMP"
 
-force=
 ignore_exclude=
 while :; do
 	case "$1" in
