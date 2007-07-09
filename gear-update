@@ -185,6 +185,25 @@ validate_destdir()
 	fi
 }
 
+update_destdir()
+{
+	[ "$#" -eq 3 ] ||
+		fatal "update_destdir: invalid ($#) number of arguments"
+	local command="$1"; shift
+	local src_dir="$1"; shift
+	local dst_dir="$1"; shift
+	local cmd=
+	case "$command" in
+		copy) cmd="cp -a" ;;
+		move) cmd="mv" ;;
+	esac
+	[ -n "$cmd" ] ||
+		fatal "update_destdir: invalid command: $command"
+
+	find "$src_dir" -mindepth 1 -maxdepth 1 \! \( -name '.git' -o -name '.gear-rules' \) -print0 |
+		xargs -r0 $cmd -t "$dst_dir" --
+}
+
 workdir=
 destdir=
 exit_handler()
@@ -293,23 +312,23 @@ case "$source_type" in
 		cpio_unpack "$source" "$subdir"
 		cd - >/dev/null
 		validate_destdir "$workdir/$subdir" "$destdir"
-		mv -f -- "$workdir/$subdir" "$destdir"
+		update_destdir move "$workdir/$subdir" "$destdir"
 		;;
 	dir)
 		validate_destdir "$subdir" "$destdir"
-		cp -a -- "$subdir" "$destdir"
+		update_destdir copy "$subdir" "$destdir"
 		;;
 	tar)
 		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
 		tar -x -f "$source" -C "$workdir" -- "$subdir/"
 		validate_destdir "$workdir/$subdir" "$destdir"
-		mv -f -- "$workdir/$subdir" "$destdir"
+		update_destdir move "$workdir/$subdir" "$destdir"
 		;;
 	zip)
 		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
 		unzip -q "$source" "$subdir/*" -d "$workdir"
 		validate_destdir "$workdir/$subdir" "$destdir"
-		mv -f -- "$workdir/$subdir" "$destdir"
+		update_destdir move "$workdir/$subdir" "$destdir"
 		;;
 esac
 [ -d "$destdir" ] ||
