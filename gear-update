@@ -203,6 +203,9 @@ update_destdir()
 	[ -n "$cmd" ] ||
 		fatal "update_destdir: invalid command: $command"
 
+	[ "$dst_dir" = '.' ] ||
+		mkdir $verbose -p -- "$dst_dir"
+
 	find "$src_dir" -mindepth 1 -maxdepth 1 \! \( -name '.git' -o -name '.gear-rules' \) -print0 |
 		xargs -r0 $cmd -t "$dst_dir" --
 }
