@@ -207,7 +207,7 @@ update_destdir()
 		mkdir $verbose -p -- "$dst_dir"
 
 	find "$src_dir" -mindepth 1 -maxdepth 1 \! \( -name '.git' -o -name '.gear-rules' \) -print0 |
-		xargs -r0 $cmd -t "$dst_dir" --
+		xargs -r0 -i $cmd -- \{\} "$dst_dir/"
 }
 
 workdir=
