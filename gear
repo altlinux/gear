@@ -119,14 +119,18 @@ EOF
 }
 
 tmpdir=
-need_git_reset=
+tmp_commit_id=
 exit_handler()
 {
 	local rc=$?
 	trap - EXIT
-	if [ -n "$need_git_reset" ]; then
-		git reset --soft HEAD^ &&
-			verbose "Reverted temporary commit."
+	if [ -n "$tmp_commit_id" ]; then
+		if [ "$(get_object_sha1 HEAD)" = "$tmp_commit_id" ] &&
+		   git reset --soft HEAD^; then
+			verbose "Reverted temporary commit $tmp_commit_id."
+		else
+			msg_info "Failed to revert temporary commit $tmp_commit_id."
+		fi
 	fi
 	[ -z "$tmpdir" ] ||
 		rm -rf -- "$tmpdir"
@@ -608,8 +612,9 @@ fi
 
 if [ -n "$do_commit" ]; then
 	if git commit -a -m "Temporary commit by $PROG."; then
-		need_git_reset=1
-		verbose "Temporarily committed local changes."
+		verbose 'Temporarily committed local changes.'
+		tmp_commit_id="$(get_object_sha1 HEAD)" ||
+			fatal 'Failed to parse HEAD after temporary commit.'
 	fi
 fi
 
