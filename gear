@@ -145,14 +145,14 @@ compress_file()
 	case "$cmd" in
 		gzip|*.gz)
 			gzip -9 "$file"
-			printf "%s" "$file.gz"
+			printf '%s' "$file.gz"
 			;;
 		bzip2|*.bz2)
 			bzip2 -9 "$file"
-			printf "%s" "$file.bz2"
+			printf '%s' "$file.bz2"
 			;;
 		*)
-			printf "%s" "$file"
+			printf '%s' "$file"
 			;;
 	esac
 }
@@ -208,7 +208,7 @@ get_tar_name()
 		esac
 	done
 
-	local subst_vars="tar_name tar_tree"
+	local subst_vars='tar_name tar_tree'
 	[ -z "$tar_base" -o "$tar_base" = ' ' ] ||
 		subst_vars="$subst_vars tar_base"
 
@@ -216,12 +216,12 @@ get_tar_name()
 	subst_key_in_vars '@dir@' "$dir" $subst_vars
 
 	if [ -n "$dir" -a "$dir" != "$dir_name_base" ]; then
-		check_name "dir name" "$dir"
+		check_name 'dir name' "$dir"
 		dir_name="$dir_name_prefix$dir"
 	fi
-	check_name "tar name" "$tar_name"
+	check_name 'tar name' "$tar_name"
 	[ -n "${subst_vars##*tar_base*}" ] ||
-		check_name "tar base" "$tar_base"
+		check_name 'tar base' "$tar_base"
 }
 
 make_tar()
@@ -252,14 +252,14 @@ make_tar()
 		mv "$archive_name" "$outdir/$name$suffix"
 		archive_name="$outdir/$name$suffix"
 	fi
-	verbose "Extracted \"${archive_name##*/}\" archive."
+	verbose "Extracted archive: ${archive_name##*/}"
 }
 
 make_archive()
 {
 	# format: "format $optional cmd dirname options.."
 	[ $# -ge 4 ] ||
-		rules_error "No dirname specified"
+		rules_error 'No dirname specified'
 	local format="$1" && shift
 	local optional="$1" && shift
 	local cmd="$1" && shift
@@ -304,7 +304,7 @@ get_diff_name()
 		esac
 	done
 
-	local subst_vars="diff_name diff_old_tree diff_new_tree"
+	local subst_vars='diff_name diff_old_tree diff_new_tree'
 	subst_key_in_vars '@old_dir@' "$old_dir" $subst_vars
 	subst_key_in_vars '@new_dir@' "$new_dir" $subst_vars
 	subst_NVR_from_spec "$spec" $subst_vars
@@ -337,7 +337,7 @@ make_diff()
 	fi
 
 	git diff-tree --patch-with-stat "$old_id" "$new_id" >"$outdir/$name"
-	verbose "Extracted \"$name\" diff."
+	verbose "Extracted diff: $name"
 	compress_file "$cmd" "$outdir/$name" > /dev/null
 }
 
@@ -345,28 +345,28 @@ make_difference()
 {
 	# format: "$optional cmd old_dir new_dir options.."
 	[ $# -ge 4 ] ||
-		rules_error "No old_dir or new_dir specified"
+		rules_error 'No old_dir or new_dir specified'
 	local optional="$1" && shift
 	local cmd="$1" && shift
 	local old_dir="$1" && shift
 	local new_dir="$1" && shift
 
 	old_dir="$(parse_tree_path dirname "$old_dir")" ||
-		rules_error "Invalid old_dir specified"
+		rules_error "Invalid old_dir specified: $old_dir"
 	diff_old_tree="${old_dir%%:*}"
 	old_dir="${old_dir#*:}"
 
 	new_dir="$(parse_tree_path dirname "$new_dir")" ||
-		rules_error "Invalid new_dir specified"
+		rules_error "Invalid new_dir specified: $new_dir"
 	diff_new_tree="${new_dir%%:*}"
 	new_dir="${new_dir#*:}"
 
 	get_diff_name "$(basename -- "$old_dir")" "$(basename -- "$new_dir")" "$@"
 
 	diff_old_tree="$(resolve_tree_base_name "$diff_old_tree")" ||
-		rules_error "Invalid old tree"
+		rules_error "Invalid old tree: $diff_old_tree"
 	diff_new_tree="$(resolve_tree_base_name "$diff_new_tree")" ||
-		rules_error "Invalid new tree"
+		rules_error "Invalid new tree: $diff_new_tree"
 
 	make_diff "$optional" "$cmd" "$diff_old_tree" "$old_dir" "$diff_new_tree" "$new_dir" "$diff_name"
 }
@@ -375,13 +375,13 @@ copy_by_pattern()
 {
 	# format: "$optional cmd pattern.."
 	[ $# -ge 3 ] ||
-		rules_error "No pattern specified"
+		rules_error 'No pattern specified'
 	local optional="$1" && shift
 	local cmd="$1" && shift
 
 	for pattern; do
 		[ -z "$(printf %s "$pattern" |tr -d '[:alnum:]_.?*-/')" ] ||
-			rules_error "Invalid copy pattern \"$pattern\" specified"
+			rules_error "Invalid copy pattern specified: $pattern"
 		local dir_name base_name rc=0
 		dir_name="$(dirname "$pattern")"
 		base_name="$(basename "$pattern")"
@@ -414,14 +414,14 @@ copy_by_pattern()
 				  	continue 2
 			done
 			git cat-file blob "$id" >"$outdir/$name"
-			verbose "Extracted \"$name\" by pattern \"$pattern\"."
+			verbose "Extracted file by pattern \"$pattern\": $name"
 			[ -n "${mode%%*7??}" ] ||
 				chmod a+x "$outdir/$name"
 			compress_file "$cmd" "$outdir/$name" > /dev/null
 			found=1
 		done <"$workdir/blobs"
 		[ -n "$found" -o "$optional" = 1 ] ||
-			rules_error "Unmatched pattern \"$pattern\" specified"
+			rules_error "Unmatched pattern specified: $pattern"
 	done
 }
 
@@ -439,7 +439,7 @@ parse_rules()
 		lineno="$((lineno+1))"
 		if [ "$cmd" = 'exclude:' ]; then
 			[ -z "$(printf %s "$options" |tr -d '[:alnum:]_.?*-/')" ] ||
-				rules_error "Invalid exclude pattern \"$options\" specified"
+				rules_error "Invalid exclude pattern specified: $options"
 			exclude_pattern_list="$exclude_pattern_list $options"
 		fi
 	done <"$workdir/rules"
@@ -461,7 +461,7 @@ parse_rules()
 				optional=0
 				;;
 			*)
-				rules_info "Unrecognized rule ignored"
+				rules_info "Unrecognized rule ignored: $cmd"
 				continue
 				;;
 		esac
@@ -470,23 +470,23 @@ parse_rules()
 				continue
 				;;
 			tar|tar.gz|tar.bz2)
-				make_archive "tar" "$optional" "$cmd" $options ||
-					rules_error "Failed to make archive"
+				make_archive 'tar' "$optional" "$cmd" $options ||
+					rules_error 'Failed to make archive'
 				;;
 			zip)
-				make_archive "zip" "$optional" "$cmd" $options ||
-					rules_error "Failed to make archive"
+				make_archive 'zip' "$optional" "$cmd" $options ||
+					rules_error 'Failed to make archive'
 				;;
 			diff|diff.gz|diff.bz2)
 				make_difference "$optional" "$cmd" $options ||
-					rules_error "Failed to make diff"
+					rules_error 'Failed to make diff'
 				;;
 			copy|gzip|bzip2)
 				copy_by_pattern "$optional" "$cmd" $options ||
-					rules_error "Failed to copy by pattern"
+					rules_error 'Failed to copy by pattern'
 				;;
 			*)
-				rules_info "Unrecognized directive \"$cmd\" ignored"
+				rules_info "Unrecognized directive ignored: $cmd"
 				continue
 				;;
 		esac
@@ -598,7 +598,7 @@ git cat-file -e "$main_tree_sha1^{tree}" ||
 
 if [ -n "$update_spec" ]; then
 	[ -n "$rpmbuild" -a -z "${GIT_DIR:-}" ] ||
-		fatal "Unable to update specfile in this mode."
+		fatal 'Unable to update specfile without work directory tree.'
 fi
 
 tmpdir="$(mktemp -dt "$PROG.XXXXXXXX")"
@@ -621,7 +621,7 @@ fi
 find_specfile
 
 if [ -n "$describe" ]; then
-	printf "%s %s %s\n" "$pkg_name" "$pkg_version" "$pkg_release"
+	printf '%s %s %s\n' "$pkg_name" "$pkg_version" "$pkg_release"
 	exit 0
 fi
 
@@ -636,7 +636,7 @@ find_tags
 parse_rules
 
 install -pm644 "$workdir/specfile" "$outdir/${specfile##*/}"
-verbose "Extracted \"${specfile##*/}\" specfile."
+verbose "Extracted specfile: ${specfile##*/}"
 
 if [ -n "$rpmbuild" ]; then
 	run_command "$@" --define "_specdir $outdir" --define "_sourcedir $outdir" "$outdir/${specfile##*/}"
@@ -653,7 +653,7 @@ else
 			xargs -r0 tar --create --file="$out_file" --directory="$outdir" \
 				--label="${specfile##*/}" --owner=root --group=root \
 				--mode=u+w,go-w,go+rX $tar_compress --
-		verbose "Created \"$out_file\" output tarball."
+		verbose "Created output tarball: $out_file"
 		if [ -n "$hasher" ]; then
 			# Once tarball is created, its sources are no longer needed.
 			rm -rf -- "$outdir"
