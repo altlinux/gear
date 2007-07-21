@@ -173,6 +173,7 @@ validate_subdir()
 		fatal "$source: directory \`$subdir' not found in archive"
 }
 
+force=
 canon_destdir=
 validate_destdir()
 {
@@ -180,9 +181,33 @@ validate_destdir()
 		fatal "validate_destdir: invalid ($#) number of arguments"
 	local src_dir="$1"; shift
 	local dst_dir="$1"; shift
+	[ -z "$force" ] ||
+		return 0
 	if [ "$dst_dir" = '.' -a -d '.git' -a -d "$src_dir/.git" ]; then
 		fatal "$canon_destdir/.git: Cowardly refusing to replace git directory"
 	fi
+}
+
+update_destdir()
+{
+	[ "$#" -eq 3 ] ||
+		fatal "update_destdir: invalid ($#) number of arguments"
+	local command="$1"; shift
+	local src_dir="$1"; shift
+	local dst_dir="$1"; shift
+	local cmd=
+	case "$command" in
+		copy) cmd="cp -a" ;;
+		move) cmd="mv" ;;
+	esac
+	[ -n "$cmd" ] ||
+		fatal "update_destdir: invalid command: $command"
+
+	[ "$dst_dir" = '.' ] ||
+		mkdir $verbose -p -- "$dst_dir"
+
+	find "$src_dir" -mindepth 1 -maxdepth 1 \! \( -name '.git' -o -name '.gear-rules' \) -print0 |
+		xargs -r0 -i $cmd -- \{\} "$dst_dir/"
 }
 
 workdir=
@@ -212,7 +237,6 @@ exit_handler()
 TEMP=`getopt -n $PROG -o f,t:,s:,v,V,h -l ignore-exclude,force,type:,subdir:,verbose,version,help -- "$@"` || show_usage
 eval set -- "$TEMP"
 
-force=
 ignore_exclude=
 while :; do
 	case "$1" in
@@ -280,7 +304,7 @@ validate_subdir
 trap exit_handler HUP INT QUIT TERM EXIT
 
 # Remove $destdir
-find "$destdir" -mindepth 1 -maxdepth 1 \! -name '.git' -print0 |
+find "$destdir" -mindepth 1 -maxdepth 1 \! \( -name '.git' -o -name '.gear-rules' \) -print0 |
 	xargs -r0 rm $verbose -rf --
 [ "$destdir" = '.' ] ||
 	rmdir $verbose -- "$destdir"
@@ -293,23 +317,23 @@ case "$source_type" in
 		cpio_unpack "$source" "$subdir"
 		cd - >/dev/null
 		validate_destdir "$workdir/$subdir" "$destdir"
-		mv -f -- "$workdir/$subdir" "$destdir"
+		update_destdir move "$workdir/$subdir" "$destdir"
 		;;
 	dir)
 		validate_destdir "$subdir" "$destdir"
-		cp -a -- "$subdir" "$destdir"
+		update_destdir copy "$subdir" "$destdir"
 		;;
 	tar)
 		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
 		tar -x -f "$source" -C "$workdir" -- "$subdir/"
 		validate_destdir "$workdir/$subdir" "$destdir"
-		mv -f -- "$workdir/$subdir" "$destdir"
+		update_destdir move "$workdir/$subdir" "$destdir"
 		;;
 	zip)
 		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
 		unzip -q "$source" "$subdir/*" -d "$workdir"
 		validate_destdir "$workdir/$subdir" "$destdir"
-		mv -f -- "$workdir/$subdir" "$destdir"
+		update_destdir move "$workdir/$subdir" "$destdir"
 		;;
 esac
 [ -d "$destdir" ] ||
