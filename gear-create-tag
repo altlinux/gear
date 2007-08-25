@@ -1,0 +1,136 @@
+#!/bin/sh -efu
+#
+# Copyright (C) 2007  Alexey Gladkov <legion@altlinux.org>
+# Copyright (C) 2007  Dmitry V. Levin <ldv@altlinux.org>
+#
+# gear-create-tag - create a signed release tag object.
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+
+. gear-sh-functions
+
+print_version()
+{
+	cat <<EOF
+$PROG version $PROG_VERSION
+Written by Alexey Gladkov <legion@altlinux.org>
+
+Copyright (C) 2007  Alexey Gladkov <legion@altlinux.org>
+Copyright (C) 2007  Dmitry V. Levin <ldv@altlinux.org>
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+EOF
+	exit
+}
+
+show_help()
+{
+	cat <<EOF
+$PROG - create a signed release tag object for the given commit object
+
+Usage: $PROG [commit-ish]
+
+Options:
+  -f, --force          Replace an existing tag (instead of failing);
+  -u, --key-id=KEYID   Use the given GPG key to create a signed tag;
+  -m, --message=TEXT   Override custom tag message (default: <NAME> <VERSION>-<RELEASE>);
+  -n, --name=TEXT      Override custom tag name (default: <VERSION>-<RELEASE>);
+  -r, --rules=FILENAME Override file name with gear rules (default: .gear-rules);
+  -q, --quiet          Try to be more quiet;
+  -v, --verbose        Print a message for each action;
+  -V, --version        Print program version and exit;
+  -h, --help           Show this text and exit.
+
+Report bugs to http://bugs.altlinux.ru/
+
+EOF
+	exit
+}
+
+workdir=
+exit_handler()
+{
+	local rc=$?
+	trap - EXIT
+	[ -z "$workdir" ] || rm -rf -- "$workdir"
+	exit $rc
+}
+
+TEMP=`getopt -n $PROG -o f,m:,n:,r:,u:,v,V,h -l force,key-id:,message:,name:,rules:,verbose,version,help -- "$@"` ||
+	show_usage
+eval set -- "$TEMP"
+
+force=
+keyid=
+specfile=
+tag_msg=
+tag_name=
+rules='.gear-rules'
+main_tree_id='HEAD'
+while :; do
+	case "$1" in
+	    -f|--force) force=-f
+		;;
+	    -m|--message) shift; tag_msg="$1"
+		;;
+	    -n|--name) shift; tag_name="$1"
+		;;
+	    -r|--rules) shift; rules="$1"
+		;;
+	    -u|--key-id) shift; keyid="$1"
+		;;
+	    -v|--verbose) verbose=-v
+		;;
+	    -V|--version) print_version
+		;;
+	    -h|--help) show_help
+		;;
+	    --) shift; break
+		;;
+	    *) fatal "unrecognized option: $1"
+		;;
+	esac
+	shift
+done
+
+if [ "$#" -gt 0 ]; then
+	main_tree_id="$1"
+	shift
+fi
+
+[ "$#" -eq 0 ] ||
+	show_usage 'Too many arguments.'
+
+chdir_to_toplevel
+
+main_commit_sha1="$(get_commit_sha1 "$main_tree_id")" ||
+	fatal "$main_tree_id: Invalid commit object name"
+
+if [ -z "$tag_name" -o -z "$tag_msg" ]; then
+	trap exit_handler HUP INT QUIT TERM EXIT
+	workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
+	find_specfile
+	rm -rf -- "$workdir"
+	trap - HUP INT QUIT TERM EXIT
+
+	[ -n "$tag_name" ] ||
+		tag_name="$pkg_version-$pkg_release"
+
+	[ -n "$tag_msg" ] ||
+		tag_msg="$pkg_name $pkg_version-$pkg_release"
+fi
+
+exec git tag $force ${keyid:--s} ${keyid:+-u "$keyid"} -m "$tag_msg" "$tag_name" "$main_commit_sha1"
