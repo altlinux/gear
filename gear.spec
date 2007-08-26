@@ -1,3 +1,5 @@
+# Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
+
 Name: gear
 Version: 1.2.5
 Release: alt1

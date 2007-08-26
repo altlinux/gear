@@ -1,4 +1,5 @@
 .\" Copyright (C) 2007  Sergey Vlasov <vsu@altlinux.org>
+.\" Copyright (C) 2007  Dmitry V. Levin <ldv@altlinux.org>
 .\"
 .\" Documentation for the .gear-rules file format.
 .\"
