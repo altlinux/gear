@@ -133,4 +133,5 @@ if [ -z "$tag_name" -o -z "$tag_msg" ]; then
 		tag_msg="$pkg_name $pkg_version-$pkg_release"
 fi
 
+verbose "Creating tag named \"$tag_name\" using tag message \"$tag_msg\" for commit $main_commit_sha1"
 exec git tag $force ${keyid:--s} ${keyid:+-u "$keyid"} -m "$tag_msg" "$tag_name" "$main_commit_sha1"
