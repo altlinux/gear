@@ -1,7 +1,7 @@
 # Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
 
 Name: gear
-Version: 1.2.5
+Version: 1.2.6
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -42,6 +42,17 @@ See %_docdir/%name-%version/QUICKSTART.ru_RU.KOI8-R for details.
 %doc QUICKSTART*
 
 %changelog
+* Wed Aug 29 2007 Dmitry V. Levin <ldv@altlinux.org> 1.2.6-alt1
+- gear-update (legion):
+  + Added cpio* types support.
+  + Allowed update of top directory.
+- gear:
+  + Robustify --commit (ldv).
+- gear, gear-srpmimport, gear-update:
+  + Run grep in C locale, run sort in C collation (ldv).
+- gear-create-tag:
+  + New utility, creates a signed release tag object (legion, ldv).
+
 * Sun May 20 2007 Dmitry V. Levin <ldv@altlinux.org> 1.2.5-alt1
 - gear-srpmimport:
   + Do not perform a noop merge (#11721).
