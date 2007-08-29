@@ -158,8 +158,8 @@ validate_subdir()
 		subdir="$($source_ls_cmd "$source")"
 		subdir="$(printf %s "$subdir" |
 			  sed 's#\(\([./]\+\)\?[^/]\+\)/.*#\1#g' |
-			  grep '^[^[:space:]]' |
-			  sort -u)"
+			  LC_ALL=C grep '^[^[:space:]]' |
+			  LC_COLLATE=C sort -u)"
 	fi
 
 	[ -n "$subdir" ] ||
@@ -169,7 +169,7 @@ validate_subdir()
 
 	local quoted_subdir
 	quoted_subdir="$(quote_sed_regexp "$subdir")"
-	$source_ls_cmd "$source" |grep -qs "^$quoted_subdir\(/\|\$\)" ||
+	$source_ls_cmd "$source" |LC_ALL=C grep -qs "^$quoted_subdir\(/\|\$\)" ||
 		fatal "$source: directory \`$subdir' not found in archive"
 }
 

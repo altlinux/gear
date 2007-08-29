@@ -107,7 +107,7 @@ optimize_rules()
 		while read suffix; do
 			local quoted
 			quoted="$(quote_sed_regexp "$suffix")"
-			method="$(sed -ne 's/^\([^:]\+\): [^ ]*\.'"$quoted"'$/\1/p' "$rules" |sort -u)"
+			method="$(sed -ne 's/^\([^:]\+\): [^ ]*\.'"$quoted"'$/\1/p' "$rules" |LC_COLLATE=C sort -u)"
 			case "$method" in
 				copy|gzip|bzip2)
 					printf '%s: *.%s\n' "$method" "$suffix"
@@ -232,7 +232,7 @@ import_tree()
 
 	# Avoid unpacking archives with paths containing /../
 	local dir_name=
-	printf %s "$tree_list" |egrep -qs '^\.\.(/|$)|/\.\.(/|$)' ||
+	printf %s "$tree_list" |LC_ALL=C egrep -qs '^\.\.(/|$)|/\.\.(/|$)' ||
 		dir_name="$(printf %s "$tree_list" |
 			    tr -s / |			# squeeze slashes
 			    sed 's|^/|.&|' |		# prefix leading slash with dot

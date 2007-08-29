@@ -651,7 +651,7 @@ else
 		out_file="$workdir/pkg.tar"
 	if [ -n "$out_file" ]; then
 		find "$outdir" -maxdepth 1 -type f -printf '%f\0' |
-			sort -uz |
+			LC_COLLATE=C sort -uz |
 			xargs -r0 tar --create --file="$out_file" --directory="$outdir" \
 				--label="${specfile##*/}" --owner=root --group=root \
 				--mode=u+w,go-w,go+rX $tar_compress --
