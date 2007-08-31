@@ -452,7 +452,8 @@ import()
 	local message
 	message="$(printf '%s\n\n%s\n' "$verrel" "$changelog")"
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
-		git commit ${quiet:+-q} -a -m "$message" ${author:+--author "$author"}
+		git commit --no-status ${quiet:+-q} -a -m "$message" ${author:+--author "$author"} ||
+			fatal "Failed to commit $srpm"
 	verbose "Committed $name $verrel"
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
 		git tag -a -m "$name $verrel" "$verrel" ||:
