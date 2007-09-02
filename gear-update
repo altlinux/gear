@@ -145,7 +145,7 @@ validate_subdir()
 {
 	if [ "$source_type" = dir ]; then
 		[ -z "$subdir" -o "$subdir" = "$source" ] ||
-			fatal "Invalid subdir \`$subdir' for directory source \`$source'"
+			fatal "Invalid subdir \`$subdir' for directory source \`$source'."
 		subdir="$source"
 		return 0
 	fi
@@ -158,7 +158,7 @@ validate_subdir()
 		tar) source_ls_cmd='tar -tf' ;;
 		zip) source_ls_cmd='zipinfo -1 --' ;;
 		cpio*) source_ls_cmd='cpio_ls_cmd' ;;
-		*) fatal "$source_type: unknown source type" ;;
+		*) fatal "$source_type: unknown source type." ;;
 	esac
 
 	if [ -z "$subdir" ]; then
@@ -177,7 +177,7 @@ validate_subdir()
 	local quoted_subdir
 	quoted_subdir="$(quote_sed_regexp "$subdir")"
 	$source_ls_cmd "$source" |LC_ALL=C grep -qs "^$quoted_subdir\(/\|\$\)" ||
-		fatal "$source: directory \`$subdir' not found in archive"
+		fatal "$source: directory \`$subdir' not found in archive."
 }
 
 force=
@@ -185,20 +185,20 @@ canon_destdir=
 validate_destdir()
 {
 	[ "$#" -eq 2 ] ||
-		fatal "validate_destdir: invalid ($#) number of arguments"
+		fatal "validate_destdir: invalid ($#) number of arguments."
 	local src_dir="$1"; shift
 	local dst_dir="$1"; shift
 	[ -z "$force" ] ||
 		return 0
 	if [ "$dst_dir" = '.' -a -d '.git' -a -d "$src_dir/.git" ]; then
-		fatal "$canon_destdir/.git: Cowardly refusing to replace git directory"
+		fatal "$canon_destdir/.git: Cowardly refusing to replace git directory."
 	fi
 }
 
 update_destdir()
 {
 	[ "$#" -eq 3 ] ||
-		fatal "update_destdir: invalid ($#) number of arguments"
+		fatal "update_destdir: invalid ($#) number of arguments."
 	local command="$1"; shift
 	local src_dir="$1"; shift
 	local dst_dir="$1"; shift
@@ -236,7 +236,7 @@ exit_handler()
 		mkdir -p -- "$destdir"
 		cd "$destdir"
 		git checkout-index -a
-		msg_info 'failed to update target directory'
+		msg_info 'failed to update target directory.'
 	fi
 	exit $rc
 }
@@ -285,7 +285,7 @@ destdir="$(readlink -ev "$1")"; shift
 canon_destdir="$destdir"
 
 [ "$source" != "$destdir" ] ||
-	fatal "\`$source' and \`$destdir' are the same place"
+	fatal "\`$source' and \`$destdir' are the same place."
 [ -d "$destdir" ] ||
 	fatal "$destdir: not a directory"
 
@@ -321,7 +321,7 @@ if [ -z "$force" ]; then
 	out="$(git diff --name-only -- "$destdir" &&
 	       git ls-files --directory --others --exclude-per-directory=.gitignore -- "$destdir")"
 	[ -z "$out" ] ||
-		fatal "$destdir: untracked or modified files found"
+		fatal "$destdir: untracked or modified files found."
 fi
 
 validate_subdir
@@ -363,7 +363,7 @@ case "$source_type" in
 		;;
 esac
 [ -d "$destdir" ] ||
-	fatal "$destdir: result of extraction is not a directory"
+	fatal "$destdir: result of extraction is not a directory."
 
 if [ -n "$exclude_pattern" ]; then
 	cd "$destdir"
