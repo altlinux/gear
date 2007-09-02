@@ -32,6 +32,8 @@ Usage: $PROG [Options] <source> <subdirectory>
 
 Options:
 
+  --exclude=PATTERN   exclude files, given as a PATTERN. PATTERN should have
+                      a posix-egrep regular expression syntax;
   --ignore-exclude    ignore .gitignore and .git/info/exclude;
   -s,--subdir=DIR     extract specified directory name from archive;
   -t,--type=TYPE      define source type:
@@ -234,12 +236,16 @@ exit_handler()
 	exit $rc
 }
 
-TEMP=`getopt -n $PROG -o f,t:,s:,v,V,h -l ignore-exclude,force,type:,subdir:,verbose,version,help -- "$@"` || show_usage
+TEMP=`getopt -n $PROG -o f,t:,s:,v,V,h -l exclude:,ignore-exclude,force,type:,subdir:,verbose,version,help -- "$@"` || show_usage
 eval set -- "$TEMP"
 
+exclude_pattern=
 ignore_exclude=
 while :; do
 	case "$1" in
+	    --exclude) shift
+		[ -z "$1" ] || exclude_pattern="$1"
+		;;
 	    --ignore-exclude) ignore_exclude=1
 		;;
 	    -f|--force) force=1
@@ -338,6 +344,13 @@ case "$source_type" in
 esac
 [ -d "$destdir" ] ||
 	fatal "$destdir: result of extraction is not a directory"
+
+if [ -n "$exclude_pattern" ]; then
+	cd "$destdir"
+	find . -regextype 'posix-egrep' -regex "$exclude_pattern" -print0 |
+			xargs -r0 rm $verbose -rf --
+	cd - >/dev/null
+fi
 
 if [ -n "$ignore_exclude" ]; then
 	git ls-files -z -- "$destdir" |
