@@ -35,6 +35,7 @@ Options:
   --exclude=PATTERN   exclude files, given as a PATTERN. PATTERN should have
                       a posix-egrep regular expression syntax;
   --ignore-exclude    ignore .gitignore and .git/info/exclude;
+  -a,--all            extract all files and directories from archive;
   -s,--subdir=DIR     extract specified directory name from archive;
   -t,--type=TYPE      define source type:
                       'dir', 'tar', 'cpio', 'cpio.gz', 'cpio.bz2' or 'zip';
@@ -121,7 +122,7 @@ cpio_unpack()
 		cpio.gz)  compress='gunzip -c' ;;
 		cpio.bz2) compress='bunzip2 -c' ;;
 	esac
-	$compress "$file" |cpio --quiet -id "$subdir/*"
+	$compress "$file" |cpio --quiet -id ${subdir:+"$subdir/*"}
 }
 
 cpio_ls_cmd()
@@ -138,6 +139,7 @@ cpio_ls_cmd()
 	$compress "$file" |cpio --quiet -t
 }
 
+all_subdirs=
 subdir=
 validate_subdir()
 {
@@ -147,6 +149,9 @@ validate_subdir()
 		subdir="$source"
 		return 0
 	fi
+
+	[ -z "$all_subdirs" ] ||
+		return 0
 
 	local source_ls_cmd
 	case "$source_type" in
@@ -236,13 +241,15 @@ exit_handler()
 	exit $rc
 }
 
-TEMP=`getopt -n $PROG -o f,t:,s:,v,V,h -l exclude:,ignore-exclude,force,type:,subdir:,verbose,version,help -- "$@"` || show_usage
+TEMP=`getopt -n $PROG -o a,f,t:,s:,v,V,h -l all,exclude:,ignore-exclude,force,type:,subdir:,verbose,version,help -- "$@"` || show_usage
 eval set -- "$TEMP"
 
 exclude_pattern=
 ignore_exclude=
 while :; do
 	case "$1" in
+	    -a|--all) all_subdirs=1
+		;;
 	    --exclude) shift
 		[ -z "$1" ] || exclude_pattern="$1"
 		;;
@@ -282,6 +289,20 @@ canon_destdir="$destdir"
 [ -d "$destdir" ] ||
 	fatal "$destdir: not a directory"
 
+[ -z "$subdir" -o -z "$all_subdirs" ] ||
+	fatal "Cannot use --all and --subdir at the same time."
+
+[ -n "$source_type" ] ||
+	get_type_by_source
+
+if [ "$source_type" = "dir" ]; then
+	[ -z "$all_subdirs" ] ||
+		fatal "Cannot use --all for updating from a directory source."
+
+	[ -z "$subdir" ] ||
+		fatal "Cannot use --subdir for updating from a directory source."
+fi
+
 # Change to toplevel directory
 chdir_to_toplevel
 topdir="$(readlink -ev .)"
@@ -303,7 +324,6 @@ if [ -z "$force" ]; then
 		fatal "$destdir: untracked or modified files found"
 fi
 
-[ -n "$source_type" ] || get_type_by_source
 validate_subdir
 
 # Trap for rollback
@@ -331,13 +351,13 @@ case "$source_type" in
 		;;
 	tar)
 		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
-		tar -x -f "$source" -C "$workdir" -- "$subdir/"
+		tar -x -f "$source" -C "$workdir" -- ${subdir:+"$subdir/"}
 		validate_destdir "$workdir/$subdir" "$destdir"
 		update_destdir move "$workdir/$subdir" "$destdir"
 		;;
 	zip)
 		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
-		unzip -q "$source" "$subdir/*" -d "$workdir"
+		unzip -q "$source" ${subdir:+"$subdir/*"} -d "$workdir"
 		validate_destdir "$workdir/$subdir" "$destdir"
 		update_destdir move "$workdir/$subdir" "$destdir"
 		;;
