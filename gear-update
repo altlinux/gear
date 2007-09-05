@@ -32,8 +32,7 @@ Usage: $PROG [Options] <source> <subdirectory>
 
 Options:
 
-  --exclude=PATTERN   exclude files, given as a PATTERN. PATTERN should have
-                      a posix-egrep regular expression syntax;
+  --exclude=PATTERN   exclude files matching posix-egrep regular expression PATTERN;
   --ignore-exclude    ignore .gitignore and .git/info/exclude;
   -a,--all            extract all files and directories from archive;
   -s,--subdir=DIR     extract specified directory name from archive;
