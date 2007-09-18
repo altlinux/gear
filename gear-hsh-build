@@ -69,6 +69,7 @@ EOF
 }
 
 target=
+prefix=
 # source user config if any
 hasher_config="$HOME/.hasher/config"
 if [ -s "$hasher_config" ]; then
@@ -79,7 +80,6 @@ fi
 cleanup_repo=
 hasher="hsh"
 outdir=
-prefix=
 repo="$(mktemp -u "build-XXXXXXXXXX")"
 sisyphus=
 repos=
