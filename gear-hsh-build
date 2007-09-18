@@ -83,6 +83,7 @@ outdir=
 repo="$(mktemp -u "build-XXXXXXXXXX")"
 sisyphus=
 repos=
+indir=
 
 exit_handler()
 {
@@ -90,9 +91,9 @@ exit_handler()
 	trap - EXIT
 	if [ "$rc" -eq 0 ]; then
 		if [ -n "$cleanup_repo" ]; then
-			rm -rf $verbose -- "$prefix/$repo"
+			rm -rf $verbose -- "$indir"
 		else
-			msg_info "You may add \`\`rpm file:$prefix/$repo $target hasher'' to your sources.list"
+			msg_info "You may add \`\`rpm file:$indir $target hasher'' to your sources.list"
 		fi
 	fi
 	exit $rc
@@ -143,6 +144,15 @@ if [ -z "$outdir" ]; then
 		fatal "--sisyphus without --export-dir doesn't makes sense"
 fi
 
+indir="$prefix/$repo"
+if [ -z "${repo##/*}" ]; then
+	if [ -n "$cleanup_repo" ]; then
+		msg_info "--repo is absolute, refusing to --cleanup-repo"
+		cleanup_repo=
+	fi
+	indir="$repo"
+fi
+
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--) shift; break
@@ -186,8 +196,8 @@ IFS="$save_IFS"
 
 if [ -n "$outdir" ]; then
 	verbose "Exporting packages to $outdir..."
-	rpms="$prefix/$repo/$target/RPMS.hasher"
-	srpms="$prefix/$repo/SRPMS.hasher"
+	rpms="$indir/$target/RPMS.hasher"
+	srpms="$indir/SRPMS.hasher"
 	if [ -n "$sisyphus" ]; then
 		mkdir -p "$outdir/RPMS"
 		mkdir -p "$outdir/SRPMS"
