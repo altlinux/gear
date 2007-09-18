@@ -1,7 +1,7 @@
 # Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
 
 Name: gear
-Version: 1.2.6
+Version: 1.2.7
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -42,6 +42,10 @@ See %_docdir/%name-%version/QUICKSTART.ru_RU.KOI8-R for details.
 %doc QUICKSTART*
 
 %changelog
+* Tue Sep 18 2007 Dmitry V. Levin <ldv@altlinux.org> 1.2.7-alt1
+- gear-srpmimport: Pass --fast option to git-commit (ldv).
+- gear-update: Added --all and --exclude options (legion).
+
 * Wed Aug 29 2007 Dmitry V. Levin <ldv@altlinux.org> 1.2.6-alt1
 - gear-update (legion):
   + Added cpio* types support.
