@@ -44,15 +44,15 @@ $PROG - create a signed release tag object for the given commit object
 Usage: $PROG [commit-ish]
 
 Options:
-  -f, --force          Replace an existing tag (instead of failing);
-  -u, --key-id=KEYID   Use the given GPG key to create a signed tag;
-  -m, --message=TEXT   Override custom tag message (default: <NAME> <VERSION>-<RELEASE>);
-  -n, --name=TEXT      Override custom tag name (default: <VERSION>-<RELEASE>);
-  -r, --rules=FILENAME Override file name with gear rules (default: .gear-rules);
-  -q, --quiet          Try to be more quiet;
-  -v, --verbose        Print a message for each action;
-  -V, --version        Print program version and exit;
-  -h, --help           Show this text and exit.
+  -f, --force           Replace an existing tag (instead of failing);
+  -u, --key-id=KEYID    Use the given GPG key to create a signed tag;
+  -m, --message=TEXT    Override custom tag message (default: <NAME> <VERSION>-<RELEASE>);
+  -n, --name=TEXT       Override custom tag name (default: <VERSION>-<RELEASE>);
+  -r, --rules=FILENAME  Override file name with gear rules (default: .gear-rules);
+  -q, --quiet           Try to be more quiet;
+  -v, --verbose         Print a message for each action;
+  -V, --version         Print program version and exit;
+  -h, --help            Show this text and exit.
 
 Report bugs to http://bugs.altlinux.ru/
 
