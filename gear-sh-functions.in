@@ -196,6 +196,11 @@ check_name()
 		rules_error "Invalid $name \"$value\" specified"
 }
 
+rules_cleanup()
+{
+	sed -i 's/^[[:space:]]*\([^[:space:]:]\+\)[[:space:]]*:[[:space:]]*/\1: /' "$1"
+}
+
 workdir=
 main_tree_id=
 rules=
@@ -205,6 +210,7 @@ find_rules()
 		return 0
 	elif [ -n "$(git ls-tree "$main_tree_id" "$rules")" ]; then
 		cat_blob "$main_tree_id" "$rules" >"$workdir/rules"
+		rules_cleanup "$workdir/rules"
 	else
 		: >"$workdir/rules"
 	fi

@@ -531,6 +531,7 @@ mkdir "$tmp_tag_dir"
 
 if [ -s "$rules" ]; then
 	cat -- "$rules" >"$workdir/rules"
+	rules_cleanup "$workdir/rules"
 else
 	: >"$workdir/rules"
 fi

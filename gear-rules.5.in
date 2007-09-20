@@ -41,8 +41,8 @@ A rule file consists of 0 or more lines of the following format:
 .PP
 Empty lines and lines beginning with \*(lq#\*(rq are ignored.
 Directive arguments are delimited by whitespace characters.
-Whitespace between the directive name and \*(lq:\*(rq is not allowed;
-whitespace between \*(lq:\*(rq and the first argument is required.
+Whitespaces between the directive name and \*(lq:\*(rq are optional;
+whitespaces between \*(lq:\*(rq and the first argument are also optional.
 There is no support for line continuation and quoting of special
 characters.
 .
