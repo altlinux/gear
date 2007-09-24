@@ -35,6 +35,8 @@ Options:
   --exclude=PATTERN   exclude files matching posix-egrep regular expression PATTERN;
   --ignore-exclude    ignore .gitignore and .git/info/exclude;
   -a,--all            extract all files and directories from archive;
+  -c,--create         create the <subdirectory> before unpacking the <source>,
+                      the <subdirectory> should not exist;
   -s,--subdir=DIR     extract specified directory name from archive;
   -t,--type=TYPE      define source type:
                       'dir', 'tar', 'cpio', 'cpio.gz', 'cpio.bz2' or 'zip';
@@ -218,6 +220,7 @@ update_destdir()
 
 workdir=
 destdir=
+dest_create=
 exit_handler()
 {
 	local rc=$?
@@ -232,15 +235,18 @@ exit_handler()
 		else
 			rm $verbose -f -- "$destdir"
 		fi
-		mkdir -p -- "$destdir"
-		cd "$destdir"
-		git checkout-index -a
+
+		if [ -z "$dest_create" ]; then
+			mkdir -p -- "$destdir"
+			cd "$destdir"
+			git checkout-index -a
+		fi
 		msg_info 'failed to update target directory.'
 	fi
 	exit $rc
 }
 
-TEMP=`getopt -n $PROG -o a,f,t:,s:,v,V,h -l all,exclude:,ignore-exclude,force,type:,subdir:,verbose,version,help -- "$@"` || show_usage
+TEMP=`getopt -n $PROG -o a,c,f,t:,s:,v,V,h -l all,create,exclude:,ignore-exclude,force,type:,subdir:,verbose,version,help -- "$@"` || show_usage
 eval set -- "$TEMP"
 
 exclude_pattern=
@@ -248,6 +254,8 @@ ignore_exclude=
 while :; do
 	case "$1" in
 	    -a|--all) all_subdirs=1
+		;;
+	    -c|--create) dest_create=1
 		;;
 	    --exclude) shift
 		[ -z "$1" ] || exclude_pattern="$1"
@@ -280,12 +288,19 @@ done
 	show_usage 'Too many arguments.'
 
 source="$(readlink -ev "$1")"; shift
-destdir="$(readlink -ev "$1")"; shift
+if [ -n "$dest_create" ]; then
+	destdir="$(readlink -fv "$1")"
+	[ ! -e "$destdir" ] ||
+		fatal "$destdir: Destination directory already exists."
+else
+	destdir="$(readlink -ev "$1")"
+fi
+shift
 canon_destdir="$destdir"
 
 [ "$source" != "$destdir" ] ||
 	fatal "\`$source' and \`$destdir' are the same place."
-[ -d "$destdir" ] ||
+[ -n "$dest_create" -o -d "$destdir" ] ||
 	fatal "$destdir: not a directory"
 
 [ -z "$subdir" -o -z "$all_subdirs" ] ||
@@ -314,9 +329,10 @@ destdir="${destdir#$topdir/}"
 [ -n "$destdir" ] &&
 	destdir="${destdir%/}" ||
 	destdir='.'
-git rm -n -r -- "$destdir" >/dev/null
+[ -n "$dest_create" ] ||
+	git rm -n -r -- "$destdir" >/dev/null
 
-if [ -z "$force" ]; then
+if [ -z "$force" -a -z "$dest_create" ]; then
 	out="$(git diff --name-only -- "$destdir" &&
 	       git ls-files --directory --others --exclude-per-directory=.gitignore -- "$destdir")"
 	[ -z "$out" ] ||
@@ -329,10 +345,12 @@ validate_subdir
 trap exit_handler HUP INT QUIT TERM EXIT
 
 # Remove $destdir
-find "$destdir" -mindepth 1 -maxdepth 1 \! \( -name '.git' -o -name '.gear-rules' \) -print0 |
-	xargs -r0 rm $verbose -rf --
-[ "$destdir" = '.' ] ||
-	rmdir $verbose -- "$destdir"
+if [ -z "$dest_create" ]; then
+	find "$destdir" -mindepth 1 -maxdepth 1 \! \( -name '.git' -o -name '.gear-rules' \) -print0 |
+		xargs -r0 rm $verbose -rf --
+	[ "$destdir" = '.' ] ||
+		rmdir $verbose -- "$destdir"
+fi
 
 # Copy new sources
 case "$source_type" in
@@ -377,6 +395,7 @@ if [ -n "$ignore_exclude" ]; then
 	git ls-files -z --others --modified -- "$destdir" |
 		git update-index --add ${verbose:+--verbose} -z --stdin
 else
-	git rm -f -r --cached -- "$destdir" >/dev/null
+	[ -n "$dest_create" ] ||
+		git rm -f -r --cached -- "$destdir" >/dev/null
 	git add $verbose -- "$destdir"
 fi
