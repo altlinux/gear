@@ -329,15 +329,23 @@ destdir="${destdir#$topdir/}"
 [ -n "$destdir" ] &&
 	destdir="${destdir%/}" ||
 	destdir='.'
-[ -n "$dest_create" ] ||
-	git rm -n -r -- "$destdir" >/dev/null
 
-if [ -z "$force" -a -z "$dest_create" ]; then
+initial_commit=
+git rev-parse --verify HEAD >/dev/null 2>&1 || initial_commit=1
+
+if [ -z "$force" -a -z "$initial_commit" ]; then
+	out="$(git diff-index --cached --name-only HEAD -- "$destdir")"
+	[ -z "$out" ] ||
+		fatal "$destdir: Changed files found in the index."
+
 	out="$(git diff --name-only -- "$destdir" &&
 	       git ls-files --directory --others --exclude-per-directory=.gitignore -- "$destdir")"
 	[ -z "$out" ] ||
-		fatal "$destdir: untracked or modified files found."
+		fatal "$destdir: Untracked or modified files found."
 fi
+
+[ -n "$dest_create" -o -n "$initial_commit" ] ||
+	git rm -n -r ${force:+-f} -- "$destdir" >/dev/null
 
 validate_subdir
 
