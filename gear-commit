@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 #
-# Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
+# Copyright (C) 2006-2007  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 #
@@ -43,7 +43,7 @@ print_version()
 $PROG version $PROG_VERSION
 Written by Alexey Gladkov <legion@altlinux.org>
 
-Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
+Copyright (C) 2006-2007  Alexey Gladkov <legion@altlinux.org>
 Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
 Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 This is free software; see the source for copying conditions.  There is NO
@@ -52,31 +52,34 @@ EOF
 	exit
 }
 
-if [ "$*" = '--version' ]; then
-	print_version
-elif [ "$*" = '--help' ]; then
-	git-commit --help |
-		sed "s|\(/usr/bin/\)\?git-commit|$PROG [--spec=<file>]|g"
-	exit
-fi
+case "${*-}" in
+	-v|--version)
+		print_version
+		;;
+	-h|--help)
+		git-commit --help |
+			sed "s|\(/usr/bin/\)\?git-commit|$PROG [--spec=<file>]|g"
+		exit
+		;;
+esac
 
 # Change to toplevel directory
 chdir_to_toplevel
 
-if [ "$*" != "${*#--spec[= ]}" ]; then
+if [ $# -gt 0 ] && [ "$*" != "${*#--spec[= ]}" ]; then
 	case "$1" in
 	    --spec=*) specfile="${1#*=}"
 		shift
 		;;
 	    --spec) shift
 		[ "$#" -gt 0 ] ||
-		    fatal "option requires an argument: --spec"
+			fatal "option requires an argument: --spec"
 		specfile="$1"
 		shift
 		;;
 	esac
 	[ -f "$specfile" -o -z "$specfile" ] ||
-	    fatal "$specfile: file not available"
+		fatal "$specfile: file not available"
 elif git cat-file -t "$main_tree_id" >/dev/null 2>&1; then
 	trap exit_handler HUP INT QUIT TERM EXIT
 	workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
