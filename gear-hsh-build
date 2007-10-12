@@ -95,6 +95,9 @@ exit_handler()
 		else
 			msg_info "You may add \`\`rpm file:$indir $target hasher'' to your sources.list"
 		fi
+	else
+		[ -z "$indir" ] ||
+			msg_info "Build failed.  You may wish to check \`\`$indir'' for leftovers."
 	fi
 	exit $rc
 }
