@@ -338,7 +338,8 @@ make_diff()
 	elif [ "$rc" != 0 ]; then return 0
 	fi
 
-	git diff-tree --patch-with-stat "$old_id" "$new_id" >"$outdir/$name"
+	git diff-tree --patch-with-stat --text --no-renames --no-ext-diff \
+		"$old_id" "$new_id" >"$outdir/$name"
 	verbose "Extracted diff: $name"
 	compress_file "$cmd" "$outdir/$name" > /dev/null
 }

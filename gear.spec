@@ -18,6 +18,9 @@ Requires: faketime
 # due to git-commit --fast.
 Requires: git-commit-fast
 
+# due to git-diff-tree --no-ext-diff
+Requires: git-core >= 0:1.5.3
+
 # hasher>=1.0.30 supports tar packages made by gear utility.
 Conflicts: hasher < 0:1.0.30
 
