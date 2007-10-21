@@ -107,7 +107,7 @@ Options:
                             after --rpmbuild command;
   --export-dir=DIRNAME      write source files to specified directory;
   --describe                describe package as "%{NAME} %{VERSION} %{RELEASE}";
-  -r, --rules=FILENAME      name of file with rules, default is .$PROG-rules;
+  -r, --rules=FILENAME      override rules file name;
   -t, --tree-ish=ID         COMMIT[:PATH] specifying the tree to process;
   -q, --quiet               try to be more quiet;
   -v, --verbose             print a message for each action;
@@ -507,8 +507,6 @@ rpmbuild=
 outdir=
 describe=
 do_commit=
-rules=".$PROG-rules"
-tag_dir_default=".$PROG-tags"
 tar_compress=--gzip
 main_tree_id=HEAD
 while :; do
@@ -635,7 +633,7 @@ printf %s\\n "$orig_object_dir" >"$tmpdir/objects/info/alternates"
 GIT_OBJECT_DIRECTORY="$tmpdir/objects"
 export GIT_OBJECT_DIRECTORY
 
-find_tags
+find_tags_in_tree
 parse_rules
 
 install -pm644 "$workdir/specfile" "$outdir/${specfile##*/}"

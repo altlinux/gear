@@ -23,8 +23,7 @@
 
 . gear-sh-functions
 
-specfile=
-rules="${RULES:-.gear-rules}"
+rules="${RULES-}"
 main_tree_id=${TREE_ID:-HEAD}
 commitlog=
 
@@ -53,7 +52,7 @@ EOF
 }
 
 case "${*-}" in
-	-v|--version)
+	-V|--version)
 		print_version
 		;;
 	-h|--help)

@@ -214,7 +214,7 @@ update_destdir()
 	[ "$dst_dir" = '.' ] ||
 		mkdir $verbose -p -- "$dst_dir"
 
-	find "$src_dir" -mindepth 1 -maxdepth 1 \! \( -name '.git' -o -name '.gear-rules' \) -print0 |
+	find "$src_dir" -mindepth 1 -maxdepth 1 \! \( -name '.git' -o -name '.gear' -o -name '.gear-rules' -o -name '.gear-tags' \) -print0 |
 		xargs -r0 -i $cmd -- \{\} "$dst_dir/"
 }
 
@@ -354,7 +354,7 @@ trap exit_handler HUP INT QUIT TERM EXIT
 
 # Remove $destdir
 if [ -z "$dest_create" ]; then
-	find "$destdir" -mindepth 1 -maxdepth 1 \! \( -name '.git' -o -name '.gear-rules' \) -print0 |
+	find "$destdir" -mindepth 1 -maxdepth 1 \! \( -name '.git' -o -name '.gear' -o -name '.gear-rules' -o -name '.gear-tags' \) -print0 |
 		xargs -r0 rm $verbose -rf --
 	[ "$destdir" = '.' ] ||
 		rmdir $verbose -- "$destdir"

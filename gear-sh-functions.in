@@ -26,12 +26,12 @@ PROG_VERSION='@VERSION@'
 
 msg_info()
 {
-	printf %s\\n "$PROG: $*" >&2
+	printf '%s\n' "$PROG: $*" >&2
 }
 
 fatal()
 {
-	printf %s\\n "$PROG: $*" >&2
+	msg_info "$@"
 	exit 1
 }
 
@@ -203,17 +203,65 @@ rules_cleanup()
 
 workdir=
 main_tree_id=
-rules=
-find_rules()
+
+gear_find_rules_check_tree()
 {
+	[ -n "$(git ls-tree "$main_tree_id" "$1")" ]
+}
+
+gear_find_rules_check_cwd()
+{
+	[ -s "$1" ]
+}
+
+gear_find_rules_cat_tree()
+{
+	cat_blob "$main_tree_id" "$rules"
+}
+
+gear_find_rules_cat_cwd()
+{
+	cat -- "$rules"
+}
+
+gear_find_rules_common()
+{
+	local check_rules="$1"; shift
+	local cat_rules="$1"; shift
+
 	if [ -f "$workdir/rules" ]; then
 		return 0
-	elif [ -n "$(git ls-tree "$main_tree_id" "$rules")" ]; then
-		cat_blob "$main_tree_id" "$rules" >"$workdir/rules"
-		rules_cleanup "$workdir/rules"
-	else
-		: >"$workdir/rules"
 	fi
+	local r
+	if [ -n "$rules" ]; then
+		if $check_rules "$rules"; then
+			r="$rules"
+		fi
+	else
+		local n
+		for n in .gear-rules .gear/rules; do
+			if $check_rules "$n"; then
+				rules="$n"
+				r="$rules"
+				break
+			fi
+		done
+	fi
+	if [ -n "$r" ]; then
+		$cat_rules
+	fi >"$workdir/rules"
+	rules_cleanup "$workdir/rules"
+	[ -n "$rules" ] || rules='.gear/rules'
+}
+
+find_rules_in_tree()
+{
+	gear_find_rules_common gear_find_rules_check_tree gear_find_rules_cat_tree
+}
+
+find_rules_in_cwd()
+{
+	gear_find_rules_common gear_find_rules_check_cwd gear_find_rules_cat_cwd
 }
 
 get_filename_from_rules()
@@ -221,7 +269,7 @@ get_filename_from_rules()
 	local directive="$1" && shift
 	local name="$1" && shift
 
-	find_rules
+	find_rules_in_tree
 	[ -s "$workdir/rules" ] || return 0
 
 	local file="$(sed -ne "s/^$directive:[[:space:]]\\+\\([^[:space:]]\\+\\)/\\1/p" "$workdir/rules")"
@@ -252,6 +300,7 @@ pkg_release=
 find_specfile()
 {
 	# first try specfile defined in $rules if any.
+	find_rules_in_tree
 	specfile="$(get_filename_from_rules spec specfile)"
 
 	# second try specfile in toplevel tree.
@@ -273,27 +322,78 @@ find_specfile()
 }
 
 tag_dir=
-tag_dir_default=
-find_tags()
+gear_find_tags_check_tree()
 {
+	local t="$1"; shift
+	local id type
+	id="$(tree_entry_name "$main_tree_id" "$t/list")"
+	type="$(git cat-file -t "$id" 2>/dev/null)" || type=
+	if [ "$type" = 'blob' ]; then
+		tag_dir="$t"
+		return 0
+	fi
+	return 1
+}
+
+gear_find_tags_check_cwd()
+{
+	local t="$1"; shift
+	if [ -s "$t/list" ]; then
+		tag_dir="$t"
+		return 0
+	fi
+	return 1
+}
+
+gear_find_tags_cat_tree()
+{
+	cat_blob "$main_tree_id" "$tag_dir/list"
+}
+
+gear_find_tags_cat_cwd()
+{
+	cat -- "$tag_dir/list"
+}
+
+tag_dir_default=
+gear_find_tags_common()
+{
+	local check_tags="$1"; shift
+	local cat_tags="$1"; shift
+
 	# first try tag directory defined in rules if any.
-	tag_dir="$(get_filename_from_rules tags "tag directory")"
+	tag_dir="$(get_filename_from_rules tags 'tag directory')"
 
 	# second try tag directory in toplevel tree.
-	if [ -z "$tag_dir" ] && [ -n "$tag_dir_default" ]; then
-		local id type
-		id="$(tree_entry_name "$main_tree_id" "$tag_dir_default/list")"
-		type="$(git cat-file -t "$id" 2>/dev/null)" || type=
-		if [ "$type" = "blob" ]; then
-			tag_dir="$tag_dir_default"
+	if [ -z "$tag_dir" ]; then
+		if [ -n "$tag_dir_default" ]; then
+			if $check_tags "$tag_dir_default"; then
+				:
+			fi
+		else
+			local t
+			for t in .gear-tags .gear/tags; do
+				if $check_tags "$t"; then
+					break
+				fi
+			done
 		fi
 	fi
 
 	if [ -n "$tag_dir" ]; then
-		cat_blob "$main_tree_id" "$tag_dir/list" >"$workdir/tags"
-	else
-		: >"$workdir/tags"
-	fi
+		$cat_tags
+	fi >"$workdir/tags"
+	[ -n "$tag_dir" ] || tag_dir='.gear/tags'
+}
+
+find_tags_in_tree()
+{
+	gear_find_tags_common gear_find_tags_check_tree gear_find_tags_cat_tree
+}
+
+find_tags_in_cwd()
+{
+	gear_find_tags_common gear_find_tags_check_cwd gear_find_tags_cat_cwd
 }
 
 tag_list_lineno=

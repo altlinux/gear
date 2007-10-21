@@ -47,8 +47,8 @@ gear-srpmimport: Imported foobar-1.0-alt1.src.rpm
 gear-srpmimport: Created master branch
 
 $ ls -Alog
--rw-r--r-- 1 6637 Aug 12 34:56 .git
--rw-r--r-- 1 6637 Aug 12 34:56 .gear-rules
+drwxr-xr-x 1 4096 Aug 12 34:56 .gear
+drwxr-xr-x 1 4096 Aug 12 34:56 .git
 -rw-r--r-- 1 6637 Aug 12 34:56 foobar.spec
 drwxr-xr-x 3 4096 Aug 12 34:56 foobar
 drwxr-xr-x 3 4096 Aug 12 34:56 foobar-plugins
@@ -57,14 +57,17 @@ drwxr-xr-x 3 4096 Aug 12 34:56 foobar-plugins
 -rw-r--r-- 1  842 Aug 12 34:56 foobar.icon.png
 
 Итак, пакет импортирован в репозиторий.  Для импортированного пакета
-создаётся список правил, по которым будет создаваться архив.  Правила
-располагаются в файле `.gear-rules':
+формируется список правил, по которым будет создаваться архив.
+Правила по умолчанию располагаются в файле `.gear/rules':
 
-$ cat .gear-rules
+$ cat .gear/rules
 copy: *.patch
 copy: *.png
 tar.bz2: foobar
 tar.gz: foobar-plugins name=foobar-plugins base=
+
+Прежние версии gear-srpmimport по умолчанию располагали правила
+в файле `.gear-rules'.
 
 4) При необходимости в файл правил можно вносить изменения.  Например,
 можно убрать сжатие исходников (соответствующие изменения следует вносить
@@ -75,7 +78,7 @@ tar.gz: foobar-plugins name=foobar-plugins base=
 =============================================================
 
 1) Создать и добавить в git-репозиторий spec-файл.
-2) Создать и добавить в git-репозиторий файл с правилами `.gear-rules'.
+2) Создать и добавить в git-репозиторий файл с правилами `.gear/rules'.
 
 
 Сборка пакета из gear-репозитория при помощи hasher(7).

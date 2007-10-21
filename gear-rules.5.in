@@ -139,7 +139,7 @@ can find the spec file automatically.
 .BI "tags: " path_to_directory
 Specify another path of the directory with the list of named tags and
 stored tag objects instead of
-.BR .gear-tags .
+.BR .gear-tags " and " .gear/tags .
 .
 .TP
 .BI "copy: " glob_pattern\fR...
@@ -500,12 +500,15 @@ copy: patches/*.patch
 .
 .SH FILES
 .TP
-.B .gear-rules
-The default rule file used by
+.BR .gear-rules ", " .gear/rules
+The list of file names where
 .BR gear (1),
+.BR gear-commit (1),
+.BR gear-create-tag (1),
 .BR gear-srpmimport (1)
 and
-.BR gear-update-tag (1),
+.BR gear-update-tag (1)
+expect to find rules (first non-empty file from this list is used),
 unless another name is specified by the
 .BI \-\-rules= filename
 option.

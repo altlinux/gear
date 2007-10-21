@@ -48,7 +48,7 @@ Options:
   --branch=BRANCH           branch name where to import (default is "srpms");
   --import-only             do not perform a checkout after importing;
   --no-unpack               do not unpack source archives;
-  --rules=FILENAME          gear rules filename (default is ".gear-rules");
+  --rules=FILENAME          gear rules filename (default is ".gear/rules");
   --spec-pattern=PATTERN    specfile pattern list (default is "*.spec");
   --stdin                   read source package names from stdin;
   -q, --quiet               try to be more quiet;
@@ -402,6 +402,9 @@ import()
 	rpm2cpio "$srpm" |cpio --extract $([ -n "$verbose" ] || echo --quiet)
 	verbose "Unpacked ${srpm##*/}"
 
+	[ -n "${gear_rules##*/*}" ] ||
+		mkdir -p -- "${gear_rules%/*}"
+
 	# Find specfile.
 	spec_version=
 	local spec=
@@ -468,7 +471,7 @@ branch_import=srpms
 import_only=
 no_unpack=
 read_from_stdin=
-gear_rules=".gear-rules"
+gear_rules='.gear/rules'
 while :; do
 	case "$1" in
 		--) shift; break
