@@ -77,7 +77,8 @@ html: $(HTMLPAGES)
 
 install: all
 	$(MKDIR_P) -m755 $(DESTDIR)$(bindir)
-	$(INSTALL) -p -m755 gear-sh-functions $(PROGRAMS) $(DESTDIR)$(bindir)/
+	$(INSTALL) -p -m644 gear-sh-functions $(DESTDIR)$(bindir)/
+	$(INSTALL) -p -m755 $(PROGRAMS) $(DESTDIR)$(bindir)/
 	$(MKDIR_P) -m755 $(DESTDIR)$(man1dir)
 	$(INSTALL) -p -m644 $(MAN1PAGES) $(DESTDIR)$(man1dir)/
 	$(MKDIR_P) -m755 $(DESTDIR)$(man5dir)
