@@ -1,7 +1,7 @@
 # Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
 
 Name: gear
-Version: 1.2.7
+Version: 1.3.0
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -45,6 +45,23 @@ See %_docdir/%name-%version/QUICKSTART.ru_RU.KOI8-R for details.
 %doc QUICKSTART*
 
 %changelog
+* Tue Oct 23 2007 Dmitry V. Levin <ldv@altlinux.org> 1.3.0-alt1
+- Added .gear directory support (ldv).
+- Extended rules syntax: made whitespaces between directive
+  and its parameters optional (legion, ldv).
+- gear-create-tag (show_help): Fixed options output (ldv).
+- gear (make_diff): Pass additional options to git-diff-tree,
+  this change makes "diff" directive complete (ldv).
+- Install gear-sh-functions without execute permissions set (ldv).
+- gear-commit: Fixed unbound variable error (legion, #13057).
+- gear-update: Added --create option (legion).
+- gear-update: Added check for initial commit and
+  for changed files in the index (legion, ldv).
+- gear-hsh-build (raorn):
+  + Honor "prefix" option from ~/.hasher/config.
+  + Enhanced --repo handling.
+  + exit_handler: Show path to hasher repo if build has failed.
+
 * Tue Sep 18 2007 Dmitry V. Levin <ldv@altlinux.org> 1.2.7-alt1
 - gear-srpmimport: Pass --fast option to git-commit (ldv).
 - gear-update: Added --all and --exclude options (legion).
