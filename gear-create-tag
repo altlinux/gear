@@ -117,19 +117,18 @@ chdir_to_toplevel
 main_commit_sha1="$(get_commit_sha1 "$main_tree_id")" ||
 	fatal "$main_tree_id: Invalid commit object name"
 
-if [ -z "$tag_name" -o -z "$tag_msg" ]; then
-	trap exit_handler HUP INT QUIT TERM EXIT
-	workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
-	find_specfile
-	rm -rf -- "$workdir"
-	trap - HUP INT QUIT TERM EXIT
+trap exit_handler HUP INT QUIT TERM EXIT
+workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
+find_specfile
+rm -rf -- "$workdir"
+trap - HUP INT QUIT TERM EXIT
 
-	[ -n "$tag_name" ] ||
-		tag_name="$pkg_version-$pkg_release"
+[ -n "$tag_name" ] ||
+	tag_name='@version@-@release@'
+[ -n "$tag_msg" ] ||
+	tag_msg='@name@ @version@-@release@'
 
-	[ -n "$tag_msg" ] ||
-		tag_msg="$pkg_name $pkg_version-$pkg_release"
-fi
+subst_NVR_from_spec_file '' tag_name tag_msg
 
 verbose "Creating tag named \"$tag_name\" using tag message \"$tag_msg\" for commit $main_commit_sha1"
 exec git tag $force ${keyid:--s} ${keyid:+-u "$keyid"} -m "$tag_msg" "$tag_name" "$main_commit_sha1"
