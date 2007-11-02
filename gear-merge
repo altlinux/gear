@@ -1,4 +1,4 @@
-#!/bin/ash -efu
+#!/bin/sh -efu
 #
 # Copyright (C) 2007  Alexey Gladkov <legion@altlinux.org>
 #
@@ -19,20 +19,18 @@
 # Rules:
 # directive: args
 #
-# directive             := ( merge | gendiff )
-# args                  := ( strategy | squash | merge_specific_args | gendiff_specific_args )
-# strategy              := <git merge strategy>
-# gendiff_specific_args := ( name | unified )
-# name                  := <file>
-# unified               := <number>
+# directive  := ( merge | gendiff )
+# args       := ( -strategy | -squash | -message | -unified | -name )
+# -name      := <file>
+# -message   := <text>
+# -unified   := <number>
+# -strategy  := <git merge strategy>
+# -squash    := NONE
 #
 # <git merge strategy> - Use the given merge strategy. See man git-merge(1).
 #
 
 . gear-sh-functions
-
-main_tree_id='HEAD'
-merge_rules='.gear/merge'
 
 show_help() {
 	cat <<EOF
@@ -43,7 +41,7 @@ Usage: $PROG [Options]
 Options:
 
   -a, --add              add new patches in git repository;
-  -r, --rules=FILENAME   name of file with rules, default is (default: $merge_rules);
+  -r, --rules=FILENAME   name of file with rules, default is .gear/merge;
   -v,--verbose           print a message for each action;
   -V,--version           print program version and exit;
   -h,--help              show this text and exit.
@@ -81,86 +79,140 @@ exit_handler() {
 	exit $rc
 }
 
-main_commit_id=
-merge_rules=
+main_tree_id='HEAD'
+rules=
 find_merge_rules() {
-	if [ -f "$workdir/rules" ]; then
-		return 0
-	elif [ -n "$(git ls-tree "$main_tree_id" "$merge_rules")" ]; then
-		cat_blob "$main_tree_id" "$merge_rules" >"$workdir/rules"
-	else
-		: >"$workdir/rules"
+	: >"$workdir/rules"
+	if [ -n "$(git ls-tree "$main_tree_id" "$rules")" ]; then
+		cat_blob "$main_tree_id" "$rules" >"$workdir/rules"
 	fi
 }
 
-is_already_merged() {
-	local src dst missing
+validate_rule() {
+	local cmd src dst
+	cmd="$1"; shift
 	src="$1"; shift
 	dst="$1"; shift
-	missing="$(git-rev-list --max-count=1 "$src".."$dst")"
-	[ -z "$missing" ] || return 1
-}
 
-parse_common_options() {
-	merge_squash=
-	merge_strategy=
-
-	[ "$#" -ne 0 ] ||
-		return 0
-
-	local o
-	for o in "$@"; do
-		case "$o" in
-			merge_strategy=*) merge_strategy="${o#strategy=}" ;;
-			merge_squash) merge_squash="--sq" ;;
-		esac
+	for b in "$src" "$dst"; do
+		[ -n "$(git ls-remote -h . "refs/heads/$b")" ] ||
+			fatal "$b: branch not found."
 	done
+
+	[ "$cmd" != 'gendiff' -o -n "$name" ] ||
+		rules_error "patch name not defined. Use '-name' option."
 }
 
-merge_branch() {
+parse_options() {
+	name= message= squash= strategy= unified=
+	[ "$#" -gt 0 ] || return 0
+
+	local TEMP
+	TEMP=`getopt -a -o n:,m:,u:,s:,S -l name:,message:,unified:,strategy:,squash -- "$@" 2>/dev/null` ||
+		fatal "Unable to parse options"
+
+	eval set -- "$TEMP"
+	while :; do
+		case "${1-}" in
+			-n|--name)     shift; name="$1" ;;
+			-m|--message)  shift; message="$1" ;;
+			-u|--unified)  shift; unified="$1" ;;
+			-s|--strategy) shift; strategy="$1" ;;
+			-S|--squash)   shift; squash='--sq' ;;
+			--)            shift; break ;;
+		esac
+		shift
+	done
+	[ "$#" -eq 0 ] ||
+		rules_error "unknown option: $*"
+}
+
+parse_rules() {
+	local parser_func="${1-}"
+	local cmd options src dst lineno=0
+
+	echo >>"$workdir/rules"
+	while read -r cmd options; do
+		lineno=$(($lineno+1))
+		eval set -- "$options"
+
+		cmd="${cmd%:}"
+		case "$cmd" in
+			merge)
+				[ "$#" -ge 1 ] ||
+					rules_error 'expected syntax: <command> <branch-to-merge> [<options>]'
+				src="$current_branch"
+				dst="$1"; shift
+				;;
+			gendiff)
+				[ "$#" -ge 2 ] ||
+					rules_error 'expected syntax: <command> <src-branch> <dst-branch> [<options>]'
+				src="$1"; shift
+				dst="$1"; shift
+				;;
+			''|'#'*) continue ;;
+			*) rules_error 'unknown command.' ;;
+		esac
+
+		parse_options "$@"
+
+		if [ -n "$parser_func" ]; then
+			$parser_func "$cmd" "$src" "$dst"
+			continue
+		fi
+
+		branch_$cmd "$src" "$dst"
+
+	done < "$workdir/rules"
+}
+
+is_already_merged() {
+	[ -z "$(git-rev-list --max-count=1 "$1".."$2")" ] || return 1
+}
+
+branch_merge() {
 	local src dst
 	src="$1"; shift
 	dst="$1"; shift
 
 	if is_already_merged "$src" "$dst"; then
-		verbose "No new commits in branch '$src'."
+		verbose "No new commits in branch '$src'"
 		return 0
 	fi
 
-	parse_common_options "$@"
-
-	git merge ${merge_squash:-} ${merge_strategy:+-s "$merge_strategy"} "refs/heads/$dst" ||
-		fatal "Unable to merge \`$dst' automatically."
+	git merge \
+		${squash:-} \
+		${strategy:+-s "$strategy"} \
+		${message:+-m "$message"} \
+		"refs/heads/$dst" ||
+		fatal "Unable to merge '$dst' automatically"
 }
 
 new_files=
 add_new_files=
-gendiff_branch() {
-	local dir name= unified= o
+branch_gendiff() {
+	local dir
 
 	local src dst
 	src="$1"; shift
 	dst="$1"; shift
 
 	git checkout "$dst"
-	merge_branch "$dst" "$src" "$@"
-
-	for o in "$@"; do
-		case "$o" in
-			name=*) name="${o#name=}" ;;
-			unified=*) unified="${o#unified=}" ;;
-		esac
-	done
-
-	[ -n "$name" ] ||
-		fatal "Patch name not defined. Use 'name=' parameter."
+	merge_branch "$dst" "$src"
 
 	dir="${name%/*}"
 	[ "$dir" = "$name" -o -d "$dir" ] ||
 		mkdir -p -- "$dir"
 
-	git diff -p ${unified:+-U"$unified"} "refs/heads/$src".."refs/heads/$dst" > "$name" ||
-		fatal "Unable to generate diff between \`$src' and \`$dst'."
+	{ [ -z "$message" ] || printf '%s\n\n' "$message"; } > "$name"
+
+	git diff \
+		-p \
+		--no-color \
+		--ignore-space-change \
+		${unified:+--unified="$unified"} \
+		"refs/heads/$src".."refs/heads/$dst" >> "$name" ||
+		fatal "Unable to generate diff between '$src' and '$dst'"
 
 	[ -z "$add_new_files" ] ||
 		new_files="$new_files $name"
@@ -171,11 +223,12 @@ gendiff_branch() {
 TEMP=`getopt -n $PROG -o a,r:,V,v,h -l add,rules:,version,verbose,help -- "$@"` || show_usage
 eval set -- "$TEMP"
 
+rules='.gear/merge'
 while :; do
 	case "$1" in
 		-a|--add) add_new_files=1
 			;;
-		-r|--rules) shift; merge_rules="$1"
+		-r|--rules) shift; rules="$1"
 			;;
 		-v|--verbose) verbose=-v
 			;;
@@ -198,6 +251,15 @@ git_dir="$(readlink -ev "$git_dir")"
 # Change to toplevel directory.
 chdir_to_toplevel
 
+out="$(git diff-index --cached --name-only HEAD)"
+[ -z "$out" ] ||
+	fatal "Changed files found in the index."
+
+out="$(git diff --name-only &&
+       git ls-files --directory --others --exclude-per-directory=.gitignore)"
+[ -z "$out" ] ||
+	fatal "Untracked or modified files found."
+
 current_branch="$(git-symbolic-ref "$main_tree_id")"
 
 [ -z "${current_branch%%refs/heads/*}" ] ||
@@ -208,7 +270,8 @@ current_branch="${current_branch#refs/heads/}"
 trap exit_handler HUP PIPE INT QUIT TERM EXIT
 workdir="$(mktemp -dt "$PROG.XXXXXXXX")"
 
-find_merge_rules
+#find_merge_rules
+cp -f "$rules" "$workdir/rules"
 
 if [ ! -s "$workdir/rules" ]; then
 	msg_info "No rules found."
@@ -216,41 +279,8 @@ if [ ! -s "$workdir/rules" ]; then
 	exit 0
 fi
 
-while read -r cmd options; do
-	set -- $options
-
-	cmd="${cmd%:}"
-	case "$cmd" in
-		merge)
-			[ "$#" -ge 1 ] ||
-				fatal "Bad \`$cmd' usage."
-
-			src_branch="$current_branch"
-			dst_branch="$1"; shift
-			;;
-		gendiff)
-			[ "$#" -ge 2 ] ||
-				fatal "Bad \`$cmd' usage."
-
-			src_branch="$1"; shift
-			dst_branch="$1"; shift
-			;;
-		""|\#*)
-			continue
-			;;
-		*)
-			fatal "Unknown command: $cmd"
-			;;
-	esac
-
-	for b in "$src_branch" "$dst_branch"; do
-		[ -n "$(git ls-remote -h . "refs/heads/$b")" ] ||
-			fatal "$b: branch not found"
-	done
-
-	"${cmd}_branch" "$src_branch" "$dst_branch" "$@"
-
-done < "$workdir/rules"
+parse_rules 'validate_rule'
+parse_rules
 
 if [ -n "$add_new_files" -a -n "$new_files" ]; then
 	git checkout "$current_branch"
