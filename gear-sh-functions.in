@@ -281,6 +281,60 @@ get_filename_from_rules()
 	printf %s "$file"
 }
 
+expand_rpm_macros()
+{
+	local spec="$1" && shift
+	local var_name="$1" && shift
+
+	local var_value
+	eval "var_value=\"\$$var_name\""
+
+	var_value="$(awk '
+	BEGIN {
+		macros["nil"] = ""
+	}
+	match($0, /^%(define|global)[[:space:]]+([^[:space:]]+)[[:space:]]+(.*)$/, f) {
+		expansion = expand(f[3])
+		if ((expansion == 10) && (expansion > 2))
+			delete macros[f[2]]
+		else
+			macros[f[2]] = expansion
+	}
+	END {
+		expansion = expand(value)
+		if ((expansion == 10) && (expansion > 2))
+			expansion = value
+		print expansion
+	}
+	function expand(input,
+			output, pos, macro, f)
+	{
+		output = ""
+		while ((pos = index(input, "%")) != 0) {
+			output = output substr(input, 1, pos - 1)
+			input = substr(input, pos + 1)
+			if (input ~ /^%/) {
+				output = output "%"
+				input = substr(input, 2)
+				continue
+			}
+			if (match(input, /^([[:alpha:]_][[:alnum:]_]*)(.*)$/, f) ||
+			    match(input, /^\{([[:alpha:]_][[:alnum:]_]*)\}(.*)$/, f)) {
+				macro = f[1]
+				input = f[2]
+			} else
+				return 10
+			if (!(macro in macros))
+				return 10
+			output = output macros[macro]
+		}
+		return output input
+	}
+	' value="$var_value" "$spec" )"
+
+	eval "$var_name=\"$(quote_shell_arg "$var_value")\""
+}
+
 spec_name=
 spec_version=
 spec_release=
@@ -291,6 +345,10 @@ get_NVR_from_spec()
 	spec_name="$(sed '/^name:[[:space:]]*/I!d;s///;q' "$spec")"
 	spec_version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$spec")"
 	spec_release="$(sed '/^release:[[:space:]]*/I!d;s///;q' "$spec")"
+
+	expand_rpm_macros "$spec" spec_name
+	expand_rpm_macros "$spec" spec_version
+	expand_rpm_macros "$spec" spec_release
 }
 
 specfile=
