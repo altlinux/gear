@@ -20,12 +20,12 @@
 # directive: args
 #
 # directive  := ( merge | gendiff )
-# args       := ( -strategy | -squash | -message | -unified | -name )
-# -name      := <file>
-# -message   := <text>
-# -unified   := <number>
-# -strategy  := <git merge strategy>
-# -squash    := NONE
+# args       := ( strategy | squash | message | unified | name )
+# name       := <file>
+# message    := <text>
+# unified    := <number>
+# strategy   := <git merge strategy>
+# squash     := NONE
 #
 # <git merge strategy> - Use the given merge strategy. See man git-merge(1).
 #
@@ -89,79 +89,82 @@ find_merge_rules() {
 }
 
 validate_rule() {
-	local cmd src dst
+	local cmd
 	cmd="$1"; shift
-	src="$1"; shift
-	dst="$1"; shift
 
-	for b in "$src" "$dst"; do
+	for b in "$src_branch" "$dst_branch"; do
 		[ -n "$(git ls-remote -h . "refs/heads/$b")" ] ||
 			fatal "$b: branch not found."
 	done
 
 	[ "$cmd" != 'gendiff' -o -n "$name" ] ||
-		rules_error "patch name not defined. Use '-name' option."
+		rules_error "patch name not defined. Use 'name' option."
 }
 
-parse_options() {
-	name= message= squash= strategy= unified=
-	[ "$#" -gt 0 ] || return 0
+parse_rule() {
+	local cmd="$1"; shift
+	src_branch= dst_branch= name= message= squash= strategy= unified=
 
-	local TEMP
-	TEMP=`getopt -a -o n:,m:,u:,s:,S -l name:,message:,unified:,strategy:,squash -- "$@" 2>/dev/null` ||
-		fatal "Unable to parse options"
+	case "$cmd" in
+		merge)
+			[ "$#" -ge 1 ] ||
+				rules_error 'expected syntax: <command:> <branch-to-merge> [<options>]'
+			src_branch="$current_branch"
+			dst_branch="$1"
+			;;
+		gendiff)
+			[ "$#" -ge 2 ] ||
+				rules_error 'expected syntax: <command:> <src-branch> <dst-branch> [<options>]'
+			src_branch="$1"; shift
+			dst_branch="$1"
+			;;
+		*) rules_error "unknown command: $cmd" ;;
+	esac
+	shift
 
-	eval set -- "$TEMP"
-	while :; do
-		case "${1-}" in
-			-n|--name)     shift; name="$1" ;;
-			-m|--message)  shift; message="$1" ;;
-			-u|--unified)  shift; unified="$1" ;;
-			-s|--strategy) shift; strategy="$1" ;;
-			-S|--squash)   shift; squash='--sq' ;;
-			--)            shift; break ;;
+	while [ "$#" -gt 0 ]; do
+		case "$1" in
+			name=*)     name="${1#name=}" ;;
+			message=*)  message="${1#message=}" ;;
+			unified=*)  unified="--unified=${1#unified=}" ;;
+			strategy=*) strategy="--strategy=${1#strategy=}" ;;
+			squash)     squash='--sq' ;;
+			*)          rules_error "unknown option: $1" ;;
 		esac
 		shift
 	done
-	[ "$#" -eq 0 ] ||
-		rules_error "unknown option: $*"
+}
+
+quote_shell_light() {
+	local out="$*"
+	if [ -z "${out##*[\$\`\\\\]*}" ]; then
+		out="$(printf %s "$out" |sed -e 's/[$`\\]/\\&/g')" ||
+		return 1
+	fi
+	printf %s "$out"
 }
 
 parse_rules() {
 	local parser_func="${1-}"
-	local cmd options src dst lineno=0
+	local cmd options lineno=0
 
 	echo >>"$workdir/rules"
 	while read -r cmd options; do
 		lineno=$(($lineno+1))
-		eval set -- "$options"
+
+		[ -n "${cmd%%#*}" ] ||
+			continue
 
 		cmd="${cmd%:}"
-		case "$cmd" in
-			merge)
-				[ "$#" -ge 1 ] ||
-					rules_error 'expected syntax: <command> <branch-to-merge> [<options>]'
-				src="$current_branch"
-				dst="$1"; shift
-				;;
-			gendiff)
-				[ "$#" -ge 2 ] ||
-					rules_error 'expected syntax: <command> <src-branch> <dst-branch> [<options>]'
-				src="$1"; shift
-				dst="$1"; shift
-				;;
-			''|'#'*) continue ;;
-			*) rules_error 'unknown command.' ;;
-		esac
+		options="$(quote_shell_light "$options")"
 
-		parse_options "$@"
+		eval parse_rule "$cmd" "$options"
 
 		if [ -n "$parser_func" ]; then
-			$parser_func "$cmd" "$src" "$dst"
+			$parser_func "$cmd"
 			continue
 		fi
-
-		branch_$cmd "$src" "$dst"
+		branch_$cmd
 
 	done < "$workdir/rules"
 }
@@ -171,48 +174,35 @@ is_already_merged() {
 }
 
 branch_merge() {
-	local src dst
-	src="$1"; shift
-	dst="$1"; shift
-
-	if is_already_merged "$src" "$dst"; then
-		verbose "No new commits in branch '$src'"
+	if is_already_merged "$src_branch" "$dst_branch"; then
+		verbose "No new commits in branch '$src_branch'"
 		return 0
 	fi
 
-	git merge \
-		${squash:-} \
-		${strategy:+-s "$strategy"} \
+	git merge $squash $strategy \
 		${message:+-m "$message"} \
-		"refs/heads/$dst" ||
-		fatal "Unable to merge '$dst' automatically"
+		"refs/heads/$dst_branch" ||
+		fatal "Unable to merge '$dst_branch' automatically"
 }
 
 new_files=
 add_new_files=
 branch_gendiff() {
-	local dir
+	git checkout "$dst_branch"
+	branch_merge "$dst_branch" "$src_branch"
 
-	local src dst
-	src="$1"; shift
-	dst="$1"; shift
-
-	git checkout "$dst"
-	merge_branch "$dst" "$src"
-
-	dir="${name%/*}"
+	local dir="${name%/*}"
 	[ "$dir" = "$name" -o -d "$dir" ] ||
 		mkdir -p -- "$dir"
 
 	{ [ -z "$message" ] || printf '%s\n\n' "$message"; } > "$name"
 
-	git diff \
+	git diff $unified \
 		-p \
 		--no-color \
 		--ignore-space-change \
-		${unified:+--unified="$unified"} \
-		"refs/heads/$src".."refs/heads/$dst" >> "$name" ||
-		fatal "Unable to generate diff between '$src' and '$dst'"
+		"refs/heads/$src_branch".."refs/heads/$dst_branch" >> "$name" ||
+		fatal "Unable to generate diff between '$src_branch' and '$dst_branch'"
 
 	[ -z "$add_new_files" ] ||
 		new_files="$new_files $name"
