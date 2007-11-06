@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 # Rules:
-# directive: args
+# directive: <from-branch> <to-branch> args
 #
 # directive  := ( merge | gendiff )
 # args       := ( strategy | squash | message | unified | name )
@@ -68,8 +68,18 @@ EOF
 	exit
 }
 
-checkout_current=
-current_branch=
+cur_branch=
+set_current_branch() {
+	local id="${1:-HEAD}"
+	cur_branch="$(git-symbolic-ref "$id")"
+
+	[ -z "${cur_branch%%refs/heads/*}" ] ||
+		fatal "$id: not a branch."
+
+	cur_branch="${cur_branch#refs/heads/}"
+}
+
+restore_branch=
 workdir=
 exit_handler() {
 	local rc=$?
@@ -77,8 +87,10 @@ exit_handler() {
 	[ -z "$workdir" ] ||
 		rm -rf -- "$workdir"
 
-	if [ "$rc" -eq 0 -a -n "$checkout_current" ]; then
-		git checkout "$current_branch"
+	if [ "$rc" -eq 0 ]; then
+		set_current_branch
+		[ "$cur_branch" = "$restore_branch" ] ||
+			git checkout "$restore_branch"
 	fi
 	exit $rc
 }
@@ -110,21 +122,17 @@ parse_rule() {
 	src_branch= dst_branch= name= message= squash= strategy= unified=
 
 	case "$cmd" in
-		merge)
-			[ "$#" -ge 1 ] ||
-				rules_error 'expected syntax: <command:> <branch-to-merge> [<options>]'
-			src_branch="$current_branch"
-			dst_branch="$1"
-			;;
-		gendiff)
-			[ "$#" -ge 2 ] ||
-				rules_error 'expected syntax: <command:> <src-branch> <dst-branch> [<options>]'
-			src_branch="$1"; shift
-			dst_branch="$1"
-			;;
+		merge|gendiff) ;;
 		*) rules_error "unknown command: $cmd" ;;
 	esac
-	shift
+
+	[ "$#" -ge 2 ] ||
+		rules_error 'expected syntax: <command:> <from-branch> <to-branch> [<options>]'
+
+	src_branch="$1"; shift
+	dst_branch="$1"; shift
+
+	set_current_branch
 
 	while [ "$#" -gt 0 ]; do
 		case "$1" in
@@ -178,22 +186,24 @@ is_already_merged() {
 }
 
 branch_merge() {
-	if is_already_merged "$src_branch" "$dst_branch"; then
-		verbose "No new commits in branch '$src_branch'"
+	if is_already_merged "$dst_branch" "$src_branch"; then
+		verbose "No new commits in branch '$dst_branch'"
 		return 0
 	fi
 
+	[ "$cur_branch" = "$dst_branch" ] ||
+		git checkout "$dst_branch"
+
 	git merge $squash $strategy \
 		${message:+-m "$message"} \
-		"refs/heads/$dst_branch" ||
-		fatal "Unable to merge '$dst_branch' automatically"
+		"refs/heads/$src_branch" ||
+		fatal "Unable to merge '$src_branch' automatically"
 }
 
 new_files=
 add_new_files=
 branch_gendiff() {
-	git checkout "$dst_branch"
-	branch_merge "$dst_branch" "$src_branch"
+	branch_merge
 
 	local dir="${name%/*}"
 	[ "$dir" = "$name" -o -d "$dir" ] ||
@@ -210,8 +220,6 @@ branch_gendiff() {
 
 	[ -z "$add_new_files" ] ||
 		new_files="$new_files $name"
-
-	checkout_current=1
 }
 
 TEMP=`getopt -n $PROG -o a,r:,V,v,h -l add,rules:,version,verbose,help -- "$@"` || show_usage
@@ -254,12 +262,8 @@ out="$(git diff --name-only &&
 [ -z "$out" ] ||
 	fatal "Untracked or modified files found."
 
-current_branch="$(git-symbolic-ref "$main_tree_id")"
-
-[ -z "${current_branch%%refs/heads/*}" ] ||
-	fatal "$main_tree_id: not a branch."
-
-current_branch="${current_branch#refs/heads/}"
+set_current_branch
+restore_branch="$cur_branch"
 
 trap exit_handler HUP PIPE INT QUIT TERM EXIT
 workdir="$(mktemp -dt "$PROG.XXXXXXXX")"
@@ -276,7 +280,10 @@ parse_rules 'validate_rule'
 parse_rules
 
 if [ -n "$add_new_files" -a -n "$new_files" ]; then
-	git checkout "$current_branch"
+	set_current_branch
+	if [ "$cur_branch" != "$restore_branch" ]; then
+		git checkout "$restore_branch"
+		restore_branch=
+	fi
 	git add $new_files
-	checkout_current=
 fi
