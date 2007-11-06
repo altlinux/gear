@@ -34,9 +34,13 @@
 
 show_help() {
 	cat <<EOF
-$PROG - Merge branches in the package repository
-
 Usage: $PROG [Options]
+
+This utility might help you to store upstream sources, patches
+and metafiles to facilitate packaging for different repository branches.
+
+Its main purpose is merging differerent branches (usually upstream
+sources and/or patch branches) into single master branch.
 
 Options:
 
@@ -260,8 +264,7 @@ current_branch="${current_branch#refs/heads/}"
 trap exit_handler HUP PIPE INT QUIT TERM EXIT
 workdir="$(mktemp -dt "$PROG.XXXXXXXX")"
 
-#find_merge_rules
-cp -f "$rules" "$workdir/rules"
+find_merge_rules
 
 if [ ! -s "$workdir/rules" ]; then
 	msg_info "No rules found."
