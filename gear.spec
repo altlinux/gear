@@ -1,7 +1,7 @@
 # Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
 
 Name: gear
-Version: 1.3.0
+Version: 1.3.1
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -45,6 +45,12 @@ See %_docdir/%name-%version/QUICKSTART.ru_RU.KOI8-R for details.
 %doc QUICKSTART*
 
 %changelog
+* Fri Nov 09 2007 Dmitry V. Levin <ldv@altlinux.org> 1.3.1-alt1
+- gear-create-tag:
+  + Enabled keyword substitution in --name and --version options (ldv).
+- gear-sh-functions.in (get_NVR_from_spec):
+  + Added minimal support for RPM macros (vsu).
+
 * Tue Oct 23 2007 Dmitry V. Levin <ldv@altlinux.org> 1.3.0-alt1
 - Added .gear directory support (ldv).
 - Extended rules syntax: made whitespaces between directive
