@@ -288,6 +288,7 @@ expand_rpm_macros()
 
 	local var_value
 	eval "var_value=\"\$$var_name\""
+	[ -n "$var_value" -a -z "${var_value##*%*}" ] || return 0
 
 	var_value="$(awk '
 	BEGIN {
