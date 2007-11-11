@@ -102,6 +102,7 @@ find_merge_rules() {
 	if [ -n "$(git ls-tree "$main_tree_id" "$rules")" ]; then
 		cat_blob "$main_tree_id" "$rules" >"$workdir/rules"
 	fi
+	rules_cleanup "$workdir/rules"
 }
 
 validate_rule() {
