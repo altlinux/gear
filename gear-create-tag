@@ -75,6 +75,7 @@ eval set -- "$TEMP"
 
 force=
 keyid=
+opt_s='-s'
 tag_msg=
 tag_name=
 main_tree_id='HEAD'
@@ -88,7 +89,7 @@ while :; do
 		;;
 	    -r|--rules) shift; rules="$1"
 		;;
-	    -u|--key-id) shift; keyid="$1"
+	    -u|--key-id) shift; keyid="$1"; opt_s=
 		;;
 	    -v|--verbose) verbose=-v
 		;;
@@ -131,4 +132,4 @@ trap - HUP INT QUIT TERM EXIT
 subst_NVR_from_spec_file '' tag_name tag_msg
 
 verbose "Creating tag named \"$tag_name\" using tag message \"$tag_msg\" for commit $main_commit_sha1"
-exec git tag $force ${keyid:--s} ${keyid:+-u "$keyid"} -m "$tag_msg" "$tag_name" "$main_commit_sha1"
+exec git tag $force $opt_s ${keyid:+-u "$keyid"} -m "$tag_msg" "$tag_name" "$main_commit_sha1"
