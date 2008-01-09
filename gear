@@ -508,6 +508,7 @@ hasher=
 update_spec=
 rpmbuild=
 command=
+command_helper='gear-command-tar'
 outdir=
 describe=
 do_commit=
@@ -527,15 +528,19 @@ while :; do
 			;;
 		--gzip) tar_compress=--gzip
 			;;
-		--command) command=1
+		--command) command=1; command_helper=
 			;;
 		--hasher) hasher=1
 			[ -z "$outdir$rpmbuild$describe$command" ] ||
 				show_usage 'Options --hasher, --rpmbuild, --export-dir, --command and --describe are mutually exclusive.'
+			msg_info 'Warning: Option --hasher is obsolete, use --command instead.'
+			command_helper='gear-command-hasher'
 			;;
 		--rpmbuild) rpmbuild=1
 			[ -z "$hasher$outdir$describe$command" ] ||
 				show_usage 'Options --hasher, --rpmbuild, --export-dir, --command and --describe are mutually exclusive.'
+			msg_info 'Warning: Option --rpmbuild is obsolete, use --command instead.'
+			command_helper='gear-command-rpmbuild'
 			;;
 		--update-spec) update_spec=1
 			;;
@@ -586,11 +591,6 @@ else
 	out_file="$1"
 	shift
 fi
-
-[ -z "$hasher" ] ||
-	msg_info "Warning: Option --hasher is obsolete, use --command instead."
-[ -z "$rpmbuild" ] ||
-	msg_info "Warning: Option --rpmbuild is obsolete, use --command instead."
 
 # Save git directory for future use.
 git_dir="$(git rev-parse --git-dir)"
@@ -669,9 +669,4 @@ export gear_tar_compress gear_update_spec gear_verbose gear_quiet gear_rules
 
 install -pm644 "$specfile" "$outdir/${specfile##*/}"
 verbose "Extracted specfile: ${specfile##*/}"
-
-if [ -z "$hasher$rpmbuild$command" ]; then
-	run_command gear-command-tar
-else
-	run_command "$@"
-fi
+run_command $command_helper "$@"
