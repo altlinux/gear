@@ -24,8 +24,9 @@
 PROJECT = gear
 VERSION = $(shell sed '/^Version: */!d;s///;q' gear.spec)
 PROGRAMS = gear gear-commit gear-create-tag gear-hsh-build gear-merge \
-	gear-srpmimport gear-update gear-update-tag gear-buildreq gear-hsh gear-rpm
-HELPERS = gear-command-rpmbuild gear-command-hasher gear-command-tar
+	gear-srpmimport gear-update gear-update-tag gear-buildreq gear-hsh gear-rpm \
+	gear-remote gear-remote-hsh gear-remote-rpm
+HELPERS = gear-command-rpmbuild gear-command-hasher gear-command-tar gear-command-remote-build
 MAN1PAGES = $(PROGRAMS:=.1)
 MAN5PAGES = gear-rules.5 gear-merge-rules.5
 MANPAGES = $(MAN1PAGES) $(MAN5PAGES)

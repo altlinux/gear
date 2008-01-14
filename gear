@@ -651,6 +651,10 @@ gear_commit_id="${tmp_commit_id:-$main_commit_id}"
 gear_commit_id="$(get_object_sha1 "$gear_commit_id")" ||
 	fatal 'Failed to parse commit.'
 
+gear_pkg_name="$pkg_name"
+gear_pkg_version="$pkg_version"
+gear_pkg_release="$pkg_release"
+
 gear_specfile="$specfile"
 gear_tmpdir="$tmpdir"
 gear_outdir="$outdir"
@@ -658,6 +662,7 @@ gear_workdir="$workdir"
 gear_outfile="${out_file:-$workdir/pkg.tar}"
 
 export gear_commit_id gear_specfile gear_tmpdir gear_workdir gear_outdir gear_outfile
+export gear_pkg_name gear_pkg_version gear_pkg_release
 
 gear_tar_compress="$tar_compress"
 gear_update_spec="$update_spec"

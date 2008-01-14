@@ -1,0 +1,113 @@
+#!/bin/sh -efu
+
+. gear-sh-functions
+
+gear_command_method='gear'
+show_help()
+{
+	cat <<-EOF
+	Usage: $PROG [options] [<user>@]<hostname> <workdir> [-- $gear_command_method options]
+
+	<hostname> - remote build host;
+
+	<workdir>  - hasher working directory onto <hostname>;
+
+	Options:
+	  --cleanup-repo     cleanup hasher workdir on remote host;
+	  -t, --target=ARCH  target architecture;
+	  -m, --method=TYPE  defines build method on the remote host (default: gear);
+	  -o, --outdir=DIR   download results in DIR on local machine;
+	  -v, --verbose      print a message for each action;
+	  -V,--version       print program version and exit;
+	  -h,--help          show this text and exit.
+
+	Report bugs to http://bugs.altlinux.ru/
+
+	EOF
+	exit
+}
+
+print_version()
+{
+	cat <<-EOF
+	$PROG version $PROG_VERSION
+	Written by Alexey Gladkov <legion@altlinux.org>
+
+	Copyright (C) 2007-2008  Alexey Gladkov <legion@altlinux.org>
+	Copyright (C) 2007  Sir Raorn <raorn@altlinux.org>
+	This is free software; see the source for copying conditions.  There is NO
+	warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+	EOF
+	exit
+}
+
+[ "$#" -gt 0 ] ||
+	show_help
+
+case "$PROG" in
+	*-hsh) gear_command_method='hsh' ;;
+	*-rpm) gear_command_method='rpm' ;;
+esac
+
+
+
+TEMP=`getopt -n $PROG -o +m:,t:,o:,v,V,h -l cleanup,method:,target:,outdir:,verbose,version,help -- "$@"` ||
+	show_usage
+eval set -- "$TEMP"
+
+while :; do
+	case "$1" in
+	    --cleanup)
+		gear_command_cleanup=1
+		;;
+	    -m|--method) shift
+		gear_command_method="$1"
+		;;
+	    -t|--target) shift
+		gear_command_target="$1"
+		;;
+	    -o|--outdir)
+		gear_command_outdir="$(opt_check_dir "$1" "$2")"
+		shift
+		;;
+	    -v|--verbose) verbose=-v
+		;;
+	    -V|--version) print_version
+		;;
+	    -h|--help) show_help
+		;;
+	    --) shift; break
+		;;
+	    *) fatal "Unrecognized option: $1"
+		;;
+	esac
+	shift
+done
+
+[ "$#" -ge 2 ] ||
+	show_help
+
+gear_command_server="$1"; shift
+gear_command_workdir="$1"; shift
+[ "${1-}" != '--' ] || shift
+
+args=
+while [ $# -gt 0 ]; do
+	case "$1" in
+		--target=*)
+			target="${1#--target=}"
+			target="${target#[\'\"]}"
+			target="${target%[\'\"]}"
+			gear_command_target="$target"
+			;;
+		-v|--verbose) verbose=-v
+			;;
+	esac
+	args="$args \"$(quote_shell_arg "$1")\""
+	shift
+done
+
+export gear_command_server gear_command_workdir gear_command_method gear_command_target
+export gear_command_outdir gear_command_cleanup
+
+eval gear $verbose --command -- gear-command-remote-build "$args"

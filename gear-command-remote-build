@@ -1,0 +1,188 @@
+#!/bin/sh -efu
+#
+# Copyright (C) 2008  Alexey Gladkov <legion@altlinux.org>
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+
+. gear-sh-functions
+
+specfile="${gear_specfile##*/}"
+verbose="${gear_verbose-}"
+
+outdir="${gear_command_outdir:-out}"
+target="${gear_command_target-}"
+server="${gear_command_server-}"
+cleanup="${gear_command_cleanup-}"
+workdir="${gear_command_workdir-}"
+method="${gear_command_method-}"
+
+args=
+remote_srcdir=
+
+detect_method()
+{
+	ssh "$server" "sh -efu"<<-EOF
+	${verbose:+set -x}
+	cd '$workdir'
+	for t in gear hsh rpm; do
+	   [ -d "$gear_pkg_name#\$t" ] || continue
+	   m="\$t"
+	   break
+	done
+	echo "\${m:-gear}"
+	EOF
+}
+
+remote_prepare()
+{
+	ssh "$server" "sh -efu"<<-EOF
+	rm -rf -- '$workdir/out'
+	mkdir $verbose -p -- \
+		'$workdir/out/bin' \
+		'$workdir/out/src' \
+		'$workdir/build' \
+		'$remote_srcdir'
+	EOF
+}
+
+remote_cleanup()
+{
+	ssh "$server" "sh -eu"<<-EOF
+	${verbose:+set -x}
+	! type -p hsh >/dev/null ||
+		hsh --cleanup -- '$workdir/build'
+	rm -rf -- '$workdir/out' '$workdir/$gear_pkg_name#'* '$workdir/build'
+	EOF
+}
+
+remote_hsh()
+{
+	local pkgname="${gear_outfile##*/}"
+
+	find "$gear_outdir" -maxdepth 1 -type f -printf '%f\0' |
+		LC_COLLATE=C sort -uz |
+		xargs -r0 tar --create --file="$gear_outfile" --directory="$gear_outdir" \
+			--label="$specfile" --owner=root --group=root \
+			--mode=u+w,go-w,go+rX $gear_tar_compress --
+
+	verbose "Created output tarball: $pkgname"
+	rsync $verbose -rtlp "$gear_outfile" "$server:$remote_srcdir/"
+
+	# Once tarball is created, its sources are no longer needed.
+	rm -f -- "$gear_outfile"
+
+	ssh "$server" "sh -efu"<<-EOF
+	${verbose:+set -x}
+	cd '$remote_srcdir'
+	$target \
+	   hsh $args \
+	      ${target:+--target='$target'} \
+	      --repo-bin='$workdir/out/bin' \
+	      --repo-src='$workdir/out/src' \
+	      -- '$workdir/build' '$remote_srcdir/$pkgname'
+	EOF
+}
+
+remote_gear()
+{
+	ssh "$server" "sh -efu"<<-EOF
+	${verbose:+set -x}
+	[ -d '$remote_srcdir/.git' ] ||
+	   git --git-dir='$remote_srcdir/.git' init
+	EOF
+
+	if ! git push "$server:$remote_srcdir" "$gear_commit_id":refs/heads/master 2>/dev/null; then
+		verbose "Invalid remote git repository"
+
+		ssh "$server" "sh -efu"<<-EOF
+		rm -rf -- '$remote_srcdir/.git'
+		git --git-dir='$remote_srcdir/.git' init
+		EOF
+
+		git --thin push "$server:$remote_srcdir" "$gear_commit_id":refs/heads/master
+	fi
+
+	ssh "$server" "sh -efu"<<-EOF
+	${verbose:+set -x}
+	cd '$remote_srcdir'
+	$target \
+	   gear $verbose --hasher -- \
+	      hsh $args \
+	         ${target:+--target='$target'} \
+	         --repo-bin='$workdir/out/bin' \
+	         --repo-src='$workdir/out/src' \
+	         -- '$workdir/build'
+	EOF
+}
+
+remote_rpm()
+{
+	rsync $verbose -rtlp "$gear_outdir/" "$server:$remote_srcdir/"
+
+	ssh "$server" "sh -efu"<<-EOF
+	${verbose:+set -x}
+	cd '$workdir/build'
+
+	rm -rf -- BUILD RPMS SRPMS temp
+	mkdir -p -- BUILD RPMS SRPMS temp
+
+	$target \
+	   rpmbuild $args -ba \
+	   ${target:+--target='$target'} \
+	   --define "_topdir $workdir/build" \
+	   --define "_tmppath $workdir/temp" \
+	   --define "_specdir $remote_srcdir" \
+	   --define "_sourcedir $remote_srcdir" \
+	   '$remote_srcdir/$specfile'
+
+	find '$workdir/build/RPMS' -type f -name '*.rpm' |
+		xargs -ri mv $verbose -f '{}' '$workdir/out/bin'
+
+	find '$workdir/build/SRPMS' -type f -name '*src.rpm' |
+		xargs -ri mv $verbose -f '{}' '$workdir/out/src'
+	EOF
+}
+
+exit_handler()
+{
+	local rc=$?
+	trap - EXIT
+	[ -z "$cleanup" ] ||
+		remote_cleanup
+	exit $rc
+}
+
+[ -n "$method" ] ||
+	method="$(detect_method)"
+
+case "$method" in
+	hsh|rpm|gear) ;;
+	*) fatal "Unknown build method: $method" ;;
+esac
+
+remote_srcdir="$workdir/$gear_pkg_name#$method"
+trap exit_handler HUP PIPE INT QUIT TERM EXIT
+
+args=
+while [ $# -gt 0 ]; do
+	args="$args \"$(quote_shell_arg "$1")\""
+	shift
+done
+
+remote_prepare
+remote_$method
+
+rsync $verbose -rtlp "$server:$workdir/out/" "$outdir/"
