@@ -15,6 +15,7 @@ show_help()
 	Options:
 	  --build-only       do not download results onto current host;
 	  --cleanup-repo     cleanup hasher workdir on remote host;
+	  --commit           make temporary commit prior to extract;
 	  -t, --target=ARCH  target architecture;
 	  -m, --method=TYPE  defines build method on the remote host (default: gear);
 	  -o, --outdir=DIR   download results in DIR on local machine;
@@ -52,9 +53,11 @@ esac
 
 
 
-TEMP=`getopt -n $PROG -o +m:,t:,o:,v,V,h -l build-only,cleanup,method:,target:,outdir:,verbose,version,help -- "$@"` ||
+TEMP=`getopt -n $PROG -o +m:,t:,o:,v,V,h -l build-only,cleanup,commit,method:,target:,outdir:,verbose,version,help -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
+
+do_commit=
 
 while :; do
 	case "$1" in
@@ -63,6 +66,9 @@ while :; do
 		;;
 	    --cleanup)
 		gear_command_cleanup=1
+		;;
+	    --commit)
+		do_commit=1
 		;;
 	    -m|--method) shift
 		gear_command_method="$1"
@@ -114,4 +120,8 @@ done
 export gear_command_server gear_command_workdir gear_command_method gear_command_target
 export gear_command_outdir gear_command_build_only gear_command_cleanup
 
-eval gear $verbose --command -- gear-command-remote-build "$args"
+eval gear \
+	$verbose \
+	${do_commit:+--commit} \
+	--command \
+	-- gear-command-remote-build "$args"
