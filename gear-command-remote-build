@@ -25,7 +25,6 @@ verbose="${gear_verbose-}"
 outdir="${gear_command_outdir:-out}"
 target="${gear_command_target-}"
 server="${gear_command_server-}"
-cleanup="${gear_command_cleanup-}"
 workdir="${gear_command_workdir-}"
 method="${gear_command_method-}"
 
@@ -160,7 +159,7 @@ exit_handler()
 {
 	local rc=$?
 	trap - EXIT
-	[ -z "$cleanup" ] ||
+	[ -z "${gear_command_cleanup-}" ] ||
 		remote_cleanup
 	exit $rc
 }
