@@ -185,4 +185,5 @@ done
 remote_prepare
 remote_$method
 
-rsync $verbose -rtlp "$server:$workdir/out/" "$outdir/"
+[ -n "${gear_command_build_only-}" ] ||
+	rsync $verbose -rtlp "$server:$workdir/out/" "$outdir/"
