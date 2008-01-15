@@ -104,7 +104,7 @@ remote_gear()
 	   git --git-dir='$remote_srcdir/.git' init
 	EOF
 
-	if ! git push "$server:$remote_srcdir" "$gear_commit_id":refs/heads/master 2>/dev/null; then
+	if ! git push --thin "$server:$remote_srcdir" "$gear_commit_id":refs/heads/master 2>/dev/null; then
 		verbose "Invalid remote git repository"
 
 		ssh "$server" "sh -efu"<<-EOF
@@ -112,7 +112,7 @@ remote_gear()
 		git --git-dir='$remote_srcdir/.git' init
 		EOF
 
-		git --thin push "$server:$remote_srcdir" "$gear_commit_id":refs/heads/master
+		git push --thin "$server:$remote_srcdir" "$gear_commit_id":refs/heads/master
 	fi
 
 	ssh "$server" "sh -efu"<<-EOF
