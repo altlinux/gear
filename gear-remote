@@ -16,9 +16,10 @@ show_help()
 	  --build-only       do not download results onto current host;
 	  --cleanup-repo     cleanup hasher workdir on remote host;
 	  --commit           make temporary commit prior to extract;
-	  -t, --target=ARCH  target architecture;
+	  --target=ARCH      target architecture;
 	  -m, --method=TYPE  defines build method on the remote host (default: gear);
 	  -o, --outdir=DIR   download results in DIR on local machine;
+	  -t, --tree-ish=ID  COMMIT[:PATH] specifying the tree to process;
 	  -v, --verbose      print a message for each action;
 	  -V,--version       print program version and exit;
 	  -h,--help          show this text and exit.
@@ -53,11 +54,12 @@ esac
 
 
 
-TEMP=`getopt -n $PROG -o +m:,t:,o:,v,V,h -l build-only,cleanup,commit,method:,target:,outdir:,verbose,version,help -- "$@"` ||
+TEMP=`getopt -n $PROG -o +m:,t:,o:,v,V,h -l build-only,cleanup,commit,method:,target:,tree-ish:,outdir:,verbose,version,help -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
 do_commit=
+main_tree_id=
 
 while :; do
 	case "$1" in
@@ -70,15 +72,19 @@ while :; do
 	    --commit)
 		do_commit=1
 		;;
+	    --target) shift
+		gear_command_target="$1"
+		;;
 	    -m|--method) shift
 		gear_command_method="$1"
-		;;
-	    -t|--target) shift
-		gear_command_target="$1"
 		;;
 	    -o|--outdir)
 		gear_command_outdir="$(opt_check_dir "$1" "$2")"
 		shift
+		;;
+	    -t|--tree-ish) shift; main_tree_id="$1"
+		[ -z "$do_commit" -o -z "$main_tree_id" ] ||
+			show_usage 'Options --commit and --tree-ish are mutually exclusive.'
 		;;
 	    -v|--verbose) verbose=-v
 		;;
@@ -123,5 +129,6 @@ export gear_command_outdir gear_command_build_only gear_command_cleanup
 eval gear \
 	$verbose \
 	${do_commit:+--commit} \
+	${main_tree_id:+-t "$main_tree_id"} \
 	--command \
 	-- gear-command-remote-build "$args"
