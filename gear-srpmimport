@@ -256,21 +256,27 @@ import_tree()
 		base="$dir_name"
 	fi
 
-	local subdir
+	local subdir broken
 	subdir="$(mktemp -d subdir.XXXXXX)"
 
 	case "$method_tree" in
 		tar) tar -x -C "$subdir" -f "$f" ;;
 		zip) unzip -q "$f" -d "$subdir" ;;
-	esac ||
-	{
-		# Archive is currupted, store it as a file.
-		chmod -Rf u+rwX "$subdir"
+	esac
+	broken=$?
+	chmod -Rf u+rwX,go-w "$subdir"
+
+	# Test whether archive contains files.
+	if [ "$broken" = 0 ] &&
+	   [ "$(find "$subdir" ! -type d -print -quit 2>/dev/null |wc -c)" = 0 ]; then
+		broken=1
+	fi
+	if [ "$broken" != 0 ]; then
+		# Archive is broken, store it as a file.
 		rm -rf "$subdir"
 		import_file 1 "$method_copy" "$f"
 		return
-	}
-	chmod -Rf u+rwX,go-w "$subdir"
+	fi
 	rm "$f"
 
 	# Apply heuristics to shorten directory name.
