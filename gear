@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 #
-# Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
+# Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006  Sir Raorn <raorn@altlinux.org>
 # Copyright (C) 2006-2008  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
@@ -75,9 +75,9 @@ print_version()
 $PROG version $PROG_VERSION
 Written by Dmitry V. Levin <ldv@altlinux.org>
 
-Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
+Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 Copyright (C) 2006  Sir Raorn <raorn@altlinux.org>
-Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
+Copyright (C) 2006-2008  Alexey Gladkov <legion@altlinux.org>
 Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 Copyright (C) 2006  Fr. Br. George <george@altlinux.org>
 This is free software; see the source for copying conditions.  There is NO
@@ -93,8 +93,7 @@ $PROG - extract archive from git package repository.
 
 Usage: $PROG [options] <output-tarball-name>
 or:    $PROG [options] --export-dir=<dirname>
-or:    $PROG [options] --hasher -- <hsh-command>...
-or:    $PROG [options] --rpmbuild -- <rpmbuld-command>...
+or:    $PROG [options] --command -- <command>...
 
 Options:
   --no-compress             do not compress output archive;
@@ -102,12 +101,12 @@ Options:
   --gzip                    compress output archive using gzip;
   --commit                  make temporary commit prior to extract;
   --command                 execute command afterwards;
-  --hasher                  execute hsh-like command afterwards.
-                            This option is obsolete, use --command instead;
-  --rpmbuild                execute rpmbuild-like command afterwards.
-                            This option is obsolete, use --command instead;
-  --update-spec             change specfile in repository if specfile changed 
-                            after --rpmbuild command;
+  --hasher                  execute hsh-like command afterwards;
+                            NOTE: this option is obsolete, use gear-hsh instead;
+  --rpmbuild                execute rpmbuild-like command afterwards;
+                            NOTE: this option is obsolete, use gear-rpm instead;
+  --update-spec             if specfile was changed after executed rpmbuild
+                            command, then update it in the git repository;
   --export-dir=DIRNAME      write source files to specified directory;
   --describe                describe package as "%{NAME} %{VERSION} %{RELEASE}";
   -r, --rules=FILENAME      override rules file name;
@@ -117,7 +116,7 @@ Options:
   -V, --version             print program version and exit;
   -h, --help                show this text and exit.
 
-Report bugs to http://bugs.altlinux.ru/
+Report bugs to http://bugzilla.altlinux.org/
 
 EOF
 	exit
