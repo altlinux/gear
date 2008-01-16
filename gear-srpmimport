@@ -256,22 +256,21 @@ import_tree()
 		base="$dir_name"
 	fi
 
-	local subdir broken
+	local subdir broken=
 	subdir="$(mktemp -d subdir.XXXXXX)"
 
 	case "$method_tree" in
 		tar) tar -x -C "$subdir" -f "$f" ;;
 		zip) unzip -q "$f" -d "$subdir" ;;
-	esac
-	broken=$?
-	chmod -Rf u+rwX,go-w "$subdir"
+	esac || broken=1
+	chmod -Rf u+rwX,go-w "$subdir" || broken=1
 
-	# Test whether archive contains files.
-	if [ "$broken" = 0 ] &&
-	   [ "$(find "$subdir" ! -type d -print -quit 2>/dev/null |wc -c)" = 0 ]; then
-		broken=1
-	fi
-	if [ "$broken" != 0 ]; then
+	# Add empty .gitignore file to each empty directory.
+	[ -n "$broken" ] ||
+		find "$subdir" -type d -empty -exec touch -- '{}/.gitignore' ';' ||
+			broken=1
+
+	if [ -n "$broken" ]; then
 		# Archive is broken, store it as a file.
 		rm -rf "$subdir"
 		import_file 1 "$method_copy" "$f"
