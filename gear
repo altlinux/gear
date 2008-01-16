@@ -646,31 +646,31 @@ export GIT_OBJECT_DIRECTORY
 find_tags_in_tree
 parse_rules
 
+install -pm644 "$specfile" "$outdir/${specfile##*/}"
+verbose "Extracted specfile: ${specfile##*/}"
+
 gear_commit_id="${tmp_commit_id:-$main_commit_id}"
 gear_commit_id="$(get_object_sha1 "$gear_commit_id")" ||
 	fatal 'Failed to parse commit.'
+export gear_commit_id
 
 gear_pkg_name="$pkg_name"
 gear_pkg_version="$pkg_version"
 gear_pkg_release="$pkg_release"
-
-gear_specfile="$specfile"
-gear_tmpdir="$tmpdir"
-gear_outdir="$outdir"
-gear_workdir="$workdir"
-gear_outfile="${out_file:-$workdir/pkg.tar}"
-
-export gear_commit_id gear_specfile gear_tmpdir gear_workdir gear_outdir gear_outfile
 export gear_pkg_name gear_pkg_version gear_pkg_release
 
+gear_outdir="$outdir"
+gear_outfile="${out_file:-$workdir/pkg.tar}"
+gear_specfile="$specfile"
+gear_tmpdir="$tmpdir"
+gear_workdir="$workdir"
+export gear_outdir gear_outfile gear_specfile gear_tmpdir gear_workdir
+
+gear_rules="$rules"
 gear_tar_compress="$tar_compress"
 gear_update_spec="$update_spec"
-gear_verbose="$verbose"
 gear_quiet="$quiet"
-gear_rules="$rules"
+gear_verbose="$verbose"
+export gear_rules gear_tar_compress gear_update_spec gear_quiet gear_verbose
 
-export gear_tar_compress gear_update_spec gear_verbose gear_quiet gear_rules
-
-install -pm644 "$specfile" "$outdir/${specfile##*/}"
-verbose "Extracted specfile: ${specfile##*/}"
 run_command $command_helper "$@"
