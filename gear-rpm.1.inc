@@ -1,4 +1,5 @@
 .\" Copyright (C) 2008  Alexey Gladkov <legion@altlinux.org>
+.\" Copyright (C) 2008  Dmitry V. Levin <ldv@altlinux.org>
 .\"
 .\" Additional documentation for the gear-rpm command.
 .\"
@@ -17,8 +18,8 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-gear-rpm \- run rpm for gear repository
+gear-rpm \- run rpmbuild for gear repository
 
 [SEE ALSO]
 .BR gear (1),
-.BR rpm (8)
+.BR rpmbuild (8)
