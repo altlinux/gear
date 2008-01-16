@@ -574,11 +574,11 @@ while :; do
 done
 
 out_file=
-if [ -n "$hasher" -o -n "$rpmbuild" -o -n "$command" ]; then
+if [ -n "$hasher$rpmbuild$command" ]; then
 	# At least one argument, please.
 	[ "$#" -ge 1 ] ||
 		show_usage 'Not enough arguments.'
-elif [ -n "$outdir" -o -n "$describe" ]; then
+elif [ -n "$outdir$describe" ]; then
 	[ "$#" -eq 0 ] ||
 		show_usage 'Too many arguments.'
 else
