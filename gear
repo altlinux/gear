@@ -646,7 +646,7 @@ export GIT_OBJECT_DIRECTORY
 find_tags_in_tree
 parse_rules
 
-install -pm644 "$specfile" "$outdir/${specfile##*/}"
+install -pm644 "$workdir/specfile" "$outdir/${specfile##*/}"
 verbose "Extracted specfile: ${specfile##*/}"
 
 gear_commit_id="${tmp_commit_id:-$main_commit_id}"
