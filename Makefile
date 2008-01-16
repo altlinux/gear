@@ -1,6 +1,6 @@
 #
-# Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
-# Copyright (C) 2006-2007  Alexey Gladkov <legion@altlinux.org>
+# Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
+# Copyright (C) 2006-2008  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006  Sir Raorn <raorn@altlinux.org>
 # Copyright (C) 2006-2007  Sergey Vlasov <vsu@altlinux.org>
 #
@@ -23,10 +23,28 @@
 
 PROJECT = gear
 VERSION = $(shell sed '/^Version: */!d;s///;q' gear.spec)
-PROGRAMS = gear gear-commit gear-create-tag gear-hsh-build gear-merge \
-	gear-srpmimport gear-update gear-update-tag gear-buildreq gear-hsh gear-rpm \
-	gear-remote gear-remote-hsh gear-remote-rpm
-HELPERS = gear-command-rpmbuild gear-command-hasher gear-command-tar gear-command-remote-build
+PROGRAMS = \
+	gear \
+	gear-buildreq \
+	gear-commit \
+	gear-create-tag \
+	gear-hsh \
+	gear-hsh-build \
+	gear-merge \
+	gear-remote \
+	gear-remote-hsh \
+	gear-remote-rpm \
+	gear-rpm \
+	gear-srpmimport \
+	gear-update \
+	gear-update-tag \
+	#
+HELPERS = \
+	gear-command-hasher \
+	gear-command-remote-build \
+	gear-command-rpmbuild \
+	gear-command-tar \
+	#
 MAN1PAGES = $(PROGRAMS:=.1)
 MAN5PAGES = gear-rules.5 gear-merge-rules.5
 MANPAGES = $(MAN1PAGES) $(MAN5PAGES)
