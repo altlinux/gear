@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 #
-# Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
+# Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 #
 # Incrementally import source packages to git repository.
@@ -28,7 +28,7 @@ print_version()
 $PROG version $PROG_VERSION
 Written by Dmitry V. Levin <ldv@altlinux.org>
 
-Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
+Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -56,7 +56,7 @@ Options:
   -V, --version             print program version and exit;
   -h, --help                show this text and exit.
 
-Report bugs to http://bugs.altlinux.ru/
+Report bugs to http://bugzilla.altlinux.org/
 
 EOF
 	exit

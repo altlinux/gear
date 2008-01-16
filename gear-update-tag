@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 #
-# Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
+# Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006  Sir Raorn <raorn@altlinux.org>
 # Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
@@ -39,7 +39,7 @@ print_version()
 $PROG version $PROG_VERSION
 Written by Sergey Vlasov <vsu@altlinux.org>
 
-Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
+Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 Copyright (C) 2006  Sir Raorn <raorn@altlinux.org>
 Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
@@ -68,7 +68,7 @@ Options:
   -V, --version             print program version and exit;
   -h, --help                show this text and exit.
 
-Report bugs to http://bugs.altlinux.ru/
+Report bugs to http://bugzilla.altlinux.org/
 
 EOF
 	exit
