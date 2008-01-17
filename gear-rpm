@@ -76,7 +76,7 @@ while [ $# -gt 0 ]; do
 			;;
 		-V|--version) print_version
 			;;
-		-v|--verbose) verbose=-v
+		-v|--verbose) verbose=-v; shift; continue
 			;;
 		--) shift; break
 			;;
