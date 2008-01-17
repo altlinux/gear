@@ -94,17 +94,17 @@ $PROG - extract archive from git package repository.
 Usage: $PROG [options] <output-tarball-name>
 or:    $PROG [options] --export-dir=<dirname>
 or:    $PROG [options] --command -- <command>...
+or:    $PROG [options] --hasher -- <hsh-command>...
+or:    $PROG [options] --rpmbuild -- <rpmbuld-command>...
 
 Options:
   --no-compress             do not compress output archive;
   --bzip2                   compress output archive using bzip2;
   --gzip                    compress output archive using gzip;
   --commit                  make temporary commit prior to extract;
-  --command                 execute command afterwards;
+  --command                 execute arbitrary command afterwards;
   --hasher                  execute hsh-like command afterwards;
-                            NOTE: this option is obsolete, use gear-hsh instead;
   --rpmbuild                execute rpmbuild-like command afterwards;
-                            NOTE: this option is obsolete, use gear-rpm instead;
   --update-spec             if specfile was changed after executed rpmbuild
                             command, then update it in the git repository;
   --export-dir=DIRNAME      write source files to specified directory;
@@ -532,13 +532,11 @@ while :; do
 		--hasher) hasher=1
 			[ -z "$outdir$rpmbuild$describe$command" ] ||
 				show_usage 'Options --hasher, --rpmbuild, --export-dir, --command and --describe are mutually exclusive.'
-			msg_info 'Warning: Option --hasher is obsolete, use --command instead.'
 			command_helper='gear-command-hasher'
 			;;
 		--rpmbuild) rpmbuild=1
 			[ -z "$hasher$outdir$describe$command" ] ||
 				show_usage 'Options --hasher, --rpmbuild, --export-dir, --command and --describe are mutually exclusive.'
-			msg_info 'Warning: Option --rpmbuild is obsolete, use --command instead.'
 			command_helper='gear-command-rpmbuild'
 			;;
 		--update-spec) update_spec=1
