@@ -608,8 +608,8 @@ git cat-file -e "$main_tree_sha1^{tree}" ||
 	fatal "Invalid tree \"$main_tree_id\""
 
 if [ -n "$update_spec" ]; then
-	[ -n "$rpmbuild" -a -z "${GIT_DIR:-}" ] ||
-		fatal 'Unable to update specfile without work directory tree.'
+	[ -n "$rpmbuild$command" ] ||
+		fatal 'Unable to update specfile without appropriate command.'
 fi
 
 tmpdir="$(mktemp -dt "$PROG.XXXXXXXX")"
@@ -648,6 +648,13 @@ parse_rules
 
 install -pm644 "$workdir/specfile" "$outdir/${specfile##*/}"
 verbose "Extracted specfile: ${specfile##*/}"
+
+if [ -n "$update_spec" ]; then
+	[ -f "$specfile" ] ||
+		fatal "Unable to update specfile: file $specfile not available."
+	cmp -s "$specfile" "$workdir/specfile" ||
+		fatal "Unable to update specfile: file $specfile differs from original specfile."
+fi
 
 gear_commit_id="${tmp_commit_id:-$main_commit_id}"
 gear_commit_id="$(get_object_sha1 "$gear_commit_id")" ||
