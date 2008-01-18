@@ -591,7 +591,7 @@ fi
 
 # Save git directory for future use.
 git_dir="$(git rev-parse --git-dir)"
-git_dir="$(readlink -ev "$git_dir")"
+git_dir="$(readlink -ev -- "$git_dir")"
 
 # Change to toplevel directory.
 chdir_to_toplevel

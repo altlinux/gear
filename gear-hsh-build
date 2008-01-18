@@ -187,7 +187,7 @@ for git_repo in $repos; do
 		git_tree=
 	fi
 	[ -d "$git_dir" ] || continue
-	git_dir="$(readlink -ev "$git_dir")"
+	git_dir="$(readlink -ev -- "$git_dir")"
 	msg_info "Building $git_dir${git_tree:+ with tag $git_tree}..."
 	export GIT_DIR="$git_dir"
 	run_command gear $quiet $verbose ${git_tree:+--tree="$git_tree"} --hasher -- "$hasher" $quiet $verbose "$@" --target="$target" --repo="$repo" -- "$prefix"

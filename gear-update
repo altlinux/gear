@@ -287,13 +287,13 @@ done
 [ "$#" -eq 2 ] ||
 	show_usage 'Too many arguments.'
 
-source="$(readlink -ev "$1")"; shift
+source="$(readlink -ev -- "$1")"; shift
 if [ -n "$dest_create" ]; then
-	destdir="$(readlink -fv "$1")"
+	destdir="$(readlink -fv -- "$1")"
 	[ ! -e "$destdir" ] ||
 		fatal "$destdir: Destination directory already exists."
 else
-	destdir="$(readlink -ev "$1")"
+	destdir="$(readlink -ev -- "$1")"
 fi
 shift
 canon_destdir="$destdir"

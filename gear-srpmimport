@@ -379,7 +379,7 @@ import()
 	local srpm="$1" && shift
 	cd "$saved_cwd"
 	verbose "Processing $srpm"
-	srpm="$(readlink -ev "$srpm")"
+	srpm="$(readlink -ev -- "$srpm")"
 
 	local header name verrel buildtime filelist changelog author
 	header="$(od -A n -N 8 -t x1 -- "$srpm")" &&
@@ -513,7 +513,7 @@ else
 fi
 
 GIT_DIR="$(git rev-parse --git-dir)"
-GIT_DIR="$(readlink -ev "$GIT_DIR")"
+GIT_DIR="$(readlink -ev -- "$GIT_DIR")"
 export GIT_DIR
 
 branch_orig="$(git symbolic-ref HEAD)"

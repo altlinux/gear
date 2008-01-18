@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 #
-# Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
+# Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 #
@@ -649,7 +649,7 @@ run_command()
 opt_check_dir()
 {
 	local value
-	value="$(readlink -ev "$2")" &&
+	value="$(readlink -ev -- "$2")" &&
 		[ -d "$value" -a -x "$value" ] ||
 		fatal "$1: $2: Directory not available"
 	printf %s "$value"
