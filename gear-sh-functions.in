@@ -649,8 +649,8 @@ run_command()
 opt_check_dir()
 {
 	local value
-	value="$(readlink -ev -- "$2")" &&
-		[ -d "$value" -a -x "$value" ] ||
+	[ -d "$2" -a -x "$2" ] &&
+		value="$(readlink -ev -- "$2")" ||
 		fatal "$1: $2: Directory not available"
 	printf %s "$value"
 }
