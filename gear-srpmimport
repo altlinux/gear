@@ -379,6 +379,7 @@ import_file()
 	esac
 }
 
+git_commit_fast=
 import()
 {
 	local srpm="$1" && shift
@@ -459,8 +460,15 @@ import()
 
 	local message
 	message="$(printf '%s\n\n%s\n' "$verrel" "$changelog")"
+
+	if [ -z "$git_commit_fast" ]; then
+		git commit --h 2>&1 |fgrep -qs '[--fast]' &&
+			git_commit_fast='git commit --fast' ||
+			git_commit_fast='git commit'
+	fi
+
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
-		git commit --fast ${quiet:+-q} -a -m "$message" ${author:+--author "$author"} ||
+		$git_commit_fast ${quiet:+-q} -a -m "$message" ${author:+--author "$author"} ||
 			fatal "Failed to commit $srpm"
 	verbose "Committed $name $verrel"
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
