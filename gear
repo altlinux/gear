@@ -68,6 +68,8 @@
 #  Default diff name is @new_dir@-@version@-@release@.patch.
 
 . gear-sh-functions
+__libshell_experimental=1
+. shell-getopt
 
 print_version()
 {
@@ -499,7 +501,7 @@ parse_rules()
 	lineno=
 }
 
-TEMP=`getopt -n $PROG -o r:,t:,h,q,v,V -l no-compress,commit,bzip2,gzip,command,hasher,rpmbuild,update-spec,export-dir:,describe,rules:,tree-ish:,help,quiet,verbose,version -- "$@"` ||
+TEMP=`getopt -n $PROG -o "$gear_short_options" -l "$gear_long_options" -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 

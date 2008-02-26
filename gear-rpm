@@ -19,6 +19,8 @@
 #
 
 . gear-sh-functions
+__libshell_experimental=1
+. shell-getopt
 
 cmd=
 show_help()
@@ -70,24 +72,30 @@ case "$PROG" in
 		;;
 esac
 
-while [ $# -gt 0 ]; do
+GETOPT_ALLOW_UNKNOWN=1
+GETOPT_ALLOW_ABBREV=
+TEMP=`getopt -n $PROG -o "$gear_short_options" -l "$gear_long_options" -- "$@"` ||
+	show_usage
+eval set -- "$TEMP"
+
+gear_args=
+while :; do
 	case "$1" in
 		-h|--help) show_help
 			;;
 		-V|--version) print_version
 			;;
-		-v|--verbose) verbose=-v; shift; continue
+		-v|--verbose) verbose=-v
 			;;
 		--) shift; break
 			;;
 	esac
-	args="$args \"$(quote_shell_arg "$1")\""
+	gear_args="$gear_args \"$(quote_shell_arg "$1")\""
 	shift
 done
 
-gear_args="$verbose"
 while [ $# -gt 0 ]; do
-	gear_args="$gear_args \"$(quote_shell_arg "$1")\""
+	args="$args \"$(quote_shell_arg "$1")\""
 	shift
 done
 

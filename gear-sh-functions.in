@@ -24,6 +24,9 @@
 PROG="${0##*/}"
 PROG_VERSION='@VERSION@'
 
+gear_short_options='r:,t:,h,q,v,V'
+gear_long_options='no-compress,commit,bzip2,gzip,command,hasher,rpmbuild,update-spec,export-dir:,describe,rules:,tree-ish:,help,quiet,verbose,version'
+
 msg_info()
 {
 	printf '%s\n' "$PROG: $*" >&2
