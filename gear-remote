@@ -1,12 +1,32 @@
 #!/bin/sh -efu
+#
+# Copyright (C) 2008  Alexey Gladkov <legion@altlinux.org>
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+#
 
+__libshell_experimental=1
 . gear-sh-functions
+. shell-getopt
+. shell-quote
 
 gear_command_method='gear'
 show_help()
 {
 	cat <<-EOF
-	Usage: $PROG [options] [<user>@]<hostname> <workdir> [-- $gear_command_method options]
+	Usage: $PROG [options] [$gear_command_method options] [<user>@]<hostname> <workdir>
 
 	<hostname> - remote build host;
 
@@ -53,9 +73,9 @@ case "$PROG" in
 	*-rpm) gear_command_method='rpm' ;;
 esac
 
-
-
-TEMP=`getopt -n $PROG -o +m:,o:,r:,t:,v,V,h -l build-only,cleanup,commit,method:,rules:,target:,tree-ish:,outdir:,verbose,version,help -- "$@"` ||
+GETOPT_ALLOW_UNKNOWN=1
+GETOPT_ALLOW_ABBREV=
+TEMP=`getopt -n $PROG -o m:,o:,r:,t:,v,V,h -l build-only,cleanup,commit,method:,rules:,target:,tree-ish:,outdir:,verbose,version,help -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
@@ -109,18 +129,13 @@ done
 
 gear_command_server="$1"; shift
 gear_command_workdir="$1"; shift
-[ "${1-}" != '--' ] || shift
 
-args=
+args="$verbose"
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--target=*)
 			target="${1#--target=}"
-			target="${target#[\'\"]}"
-			target="${target%[\'\"]}"
-			gear_command_target="$target"
-			;;
-		-v|--verbose) verbose=-v
+			gear_command_target="$(string_quote_remove "$target")"
 			;;
 	esac
 	args="$args \"$(quote_shell_arg "$1")\""
