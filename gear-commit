@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 #
-# Copyright (C) 2006-2007  Alexey Gladkov <legion@altlinux.org>
+# Copyright (C) 2006-2008  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 #
@@ -21,7 +21,9 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 
+__libshell_experimental=1
 . gear-sh-functions
+. shell-getopt
 
 rules="${RULES-}"
 main_tree_id=${TREE_ID:-HEAD}
@@ -42,7 +44,7 @@ print_version()
 $PROG version $PROG_VERSION
 Written by Alexey Gladkov <legion@altlinux.org>
 
-Copyright (C) 2006-2007  Alexey Gladkov <legion@altlinux.org>
+Copyright (C) 2006-2008  Alexey Gladkov <legion@altlinux.org>
 Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
 Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 This is free software; see the source for copying conditions.  There is NO
@@ -51,49 +53,64 @@ EOF
 	exit
 }
 
-case "${*-}" in
-	-V|--version)
-		print_version
-		;;
-	-h|--help)
-		git-commit --help |
-			sed "s|\(/usr/bin/\)\?git-commit|$PROG [--spec=<file>]|g"
-		exit
-		;;
-esac
+GETOPT_ALLOW_UNKNOWN=1
+GETOPT_ALLOW_ABBREV=
+TEMP=`getopt -n $PROG -o 'm:,h,V' -l 'message:,spec:,help,version' -- "$@"` || show_usage
+eval set -- "$TEMP"
+
+commitlog=
+specfile=
+while :; do
+	case "$1" in
+		--spec) shift
+			specfile="$1"
+			[ -z "$commitlog" ] ||
+				show_usage "Options --spec and --message are mutually exclusive."
+			;;
+		-m|--message) shift
+			commitlog="$1"
+			[ -z "$specfile" ] ||
+				show_usage "Options --spec and --message are mutually exclusive."
+			;;
+		-h|--help)
+			git-commit --help |
+				sed "s|\(/usr/bin/\)\?git-commit|$PROG [-h \| --help] \| [-V \| --version] \| [--spec <file>]|g"
+			exit
+			;;
+		-V|--version) print_version
+			;;
+		--) shift; break
+			;;
+	esac
+	shift
+done
+
+args=
+while [ $# -gt 0 ]; do
+	args="$args \"$(quote_shell_arg "$1")\""
+	shift
+done
 
 # Change to toplevel directory
 chdir_to_toplevel
 
-if [ $# -gt 0 ] && [ "$*" != "${*#--spec[= ]}" ]; then
-	case "$1" in
-	    --spec=*) specfile="${1#*=}"
-		shift
-		;;
-	    --spec) shift
-		[ "$#" -gt 0 ] ||
-			fatal "option requires an argument: --spec"
-		specfile="$1"
-		shift
-		;;
-	esac
-	[ -f "$specfile" -o -z "$specfile" ] ||
-		fatal "$specfile: file not available"
-elif git cat-file -t "$main_tree_id" >/dev/null 2>&1; then
-	trap exit_handler HUP INT QUIT TERM EXIT
-	workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
+if [ -z "$specfile" ]; then
+	if git cat-file -t "$main_tree_id" >/dev/null 2>&1; then
+		trap exit_handler HUP INT QUIT TERM EXIT
+		workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
 
-	# Get specfile from archive.
-	find_specfile
+		# Get specfile from archive.
+		find_specfile
 
-	rm -rf -- "$workdir"
-	trap - HUP INT QUIT TERM EXIT
-	unset rules main_tree_id workdir
-else
-	specfile="$(set +f; find_specfile_in_cwd '' *)" ||:
+		rm -rf -- "$workdir"
+		trap - HUP INT QUIT TERM EXIT
+		unset rules main_tree_id workdir
+	else
+		specfile="$(set +f; find_specfile_in_cwd '' *)" ||:
+	fi
 fi
 
-if [ -f "$specfile" ]; then
+if [ -f "$specfile" -a -z "$commitlog" ]; then
 	vr="$(sed -ne '/^[[:space:]]*%changelog[[:space:]]*$/{n; s/\* .* \([^[:space:]]\+\)$/\1/p}' "$specfile")"
 	ch="$(sed -ne '0,/^[[:space:]]*%changelog[[:space:]]*$/d;2,/^* /{/^* /!p}' "$specfile")"
 	commitlog="${vr:+$vr}
@@ -102,4 +119,4 @@ $ch"
 	unset ch vr specfile
 fi
 
-exec git commit ${commitlog:+-m "$commitlog" --edit} "$@"
+eval git commit ${commitlog:+-m \""$commitlog"\" --edit} $args

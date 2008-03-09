@@ -1,5 +1,5 @@
+.\" Copyright (C) 2006-2008  Alexey Gladkov <legion@altlinux.org>
 .\" Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
-.\" Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 .\" Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 .\"
 .\" Additional documentation for the gear-commit command.
@@ -24,7 +24,20 @@ gear\-commit \- invoke git\-commit using last changelog entry from spec file as 
 [OPTIONS]
 .TP
 .B --spec=FILE
-don't search specfile in repository and use a FILE instead.
+don't search specfile in repository and use a
+.B <FILE>
+instead;
+.TP
+.B -m, --message=TEXT
+use the given
+.B <TEXT>
+as the commit message;
+.TP
+.B -V, --version
+print program version and exit;
+.TP
+.B -h, --help
+show this text and exit.
 
 [ENVIRONMENT]
 .TP
