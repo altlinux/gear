@@ -19,7 +19,6 @@
 #
 
 . gear-sh-functions
-__libshell_experimental=1
 . shell-getopt
 
 cmd=
