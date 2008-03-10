@@ -53,7 +53,6 @@ EOF
 }
 
 GETOPT_ALLOW_UNKNOWN=1
-GETOPT_ALLOW_ABBREV=
 TEMP=`getopt -n $PROG -o 'm:,h,V' -l 'message:,spec:,help,version' -- "$@"` || show_usage
 eval set -- "$TEMP"
 
