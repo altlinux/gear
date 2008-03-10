@@ -73,7 +73,7 @@ EOF
 cur_branch=
 set_current_branch() {
 	local id="${1:-HEAD}"
-	cur_branch="$(git-symbolic-ref "$id")"
+	cur_branch="$(git symbolic-ref "$id")"
 
 	[ -z "${cur_branch%%refs/heads/*}" ] ||
 		fatal "$id: not a branch."
@@ -238,7 +238,7 @@ parse_rules() {
 }
 
 is_already_merged() {
-	[ -z "$(git-rev-list --max-count=1 "$1".."$2")" ] || return 1
+	[ -z "$(git rev-list --max-count=1 "$1".."$2")" ] || return 1
 }
 
 branch_merge() {
