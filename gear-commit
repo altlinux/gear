@@ -109,7 +109,10 @@ if [ -z "$specfile" ]; then
 	fi
 fi
 
-if [ -f "$specfile" -a -z "$commitlog" ]; then
+[ -s "$specfile" ] ||
+	fatal "$specfile: file not available or empty"
+
+if [ -z "$commitlog" ]; then
 	vr="$(sed -ne '/^[[:space:]]*%changelog[[:space:]]*$/{n; s/\* .* \([^[:space:]]\+\)$/\1/p}' "$specfile")"
 	ch="$(sed -ne '0,/^[[:space:]]*%changelog[[:space:]]*$/d;2,/^* /{/^* /!p}' "$specfile")"
 	[ -z "$vr$ch" ] ||
