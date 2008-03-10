@@ -137,7 +137,7 @@ while [ $# -gt 0 ]; do
 			gear_command_target="$(string_quote_remove "$target")"
 			;;
 	esac
-	args="$args \"$(quote_shell_arg "$1")\""
+	args="$args \"$(quote_shell "$1")\""
 	shift
 done
 

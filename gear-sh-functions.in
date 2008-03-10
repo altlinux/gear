@@ -71,17 +71,6 @@ rules_info()
 	msg_info "$rules$lineno_text: $*"
 }
 
-# quote argument for shell.
-quote_shell_arg()
-{
-	local out="$*"
-	if [ -z "${out##*[\"\$\`\\]*}" ]; then
-		out="$(printf %s "$out" |sed -e 's/["$`\]/\\&/g')" ||
-			return 1
-	fi
-	printf %s "$out"
-}
-
 is_hex_sha1()
 {
 	[ "${#1}" -eq 40 ] || return 1
@@ -327,7 +316,7 @@ expand_rpm_macros()
 	}
 	' value="$var_value" "$spec" )"
 
-	eval "$var_name=\"$(quote_shell_arg "$var_value")\""
+	eval "$var_name=\"$(quote_shell "$var_value")\""
 }
 
 spec_name=
@@ -468,7 +457,7 @@ lookup_tag()
 	while read -r sha1 name; do
 		tag_list_lineno="$((tag_list_lineno+1))"
 		if [ "$name" = "$requested_tag_name" ]; then
-			eval "$variable=\"$(quote_shell_arg "$sha1")\""
+			eval "$variable=\"$(quote_shell "$sha1")\""
 			return 0
 		fi
 	done <"$tag_list_file"
@@ -662,7 +651,7 @@ subst_key()
 		check_name "$key_name" "$key_value"
 		quoted="$(quote_sed_regexp "$key_value")"
 		var_value="$(printf %s "$var_value" |sed "s/$key_name/$quoted/g")"
-		eval "$var_name=\"$(quote_shell_arg "$var_value")\""
+		eval "$var_name=\"$(quote_shell "$var_value")\""
 	fi
 }
 

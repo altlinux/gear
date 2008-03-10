@@ -89,12 +89,12 @@ while :; do
 		--) shift; break
 			;;
 	esac
-	gear_args="$gear_args \"$(quote_shell_arg "$1")\""
+	gear_args="$gear_args \"$(quote_shell "$1")\""
 	shift
 done
 
 while [ $# -gt 0 ]; do
-	args="$args \"$(quote_shell_arg "$1")\""
+	args="$args \"$(quote_shell "$1")\""
 	shift
 done
 
