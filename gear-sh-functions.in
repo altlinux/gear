@@ -23,6 +23,7 @@
 
 . shell-error
 . shell-quote
+. shell-args
 
 PROG="${0##*/}"
 PROG_VERSION='@VERSION@'
@@ -32,13 +33,6 @@ gear_long_options='no-compress,commit,bzip2,gzip,command,hasher,rpmbuild,update-
 
 quiet=
 verbose=
-
-show_usage()
-{
-	[ -z "$*" ] || message "$*"
-	echo "Try \`$PROG --help' for more information." >&2
-	exit 1
-}
 
 lineno=
 rules=
@@ -612,15 +606,6 @@ run_command()
 {
 	verbose "Executing: $*"
 	"$@"
-}
-
-opt_check_dir()
-{
-	local value
-	[ -d "$2" -a -x "$2" ] &&
-		value="$(readlink -ev -- "$2")" ||
-		fatal "$1: $2: Directory not available"
-	printf %s "$value"
 }
 
 subst_key()
