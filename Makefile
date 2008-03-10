@@ -26,10 +26,6 @@ VERSION = $(shell sed '/^Version: */!d;s///;q' gear.spec)
 PROGRAMS = \
 	gear \
 	gear-buildreq \
-	gear-command-hasher \
-	gear-command-remote-build \
-	gear-command-rpmbuild \
-	gear-command-tar \
 	gear-commit \
 	gear-create-tag \
 	gear-hsh \
@@ -42,6 +38,12 @@ PROGRAMS = \
 	gear-srpmimport \
 	gear-update \
 	gear-update-tag \
+	#
+HELPERS = \
+	gear-command-hasher \
+	gear-command-remote-build \
+	gear-command-rpmbuild \
+	gear-command-tar \
 	#
 MAN1PAGES = $(PROGRAMS:=.1)
 MAN5PAGES = gear-rules.5 gear-merge-rules.5
@@ -97,7 +99,7 @@ html: $(HTMLPAGES)
 install: all
 	$(MKDIR_P) -m755 $(DESTDIR)$(bindir)
 	$(INSTALL) -p -m644 gear-sh-functions $(DESTDIR)$(bindir)/
-	$(INSTALL) -p -m755 $(PROGRAMS) $(DESTDIR)$(bindir)/
+	$(INSTALL) -p -m755 $(PROGRAMS) $(HELPERS) $(DESTDIR)$(bindir)/
 	$(MKDIR_P) -m755 $(DESTDIR)$(man1dir)
 	$(INSTALL) -p -m644 $(MAN1PAGES) $(DESTDIR)$(man1dir)/
 	$(MKDIR_P) -m755 $(DESTDIR)$(man5dir)
