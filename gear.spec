@@ -15,9 +15,6 @@ Source: %name-%version.tar
 # due to gear-srpmimport.
 Requires: faketime
 
-# due to git-commit --fast.
-Requires: git-commit-fast
-
 # due to git-diff-tree --no-ext-diff
 Requires: git-core >= 0:1.5.3
 
