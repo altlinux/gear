@@ -72,8 +72,8 @@ while :; do
 				show_usage "Options --spec and --message are mutually exclusive."
 			;;
 		-h|--help)
-			git-commit --help |
-				sed "s|\(/usr/bin/\)\?git-commit|$PROG [-h \| --help] \| [-V \| --version] \| [--spec <file>]|g"
+			git commit -h |
+				sed "s,\(/usr/bin/\)\?git-commit,$PROG [-h | --help] | [-V | --version] | [--spec <file>],g"
 			exit
 			;;
 		-V|--version) print_version
