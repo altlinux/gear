@@ -32,11 +32,6 @@ gear_long_options='no-compress,commit,bzip2,gzip,command,hasher,rpmbuild,update-
 
 quiet=
 verbose=
-verbose()
-{
-	[ -n "$verbose" ] || return 0
-	message "$@"
-}
 
 show_usage()
 {
