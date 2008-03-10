@@ -22,6 +22,7 @@
 #
 
 . gear-sh-functions
+. shell-quote
 . shell-getopt
 
 rules="${RULES-}"
@@ -86,7 +87,7 @@ done
 
 args=
 while [ $# -gt 0 ]; do
-	args="$args \"$(quote_shell_arg "$1")\""
+	args="$args \"$(quote_shell "$1")\""
 	shift
 done
 
@@ -112,10 +113,11 @@ fi
 if [ -f "$specfile" -a -z "$commitlog" ]; then
 	vr="$(sed -ne '/^[[:space:]]*%changelog[[:space:]]*$/{n; s/\* .* \([^[:space:]]\+\)$/\1/p}' "$specfile")"
 	ch="$(sed -ne '0,/^[[:space:]]*%changelog[[:space:]]*$/d;2,/^* /{/^* /!p}' "$specfile")"
-	commitlog="${vr:+$vr}
+	[ -z "$vr$ch" ] ||
+		commitlog="\"$(quote_shell "${vr:+$vr}
 
-$ch"
+$ch")\""
 	unset ch vr specfile
 fi
 
-eval git commit ${commitlog:+-m \""$commitlog"\" --edit} $args
+eval git commit ${commitlog:+-m "$commitlog" --edit} $args
