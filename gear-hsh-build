@@ -93,11 +93,11 @@ exit_handler()
 		if [ -n "$cleanup_repo" ]; then
 			rm -rf $verbose -- "$indir"
 		else
-			msg_info "You may add \`\`rpm file:$indir $target hasher'' to your sources.list"
+			message "You may add \`\`rpm file:$indir $target hasher'' to your sources.list"
 		fi
 	else
 		[ -z "$indir" ] ||
-			msg_info "Build failed.  You may wish to check \`\`$indir'' for leftovers."
+			message "Build failed.  You may wish to check \`\`$indir'' for leftovers."
 	fi
 	exit $rc
 }
@@ -150,7 +150,7 @@ fi
 indir="$prefix/$repo"
 if [ -z "${repo##/*}" ]; then
 	if [ -n "$cleanup_repo" ]; then
-		msg_info "--repo is absolute, refusing to --cleanup-repo"
+		message "--repo is absolute, refusing to --cleanup-repo"
 		cleanup_repo=
 	fi
 	indir="$repo"
@@ -188,7 +188,7 @@ for git_repo in $repos; do
 	fi
 	[ -d "$git_dir" ] || continue
 	git_dir="$(readlink -ev -- "$git_dir")"
-	msg_info "Building $git_dir${git_tree:+ with tag $git_tree}..."
+	message "Building $git_dir${git_tree:+ with tag $git_tree}..."
 	export GIT_DIR="$git_dir"
 	run_command gear $quiet $verbose ${git_tree:+--tree="$git_tree"} --hasher -- "$hasher" $quiet $verbose "$@" --target="$target" --repo="$repo" -- "$prefix"
 	save_IFS="$IFS"

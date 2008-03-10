@@ -424,7 +424,7 @@ import()
 	local f
 	for f in ${filelist}; do
 		if [ -L "$f" -o ! -f "$f" ]; then
-			msg_info "$f: Non-regular file ignored."
+			message "$f: Non-regular file ignored."
 			continue
 		fi
 		if [ "$f" = "$spec" ]; then
@@ -432,7 +432,7 @@ import()
 			continue
 		fi
 		if [ "$f" = "$gear_rules" ]; then
-			msg_info "$f: rules file $gear_rules ignored."
+			message "$f: rules file $gear_rules ignored."
 			continue
 		fi
 		local file_type
@@ -473,7 +473,7 @@ import()
 	verbose "Committed $name $verrel"
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
 		git tag -a -m "$name $verrel" "$verrel" ||:
-	msg_info "Imported $srpm"
+	message "Imported $srpm"
 }
 
 TEMP=`getopt -n $PROG -o h,q,v,V -l branch:,import-only,no-unpack,no-untar,rules:,spec-pattern:,stdin,help,quiet,verbose,version -- "$@"` ||
@@ -570,7 +570,7 @@ if [ "$head_orig" = "$head_new" ]; then
 elif [ -z "$import_only" ]; then
 	if [ -z "$head_orig" ]; then
 		git update-ref "$branch_orig" "refs/heads/$branch_import"
-		msg_info "Created ${branch_orig#refs/heads/} branch"
+		message "Created ${branch_orig#refs/heads/} branch"
 		git symbolic-ref HEAD "$branch_orig"
 		git checkout -f
 		index_already_recovered=1
@@ -580,7 +580,7 @@ elif [ -z "$import_only" ]; then
 		index_already_recovered=1
 		if [ "$branch_orig" != "refs/heads/$branch_import" ]; then
 			git pull ${quiet:+-n} . "refs/heads/$branch_import"
-			msg_info "Merged $branch_import branch into ${branch_orig#refs/heads/} branch"
+			message "Merged $branch_import branch into ${branch_orig#refs/heads/} branch"
 		fi
 	fi
 fi

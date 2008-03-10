@@ -241,7 +241,7 @@ exit_handler()
 			cd "$destdir"
 			git checkout-index -a
 		fi
-		msg_info 'failed to update target directory.'
+		message 'failed to update target directory.'
 	fi
 	exit $rc
 }

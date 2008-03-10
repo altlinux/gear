@@ -331,7 +331,7 @@ workdir="$(mktemp -dt "$PROG.XXXXXXXX")"
 find_merge_rules
 
 if [ ! -s "$workdir/rules" ]; then
-	msg_info "No rules found."
+	message "No rules found."
 	show_usage
 	exit 0
 fi

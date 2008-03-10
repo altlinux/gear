@@ -21,6 +21,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 
+. shell-error
 . shell-quote
 
 PROG="${0##*/}"
@@ -29,28 +30,17 @@ PROG_VERSION='@VERSION@'
 gear_short_options='r:,t:,h,q,v,V'
 gear_long_options='no-compress,commit,bzip2,gzip,command,hasher,rpmbuild,update-spec,export-dir:,describe,rules:,tree-ish:,help,quiet,verbose,version'
 
-msg_info()
-{
-	printf '%s\n' "$PROG: $*" >&2
-}
-
-fatal()
-{
-	msg_info "$@"
-	exit 1
-}
-
 quiet=
 verbose=
 verbose()
 {
 	[ -n "$verbose" ] || return 0
-	msg_info "$@"
+	message "$@"
 }
 
 show_usage()
 {
-	[ -z "$*" ] || msg_info "$*"
+	[ -z "$*" ] || message "$*"
 	echo "Try \`$PROG --help' for more information." >&2
 	exit 1
 }
@@ -68,7 +58,7 @@ rules_info()
 {
 	local lineno_text=
 	[ -z "$lineno" ] || lineno_text=" line $lineno"
-	msg_info "$rules$lineno_text: $*"
+	message "$rules$lineno_text: $*"
 }
 
 is_hex_sha1()
@@ -609,9 +599,9 @@ find_specfile_in_cwd()
 			break
 	done
 	if [ -z "$spec" ]; then
-		msg_info "${prefix}Spec file not found."
+		message "${prefix}Spec file not found."
 	elif [ -n "$many_specs" ]; then
-		msg_info "${prefix}Too many spec files - ignored all."
+		message "${prefix}Too many spec files - ignored all."
 		spec=
 	fi
 

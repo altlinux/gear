@@ -134,7 +134,7 @@ exit_handler()
 		   git reset --soft HEAD^; then
 			verbose "Reverted temporary commit $tmp_commit_id."
 		else
-			msg_info "Failed to revert temporary commit $tmp_commit_id."
+			message "Failed to revert temporary commit $tmp_commit_id."
 		fi
 	fi
 	[ -z "$tmpdir" ] ||
