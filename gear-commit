@@ -22,7 +22,6 @@
 #
 
 . gear-sh-functions
-. shell-quote
 . shell-getopt
 
 rules="${RULES-}"

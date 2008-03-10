@@ -19,7 +19,6 @@
 
 . gear-sh-functions
 . shell-getopt
-. shell-quote
 
 gear_command_method='gear'
 show_help()
