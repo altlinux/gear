@@ -256,21 +256,26 @@ import_tree()
 		base="$dir_name"
 	fi
 
-	local subdir
+	local subdir broken=
 	subdir="$(mktemp -d subdir.XXXXXX)"
 
 	case "$method_tree" in
 		tar) tar -x -C "$subdir" -f "$f" ;;
 		zip) unzip -q "$f" -d "$subdir" ;;
-	esac ||
-	{
-		# Archive is currupted, store it as a file.
-		chmod -Rf u+rwX "$subdir"
+	esac || broken=1
+	chmod -Rf u+rwX,go-w "$subdir" || broken=1
+
+	# Add empty .gitignore file to each empty directory.
+	[ -n "$broken" ] ||
+		find "$subdir" -type d -empty -exec touch -- '{}/.gitignore' ';' ||
+			broken=1
+
+	if [ -n "$broken" ]; then
+		# Archive is broken, store it as a file.
 		rm -rf "$subdir"
 		import_file 1 "$method_copy" "$f"
 		return
-	}
-	chmod -Rf u+rwX,go-w "$subdir"
+	fi
 	rm "$f"
 
 	# Apply heuristics to shorten directory name.
@@ -374,6 +379,7 @@ import_file()
 	esac
 }
 
+git_commit_fast=
 import()
 {
 	local srpm="$1" && shift
@@ -454,8 +460,15 @@ import()
 
 	local message
 	message="$(printf '%s\n\n%s\n' "$verrel" "$changelog")"
+
+	if [ -z "$git_commit_fast" ]; then
+		git commit --h 2>&1 |fgrep -qs '[--fast]' &&
+			git_commit_fast='git commit --fast' ||
+			git_commit_fast='git commit'
+	fi
+
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
-		git commit --fast ${quiet:+-q} -a -m "$message" ${author:+--author "$author"} ||
+		$git_commit_fast ${quiet:+-q} -a -m "$message" ${author:+--author "$author"} ||
 			fatal "Failed to commit $srpm"
 	verbose "Committed $name $verrel"
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
