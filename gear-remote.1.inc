@@ -19,5 +19,11 @@
 [NAME]
 gear-remote \- run gear build command on the remote host
 
+[DESCRIPTION]
+Utility transfers sources into <hostname> and used <workdir>
+as working directory to build sources. Results tranfered into <OUTDIR>
+after build complete. Remote data do not removed by default and next
+data transmission will occur more quickly.
+
 [SEE ALSO]
 .BR gear (1)

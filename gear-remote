@@ -28,20 +28,20 @@ show_help()
 
 	<hostname> - remote build host;
 
-	<workdir>  - hasher working directory onto <hostname>;
+	<workdir>  - working directory onto <hostname>.
 
 	Options:
-	  --build-only       do not download results onto current host;
-	  --cleanup-repo     cleanup hasher workdir on remote host;
-	  --commit           make temporary commit prior to extract;
-	  --target=ARCH      target architecture;
-	  -m, --method=TYPE  defines build method on the remote host (default: gear);
-	  -o, --outdir=DIR   download results in DIR on local machine;
-	  -r, --rules=FILE   override rules file name;
-	  -t, --tree-ish=ID  COMMIT[:PATH] specifying the tree to process;
-	  -v, --verbose      print a message for each action;
-	  -V,--version       print program version and exit;
-	  -h,--help          show this text and exit.
+	  --build-only          do not download results onto current host;
+	  --cleanup-repo        cleanup hasher workdir on remote host;
+	  --commit              make temporary commit prior to extract;
+	  --target=ARCH         target architecture;
+	  -m, --method=TYPE     defines build method on the remote host (default: gear);
+	  -o, --outdir=OUTDIR   download results in DIR on local machine;
+	  -r, --rules=FILE      override rules file name;
+	  -t, --tree-ish=ID     COMMIT[:PATH] specifying the tree to process;
+	  -v, --verbose         print a message for each action;
+	  -V,--version          print program version and exit;
+	  -h,--help             show this text and exit.
 
 	Report bugs to http://bugzilla.altlinux.org/
 
