@@ -65,6 +65,7 @@ LN_S = ln -s
 MAN2HTML = man2html -r
 MKDIR_P = mkdir -p
 TOUCH_R = touch -r
+CHMOD = chmod
 
 .PHONY:	all install clean
 
@@ -99,7 +100,8 @@ html: $(HTMLPAGES)
 install: all
 	$(MKDIR_P) -m755 $(DESTDIR)$(bindir)
 	$(INSTALL) -p -m644 gear-sh-functions $(DESTDIR)$(bindir)/
-	$(INSTALL) -p -m755 $(PROGRAMS) $(HELPERS) $(DESTDIR)$(bindir)/
+	$(CHMOD) 755 $(PROGRAMS) $(HELPERS)
+	$(CP) $(PROGRAMS) $(HELPERS) $(DESTDIR)$(bindir)/
 	$(MKDIR_P) -m755 $(DESTDIR)$(man1dir)
 	$(INSTALL) -p -m644 $(MAN1PAGES) $(DESTDIR)$(man1dir)/
 	$(MKDIR_P) -m755 $(DESTDIR)$(man5dir)
