@@ -18,10 +18,13 @@ Requires: faketime
 # due to git-diff-tree --no-ext-diff
 Requires: git-core >= 0:1.5.3
 
+# first libshell version with fixed shell-getopt
+Requires: libshell >= 0:0.0.3-alt1
+
 # hasher>=1.0.30 supports tar packages made by gear utility.
 Conflicts: hasher < 0:1.0.30
 
-BuildPreReq: git-core, help2man
+BuildPreReq: git-core, help2man, libshell >= 0:0.0.3-alt1
 
 %description
 This package contains a few utilities for managing gear repositories.
