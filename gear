@@ -253,7 +253,7 @@ make_tar()
 	git archive --format="$format" ${tar_base:+--prefix="$tar_base"/} "$id" >"$outdir/$name.$format"
 	local archive_name
 	archive_name="$(compress_file "$cmd" "$outdir/$name.$format")"
-	if [ -n "$suffix" -a "$archive_name" != "$outdir/$name$suffix" ]; then
+	if [ "$suffix" != ' ' -a "$archive_name" != "$outdir/$name$suffix" ]; then
 		mv "$archive_name" "$outdir/$name$suffix"
 		archive_name="$outdir/$name$suffix"
 	fi
@@ -274,7 +274,7 @@ make_archive()
 	local dir_name="${tree_path#*:}"
 	tar_tree="${tree_path%%:*}"
 
-	local tar_suffix=
+	local tar_suffix=' '
 	get_tar_name "$@"
 
 	tar_tree="$(resolve_tree_base_name "$tar_tree")" || return 1
