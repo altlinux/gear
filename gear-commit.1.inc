@@ -19,24 +19,24 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-gear\-commit \- invoke git\-commit using last changelog entry from spec file as commit message
+gear\-commit \- invoke git\-commit using last changelog entry from spec file for commit message
 
 [OPTIONS]
 .TP
-.B --spec=FILE
-don't search specfile in repository and use a
-.B <FILE>
+\fB\-\-spec=\fR\fIFILE\fR
+do not look for specfile in repository, use given
+.I FILE
 instead;
 .TP
-.B -m, --message=TEXT
-use the given
-.B <TEXT>
-as the commit message;
+\fB\-m\fR, \fB\-\-message\fR=\fITEXT\fR
+use given
+.I TEXT
+for commit message;
 .TP
-.B -V, --version
+\fB\-V\fR, \fB\-\-version\fR
 print program version and exit;
 .TP
-.B -h, --help
+\fB\-h\fR, \fB\-\-help\fR
 show this text and exit.
 
 [ENVIRONMENT]
@@ -55,4 +55,4 @@ Specifies a commit-ish git object where to look for spec file.
 
 [SEE ALSO]
 .BR gear (1),
-.BR git-commit (1).
+.BR git\-commit (1).
