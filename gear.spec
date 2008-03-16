@@ -24,7 +24,7 @@ Requires: libshell >= 0:0.0.3-alt1
 # hasher>=1.0.30 supports tar packages made by gear utility.
 Conflicts: hasher < 0:1.0.30
 
-BuildPreReq: git-core, help2man, libshell >= 0:0.0.3-alt1
+BuildPreReq: asciidoc, git-core, help2man, libshell >= 0:0.0.3-alt1
 
 %description
 This package contains a few utilities for managing gear repositories.
@@ -35,6 +35,8 @@ See %_docdir/%name-%version/QUICKSTART.ru_RU.KOI8-R for details.
 
 %build
 %make_build
+asciidoc ABOUT.ru.koi8
+asciidoc QUICKSTART.ru.koi8
 
 %install
 %make_install install DESTDIR=%buildroot
