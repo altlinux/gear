@@ -68,7 +68,6 @@
 #  Default diff name is @new_dir@-@version@-@release@.patch.
 
 . gear-sh-functions
-. shell-getopt
 
 print_version()
 {
