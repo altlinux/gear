@@ -62,6 +62,7 @@ or:    $PROG [options] --delete <name>
 Options:
   -a, --all                 update all tags used in rules;
   -c, --clean               delete tags not used in rules;
+      --no-clean            do not delete tags not used in rules;
   -d, --delete              delete the specified tag;
   -r, --rules=FILENAME      override rules file name;
   -v, --verbose             print a message for each action;
@@ -435,7 +436,7 @@ delete_unused_tags()
 	mv -f -- "$workdir/new_tags" "$workdir/tags"
 }
 
-TEMP=`getopt -n "$PROG" -o a,c,d,r:$getopt_common_opts -l all,clean,delete,rules:,$getopt_common_longopts -- "$@"` ||
+TEMP=`getopt -n "$PROG" -o a,c,d,r:$getopt_common_opts -l all,clean,no-clean,delete,rules:,$getopt_common_longopts -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
@@ -450,6 +451,8 @@ while :; do
 		-a|--all) all=1
 			;;
 		-c|--clean) clean=1
+			;;
+		--no-clean) clean=
 			;;
 		-d|--delete) delete=1
 			;;
