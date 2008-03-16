@@ -1,4 +1,4 @@
-# Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
+# Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 
 Name: gear
 Version: 1.3.1

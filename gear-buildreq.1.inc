@@ -1,6 +1,7 @@
 .\" Copyright (C) 2008  Alexey Gladkov <legion@altlinux.org>
+.\" Copyright (C) 2008  Dmitry V. Levin <ldv@altlinux.org>
 .\"
-.\" Additional documentation for the gear-buildreq command.
+.\" Additional documentation for the gear-buildreq utility.
 .\"
 .\" This file is free software; you can redistribute it and/or modify
 .\" it under the terms of the GNU General Public License as published by

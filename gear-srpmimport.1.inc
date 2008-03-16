@@ -1,4 +1,4 @@
-.\" Copyright (C) 2006  Dmitry V. Levin <ldv@altlinux.org>
+.\" Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 .\" Copyright (C) 2006-2007  Sergey Vlasov <vsu@altlinux.org>
 .\"
 .\" Additional documentation for the gear-srpmimport command.
