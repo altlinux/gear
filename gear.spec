@@ -1,7 +1,7 @@
 # Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 
 Name: gear
-Version: 1.3.1
+Version: 1.4.0
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -47,6 +47,40 @@ asciidoc QUICKSTART.ru.koi8
 %doc QUICKSTART* ABOUT*
 
 %changelog
+* Mon Mar 17 2008 Dmitry V. Levin <ldv@altlinux.org> 1.4.0-alt1
+- Changes made by Alexey Gladkov:
+  + gear-merge: New utility to merge branches.
+  + gear-merge-rules(5): New man page which describes
+    the .gear/merge file format.
+  + gear --command: New option.
+  + gear-command-hasher, gear-command-rpmbuild, gear-command-tar:
+    New helpers.
+  + gear-hsh, gear-rpm, gear-buildreq: New utilities which
+    hopefully provide more convenient user interface than
+    old --hasher and --rpmbuild options.
+  + gear-command-remote-build: New helper.
+  + gear-remote, gear-remote-hsh, gear-remote-rpm: New utilities.
+  + gear-commit: Use getopt from libshell.
+- My changes:
+  + gear-create-tag: Fixed -u option support.
+  + gear-srpmimport: Add empty .gitignore file to each empty directory.
+  + Made readlink(1) usage secure.
+  + gear-srpmimport: Added support for git-commit versions
+    which do not handle --fast option.
+  + Use shell-error, shell-quote and shell-args from libshell
+    to replace several functions originally developed within
+    hasher and gear projects.
+  + Do not use dashed form of git commands.
+  + gear: Implemented empty archive suffix support.
+  + Renamed: *.ru_RU.KOI8-R -> *.ru.koi8
+  + QUICKSTART.ru.koi8: Formatted for AsciiDoc.
+  + ABOUT.ru.koi8: Imported thesis about gear from Protva2007
+    in AsciiDoc format.
+  + Packaged asciidoc-generated QUICKSTART.ru.html and ABOUT.ru.html files.
+  + gear-update-tag: Added -q/--quiet and --no-clean options.
+  + gear-update-tag: Changed --all option to imply --clean.
+- Other minor fixes and cleanups, see git log for details.
+
 * Fri Nov 09 2007 Dmitry V. Levin <ldv@altlinux.org> 1.3.1-alt1
 - gear-create-tag:
   + Enabled keyword substitution in --name and ----message options (ldv).
