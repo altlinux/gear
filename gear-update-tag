@@ -55,7 +55,7 @@ show_help()
 $PROG - update list of stored tags in the package repository
 
 Usage: $PROG [options] <name> [<value>]
-or:    $PROG [options] --all [--clean]
+or:    $PROG [options] --all [--no-clean]
 or:    $PROG [options] --clean
 or:    $PROG [options] --delete <name>
 
@@ -448,7 +448,7 @@ while :; do
 	case "$1" in
 		--) shift; break
 			;;
-		-a|--all) all=1
+		-a|--all) all=1; clean=1
 			;;
 		-c|--clean) clean=1
 			;;
