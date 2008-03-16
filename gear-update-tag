@@ -65,6 +65,7 @@ Options:
   -d, --delete              delete the specified tag;
   -r, --rules=FILENAME      override rules file name;
   -v, --verbose             print a message for each action;
+  -q, --quiet               do not print a message for each action;
   -V, --version             print program version and exit;
   -h, --help                show this text and exit.
 
@@ -434,7 +435,7 @@ delete_unused_tags()
 	mv -f -- "$workdir/new_tags" "$workdir/tags"
 }
 
-TEMP=`getopt -n "$PROG" -o a,c,d,r:v,h,V -l all,clean,delete,rules:,verbose,help,version -- "$@"` ||
+TEMP=`getopt -n "$PROG" -o a,c,d,r:$getopt_common_opts -l all,clean,delete,rules:,$getopt_common_longopts -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
@@ -453,6 +454,8 @@ while :; do
 		-d|--delete) delete=1
 			;;
 		-r|--rules) shift; rules="$1"
+			;;
+		-q|--quiet) verbose=
 			;;
 		-v|--verbose) verbose=1
 			;;
