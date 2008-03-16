@@ -18,7 +18,7 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-gear-srpmimport \- Incrementally import source packages to git repository
+gear\-srpmimport \- Incrementally import source packages to git repository
 
 [ENVIRONMENT]
 .TP
@@ -30,6 +30,6 @@ the default for the base of the repository.
 
 [SEE ALSO]
 .BR gear (1),
-.BR gear-rules (5),
+.BR gear\-rules (5),
 .BR git (7),
 .BR rpm2cpio (8).

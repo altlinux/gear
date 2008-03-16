@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-gear-buildreq \- calculate rpm build requirements for gear repository
+gear\-buildreq \- calculate rpm build requirements for gear repository
 
 [CONFORMING TO]
 This helper use ALT Linux specific \`buildreq' utility.

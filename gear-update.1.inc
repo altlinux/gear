@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-gear-update \- update subdirectory from source directory or archive file
+gear\-update \- update subdirectory from source directory or archive file
 
 [ENVIRONMENT]
 .TP
@@ -29,4 +29,4 @@ the default for the base of the repository.
 
 [SEE ALSO]
 .BR gear (1),
-.BR gear-rules (5)
+.BR gear\-rules (5)

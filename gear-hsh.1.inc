@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-gear-hsh \- run hasher for gear repository
+gear\-hsh \- run hasher for gear repository
 
 [SEE ALSO]
 .BR gear (1),

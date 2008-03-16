@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-gear-hsh-build \- build packages from gear repositories with hasher
+gear\-hsh\-build \- build packages from gear repositories with hasher
 
 [ENVIRONMENT]
 .TP

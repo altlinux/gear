@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-gear-remote-rpm \- run rpm on the remote host
+gear\-remote\-rpm \- run rpm on the remote host
 
 [SEE ALSO]
 .BR gear (1),

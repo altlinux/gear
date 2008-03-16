@@ -17,7 +17,7 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-gear-remote \- run gear build command on the remote host
+gear\-remote \- run gear build command on the remote host
 
 [DESCRIPTION]
 Utility transfers sources into <hostname> and used <workdir>
