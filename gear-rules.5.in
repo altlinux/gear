@@ -19,7 +19,7 @@
 .
 .TH "GEAR-RULES" "5" "March 2007" "gear @VERSION@" "File Formats"
 .SH NAME
-gear-rules \- rule file for \fBgear\fR(1)
+gear\-rules \- rule file for gear
 .
 .
 .SH DESCRIPTION

@@ -16,7 +16,7 @@
 .
 .TH "GEAR-MERGE-RULES" "5" "November 2007" "gear @VERSION@" "File Formats"
 .SH NAME
-gear-merge rules \- rule file for \fBgear-merge\fR(1)
+gear\-merge\-rules \- rule file for gear\-merge
 .
 .
 .SH DESCRIPTION
