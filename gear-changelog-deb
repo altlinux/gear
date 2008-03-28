@@ -1,0 +1,51 @@
+#!/bin/sh -efu
+#
+# Copyright (C) 2008  Alexey Gladkov <legion@altlinux.org>
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+
+format_group() {
+	printf '%s\n' "  * $*:"
+}
+
+format_header() {
+	printf '%s\n\n' "${pkg_name:-NAME} (${pkg_version:-VERSION}-${pkg_release:-RELEASE}) unstable; urgency=low"
+}
+
+format_commit() {
+	local m='-' s='  '
+
+	[ -z "$no_groups" -a -z "$no_rules" ] ||
+		{ m='*'; s=''; }
+
+	{
+		printf '%s' "$m "
+		git log -n1 --pretty=format: --name-only "$hash" |
+			sed -e '/^$/d' -e 's/^.*/&, /' -e '$s/, $/: /' |
+			tr -d '\n'
+		printf '%s' "$subj"
+		[ "$aname <$aemail>" = "$releaser" ] ||
+			printf '%s' " (thx $aname)"
+		printf '.\n'
+	} |
+		fmt -w"$cwidth" |
+		sed -e "s/^[^$m]/  &/" -e "s/^.*/$s  &/"
+}
+
+format_footer() {
+	local stamp="$(LC_TIME=C date -R)"
+	printf '\n%s\n\n' " -- $releaser  $stamp"
+}

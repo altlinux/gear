@@ -1,0 +1,97 @@
+.\" Copyright (C) 2008  Alexey Gladkov <legion@altlinux.org>
+.\"
+.\" This file is free software; you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation; either version 2 of the License, or
+.\" (at your option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+.
+.TH "GEAR-CHNAGELOG-RULES" "28" "Mar 2008" "gear @VERSION@" "File Formats"
+.SH NAME
+gear\-changelog\-rules \- rule file for gear\-changelog
+.
+.
+.SH DESCRIPTION
+.
+The rule file specifies actions of
+.BR gear-chnagelog (1)
+required to merge branches in the package repository. There are two types of
+directives: global and sectional. Global directives should be defined before
+any sections.
+.
+.
+.SH FORMAT
+.
+A rule file consists of lines of the following format:
+.RS 4
+.PP
+.IB directive\^ :
+.IR <value>
+.RE
+.
+.PP
+Empty lines and lines beginning with \*(lq#\*(rq are ignored.
+Directive arguments are delimited by whitespace characters.
+.
+.
+.SH GLOBAL DIRECTIVES
+.
+.TP
+.BI "width: <number>
+Set width of changelog messages 
+.
+.
+.
+.SH SECTION DIRECTIVES
+.
+.TP
+.BI "group: <TEXT>
+Directive begin new section. It contains a description of the group. This
+description will be used as group message for changelog.
+.TP
+.BI "regexp: <PATTERN>
+Specifies the
+.IR <PATTERN>
+on which a commit message can be attributed to this group. You can specify
+more than one directives.
+.TP
+.BI "filter: <SED-COMMAND>
+Directive set commands for
+.BR sed(1)
+utility to able change commit message before it will be written into
+changelog. You can specify more than one directives.
+.
+.
+.SH FILES
+.TP
+.BR .gear/chnagelog
+The
+.BR gear-changelog (1)
+expect to find rules, unless another name is specified by the
+.BI \-\-rules= filename
+option.
+.
+.
+.SH AUTHOR
+.PP
+This manual page written by Alexey Gladkov  <legion@altlinux.org>.
+.PP
+Authors and contributors of the programs included in the
+.B gear
+package are listed in the manual pages for these programs.
+.
+.
+.SH SEE ALSO
+.PP
+.na
+.nh
+.tr -\(hy
+.BR gear-changelog (1).
