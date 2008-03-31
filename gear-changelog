@@ -240,6 +240,6 @@ if [ -z "$no_rules" -a -z "$no_groups" ]; then
 		i=$(($i+1))
 	done
 else
-	uniq < "$workdir/gr"
+	uniq < "$workdir/group"
 fi
 format_footer
