@@ -200,8 +200,10 @@ fi
 
 . "$0-$format"
 
-git log --no-merges --pretty="format:%h$tab%at$tab%an$tab%ae$tab%s" ${since:+$since..HEAD} |
+git log --no-merges --pretty="format:%h$tab%at$tab%an$tab%ae$tab%s%n" ${since:+$since..HEAD} |
 while IFS="$tab" read -r hash atime aname aemail subj; do
+	[ -n "$hash" ] ||
+		continue
 
 	if [ -n "$no_rules" ]; then
 		format_commit "$subj" >> "$workdir/group"
