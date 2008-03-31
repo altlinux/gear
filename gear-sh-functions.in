@@ -194,7 +194,7 @@ gear_find_rules_common()
 	if [ -f "$workdir/rules" ]; then
 		return 0
 	fi
-	local r
+	local r=
 	if [ -n "$rules" ]; then
 		if $check_rules "$rules"; then
 			r="$rules"
