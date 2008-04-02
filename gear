@@ -376,40 +376,100 @@ make_difference()
 	make_diff "$optional" "$cmd" "$diff_old_tree" "$old_dir" "$diff_new_tree" "$new_dir" "$diff_name"
 }
 
-copy_by_pattern()
-{
-	# format: "$optional cmd pattern.."
-	[ $# -ge 3 ] ||
-		rules_error 'No pattern specified'
-	local optional="$1" && shift
-	local cmd="$1" && shift
+make_compress_file() {
+	local cmd= file= name=
+	cmd="$1"; shift
+	name="$1"; shift
+	file="$1"; shift
 
+	[ -n "$name" ] &&
+		name="${file%/*}/$name" ||
+		name="$file"
+
+	case "$cmd" in
+		zip|gzip|bzip2|lzma)
+			type "$cmd" >/dev/null 2>&1 ||
+				rules_error "Compress command not found: $cmd"
+
+			if [ "$file" != "$name" ]; then
+				$cmd "$@" < "$file" > "$name"
+			else
+				$cmd "$@" "$file"
+			fi
+			;;
+		copy)
+			[ "$file" = "$name" ] ||
+				mv -f -- "$file" "$name"
+			;;
+		*)
+			rules_error "Invalid type specified: $cmd"
+			;;
+	esac
+}
+
+make_compress() {
+	# format: "$optional options -- patterns..."
+	local optional="$1"; shift
+	local new_name= cmd= args= patterns=
+
+	while [ "$#" -gt 0 ]; do
+		case "$1" in
+			name=*)
+				new_name="${1#name=}"
+				new_name="${new_name##*/}"
+				new_name="$(quote_shell "$new_name")"
+				;;
+			type=*)
+				cmd="$(quote_shell "${1#type=}")"
+				;;
+			--)
+				patterns=' '
+				;;
+			*)
+				[ -n "$patterns" ] &&
+					patterns="$patterns \"$(quote_shell "$1")\"" ||
+					args="$args \"$(quote_shell "$1")\""
+				;;
+		esac
+		shift
+	done
+	[ -n "$patterns" ] ||
+		rules_error 'No pattern specified'
+
+	eval set $patterns
+
+	local pattern dir_name base_name tree
 	for pattern; do
 		[ -z "$(printf %s "$pattern" |tr -d '[:alnum:]_.?*-/')" ] ||
 			rules_error "Invalid copy pattern specified: $pattern"
-		local dir_name base_name rc=0
+
 		dir_name="$(dirname "$pattern")"
 		base_name="$(basename "$pattern")"
 		tree="$(traverse_tree "$main_tree_id" "$dir_name" "$optional")" ||
-			rc=$?
-		if [ "$rc" = 1 ]; then exit 1
-		elif [ "$rc" != 0 ]; then return 0
-		fi
+			{
+				[ "$?" -gt 1 ] ||
+					exit 1
+				return 0
+			}
 		git ls-tree "$tree" >"$workdir/blobs"
 		echo >>"$workdir/blobs"
+
 		local mode otype id name found=
 		while read -r mode otype id name; do
 			# ignore non-blobs.
 			[ "$otype" = blob ] ||
 				continue
+
 			# ignore invalid filenames.
 			[ "$name" = "${name#*/}" -a \
 			  "$name" = "${name%/*}" ] ||
 				continue
+
 			# ignore unmatched.
 			[ -z "${name##$base_name}" -o \
 			  -z "${name%%$base_name}" ] ||
 				continue
+
 			local ex_pattern sample
 			sample="$dir_name/$name"
 			for ex_pattern in $exclude_pattern_list; do
@@ -418,11 +478,13 @@ copy_by_pattern()
 				  -n "${sample%%$ex_pattern}" ] ||
 				  	continue 2
 			done
+
 			git cat-file blob "$id" >"$outdir/$name"
 			verbose "Extracted file by pattern \"$pattern\": $name"
 			[ -n "${mode%%*7??}" ] ||
 				chmod a+x "$outdir/$name"
-			compress_file "$cmd" "$outdir/$name" > /dev/null
+
+			eval make_compress_file "\"$cmd\"" "\"$new_name\"" "\"$outdir/$name\"" $args
 			found=1
 		done <"$workdir/blobs"
 		[ -n "$found" -o "$optional" = 1 ] ||
@@ -487,7 +549,14 @@ parse_rules()
 					rules_error 'Failed to make diff'
 				;;
 			copy|gzip|bzip2)
-				copy_by_pattern "$optional" "$cmd" $options ||
+				[ -n "$options" ] ||
+					rules_error 'No pattern specified'
+
+				make_compress "$optional" type=$cmd -- $options ||
+					rules_error 'Failed to copy by pattern'
+				;;
+			compress)
+				make_compress "$optional" $options ||
 					rules_error 'Failed to copy by pattern'
 				;;
 			*)
