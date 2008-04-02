@@ -1,0 +1,275 @@
+#
+# Copyright (C) 2008  Alexey Gladkov <legion@altlinux.org>
+#
+# Completion functions for gear utilities.
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+
+_gear_shrt_options='-r -t -q -v -V -h'
+_gear_long_options='--bzip2 --command --commit --describe --export-dir --gzip --hasher \
+--help --no-compress --quiet --rpmbuild --rules --tree-ish --update-spec --verbose --version'
+
+_gear() {
+	COMPREPLY=()
+
+	local cur prev
+	cur=${COMP_WORDS[COMP_CWORD]}
+	prev=${COMP_WORDS[COMP_CWORD-1]}
+
+	case "$cur" in
+		--*)	COMPREPLY=($(compgen -W "$_gear_long_options" -- $cur))
+			;;
+		-*)	COMPREPLY=($(compgen -W "$_gear_shrt_options" -- $cur))
+			;;
+	esac
+
+	case "$prev" in
+		--export-dir)	_filedir -d
+			;;
+		-r|--rules)	_filedir
+			;;
+	esac
+}
+complete -F _gear $filenames gear
+
+_gear_update() {
+	COMPREPLY=()
+
+	local cur prev
+	cur=${COMP_WORDS[COMP_CWORD]}
+	prev=${COMP_WORDS[COMP_CWORD-1]}
+
+	case "$cur" in
+		--*)
+			COMPREPLY=($(compgen -W '\
+						--all --create --exclude --force \
+						--help --ignore-exclude --subdir \
+						--type --verbose --version \
+						' -- $cur))
+			;;
+		-*)
+			COMPREPLY=($(compgen -W '-a -c -f -h -s -t -v -V' -- $cur))
+			;;
+	esac
+
+	case "$prev" in
+		-s|--subdir)
+			_filedir -d
+			;;
+		-t|--type)
+			COMPREPLY=($(compgen -W 'dir tar cpio cpio.gz cpio.bz2 zip' -- $cur))
+			;;
+	esac
+}
+complete -F _gear_update $filenames gear-update
+
+_gear_rpm() {
+	COMPREPLY=()
+
+	local cur prev
+	cur=${COMP_WORDS[COMP_CWORD]}
+	prev=${COMP_WORDS[COMP_CWORD-1]}
+
+	case "$cur" in
+		--*)
+			_rpm
+			COMPREPLY=( $COMPREPLY $( compgen -W "$_gear_long_options" -- $cur ))
+			;;
+		-*)	COMPREPLY=($(compgen -W "$_gear_shrt_options" -- $cur)) ||
+				_rpm
+			;;
+	esac
+
+	case "$prev" in
+		-r|--rules) _filedir ;;
+	esac
+}
+complete -F _gear_rpm $filenames gear-rpm gear-buildreq
+
+_hasher_long_options='--apt-config --apt-prefix --build-args --cache-dir --cleanup-only \
+--eager-cleanup --excludedocs --hasher-priv-dir --help --initroot-only --install-langs \
+--lazy-cleanup --mountpoints --no-cache --no-contents-indices --no-repackage-source \
+--no-sisyphus-check-in --no-sisyphus-check-out --no-sisyphus-check --no-wait-lock \
+--nprocs --number --packager --pkg-build-list --pkg-init-list --query-repackage \
+--query-req-prog --quiet --rebuild-prog --repackage-source --repo --repo-bin --repo-src \
+--save-fakeroot --target --verbose --version --wait-lock --without-stuff \
+--with-qemu --with-stuff'
+
+_hasher_shrt_options='-q -v -V -h'
+
+_hsh() {
+	COMPREPLY=()
+
+	local cur prev
+	cur=${COMP_WORDS[COMP_CWORD]}
+	prev=${COMP_WORDS[COMP_CWORD-1]}
+
+	case "$cur" in
+		--*)
+			COMPREPLY=($(compgen -W "$_hasher_long_options" -- $cur))
+			;;
+		-*)
+			COMPREPLY=($(compgen -W "$_hasher_shrt_options" -- $cur))
+			;;
+	esac
+
+	case "$prev" in
+		--apt-config|--query-req-prog|--rebuild-prog)
+			_filedir
+			;;
+		--apt-prefix|--hasher-priv-dir|--cache-dir--repo|--repo-bin|--repo-src)
+			_filedir -d
+			;;
+	esac
+}
+
+_gear_hsh() {
+	COMPREPLY=()
+
+	local cur prev
+	cur=${COMP_WORDS[COMP_CWORD]}
+	prev=${COMP_WORDS[COMP_CWORD-1]}
+
+	case "$cur" in
+		--*)
+			_hsh
+			COMPREPLY=( $COMPREPLY $(compgen -W "$_gear_long_options" -- $cur))
+			;;
+		-*)	COMPREPLY=($(compgen -W "$_gear_shrt_options" -- $cur)) ||
+				_hsh
+			;;
+	esac
+
+	case "$prev" in
+		-r|--rules) _filedir ;;
+	esac
+}
+complete -F _gear_hsh $filenames gear-hsh
+
+_gear_changelog() {
+	COMPREPLY=()
+
+	case "$cur" in
+		--*)
+			COMPREPLY=($(compgen -W '\
+					--no-groups --no-rules --no-specfile \
+					--format --rules --version --help' -- $cur))
+			;;
+		-*)
+			COMPREPLY=($(compgen -W '-f -r -V -h' -- $cur))
+			;;
+	esac
+
+	case "$prev" in
+		-f|--format)
+			COMPREPLY=($(compgen -W 'deb gnu rpm' -- $cur))
+			;;
+		-r|--rules)
+			_filedir
+			;;
+	esac
+}
+complete -F _gear_changelog $filenames gear-changelog
+
+_gear_create_tag() {
+	COMPREPLY=()
+
+	local cur prev
+	cur=${COMP_WORDS[COMP_CWORD]}
+	prev=${COMP_WORDS[COMP_CWORD-1]}
+
+	case "$cur" in
+		--*)
+			COMPREPLY=($(compgen -W '\
+					--force --help --key-id --message --name \
+					--quiet --rules --verbose --version \
+					' -- $cur))
+			;;
+		-*)
+			COMPREPLY=($(compgen -W '-f -h -m -n -q -r -u -v -V' -- $cur))
+			;;
+	esac
+
+	case "$prev" in
+		-r|--rules) _filedir ;;
+	esac
+}
+complete -F _gear_create_tag $filenames gear-create-tag
+
+_gear_merge() {
+	COMPREPLY=()
+
+	local cur prev
+	cur=${COMP_WORDS[COMP_CWORD]}
+	prev=${COMP_WORDS[COMP_CWORD-1]}
+
+	case "$cur" in
+		--*)	COMPREPLY=($(compgen -W '--add --rules --version --version --help' -- $cur))
+			;;
+		-*)	COMPREPLY=($(compgen -W '-a -h -r -v -V' -- $cur))
+			;;
+	esac
+
+	case "$prev" in
+		-r|--rules) _filedir ;;
+	esac
+
+}
+complete -F _gear_merge $filenames gear-merge
+
+_gear_srpmimport() {
+	COMPREPLY=()
+
+	local cur prev
+	cur=${COMP_WORDS[COMP_CWORD]}
+	prev=${COMP_WORDS[COMP_CWORD-1]}
+
+	case "$cur" in
+		--*)	COMPREPLY=($(compgen -W '--add --rules --version --version --help' -- $cur))
+			;;
+		-*)	COMPREPLY=($(compgen -W '-a -h -r -v -V' -- $cur))
+			;;
+	esac
+
+	case "$prev" in
+		-r|--rules) _filedir ;;
+	esac
+
+}
+complete -F _gear_srpmimport $filenames gear-srpmimport
+
+_gear_update_tag() {
+	COMPREPLY=()
+
+	local cur prev
+	cur=${COMP_WORDS[COMP_CWORD]}
+	prev=${COMP_WORDS[COMP_CWORD-1]}
+
+	case "$cur" in
+		--*)	COMPREPLY=($(compgen -W '--all --clean --delete \
+					--no-clean --rules --quiet \
+					--verbose --version --help' -- $cur))
+			;;
+		-*)	COMPREPLY=($(compgen -W '-a -c -d -h -q -r -v -V' -- $cur))
+			;;
+	esac
+
+	case "$prev" in
+		-r|--rules) _filedir ;;
+	esac
+
+}
+complete -F _gear_update_tag $filenames gear-update-tag
