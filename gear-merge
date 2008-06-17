@@ -47,6 +47,7 @@ Options:
 
   -a, --add              add new patches in git repository;
   -r, --rules=FILENAME   name of file with rules, default is .gear/merge;
+  -s, --stop=BRANCH      stop merge when BRANCH shows in <to-branch>;
   -v,--verbose           print a message for each action;
   -V,--version           print program version and exit;
   -h,--help              show this text and exit.
@@ -213,6 +214,7 @@ interactive_parse_rules() {
 	done
 }
 
+stop=
 parse_rules() {
 	local parser_func="${1-}"
 	local line cmd lineno=0
@@ -230,6 +232,8 @@ parse_rules() {
 		if [ -n "$parser_func" ]; then
 			$parser_func "$cmd"
 			continue
+		elif [ -n "$stop" ] && [ "$dst_branch" = "$stop" ]; then
+			 break
 		fi
 
 		branch_$cmd
@@ -278,7 +282,7 @@ branch_gendiff() {
 		new_files="$new_files $name"
 }
 
-TEMP=`getopt -n $PROG -o a,r:,I,V,v,h -l add,rules:,no-interactive,version,verbose,help -- "$@"` ||
+TEMP=`getopt -n $PROG -o a,r:,s:,I,V,v,h -l add,rules:,stop:,no-interactive,version,verbose,help -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
@@ -291,6 +295,8 @@ while :; do
 		-a|--add) add_new_files=1
 			;;
 		-r|--rules) shift; rules="$1"
+			;;
+		-s|--stop) shift; stop="$1"; no_interactive=1
 			;;
 		-v|--verbose) verbose=-v
 			;;
