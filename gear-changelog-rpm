@@ -24,7 +24,7 @@ format_group() {
 
 format_header() {
 	local stamp="$(LC_TIME=C date '+%a %b %d %Y')"
-	printf '%s\n' "$stamp $releaser ${pkg_version:-VERSION}-${pkg_release:-RELEASE}"
+	printf '%s\n' "* $stamp $releaser ${pkg_version:-VERSION}-${pkg_release:-RELEASE}"
 }
 
 format_commit() {
