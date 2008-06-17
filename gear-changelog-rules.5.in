@@ -72,7 +72,7 @@ changelog. You can specify more than one directives.
 .
 .SH FILES
 .TP
-.BR .gear/chnagelog
+.BR .gear/changelog
 The
 .BR gear-changelog (1)
 expect to find rules, unless another name is specified by the
