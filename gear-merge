@@ -45,9 +45,11 @@ sources and/or patch branches) into single master branch.
 
 Options:
 
+  -I,--no-interactive    merge branches non-interactively;
   -a, --add              add new patches in git repository;
   -r, --rules=FILENAME   name of file with rules, default is .gear/merge;
-  -s, --stop=BRANCH      stop merge when BRANCH shows in <to-branch>;
+  -s, --stop=BRANCH      stop merge when BRANCH shows in <to-branch>,
+                         implies --no-interactive;
   -v,--verbose           print a message for each action;
   -V,--version           print program version and exit;
   -h,--help              show this text and exit.
