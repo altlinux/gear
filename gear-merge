@@ -171,6 +171,7 @@ interactive_parse_rules() {
 	max_lineno=$(wc -l < "$workdir/rules")
 	max_lineno=$(($max_lineno+1))
 
+	ans=
 	while :; do
 		lineno=0
 		while read line; do
@@ -200,13 +201,23 @@ interactive_parse_rules() {
 		[ $max_lineno != $cur_lineno ] ||
 			break
 
-		printf '======\n%s' "Confirm $cmd '$src_branch' -> '$dst_branch' (rule $lineno) [Y/n]: "
-		read ans
+		if [ "$ans" != "all" ]; then
+			printf '======\n%s' "Confirm $cmd '$src_branch' -> '$dst_branch' (rule $lineno) [Y/n/a/q]: "
+			read ans
+		fi
 
 		case "$ans" in
 			[nN]*)
 				cur_lineno=$(($lineno+1))
 				app_lineno=0
+				;;
+			[aA]*)
+				cur_lineno=$lineno
+				app_lineno=$lineno
+				ans="all"
+				;;
+			[qQ]*)
+				break
 				;;
 			*)
 				cur_lineno=$lineno
