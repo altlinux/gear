@@ -45,8 +45,11 @@ sources and/or patch branches) into single master branch.
 
 Options:
 
+  -I,--no-interactive    merge branches non-interactively;
   -a, --add              add new patches in git repository;
   -r, --rules=FILENAME   name of file with rules, default is .gear/merge;
+  -s, --stop=BRANCH      stop merge when BRANCH shows in <to-branch>,
+                         implies --no-interactive;
   -v,--verbose           print a message for each action;
   -V,--version           print program version and exit;
   -h,--help              show this text and exit.
@@ -168,6 +171,7 @@ interactive_parse_rules() {
 	max_lineno=$(wc -l < "$workdir/rules")
 	max_lineno=$(($max_lineno+1))
 
+	ans=
 	while :; do
 		lineno=0
 		while read line; do
@@ -197,13 +201,23 @@ interactive_parse_rules() {
 		[ $max_lineno != $cur_lineno ] ||
 			break
 
-		printf '======\n%s' "Confirm $cmd '$src_branch' -> '$dst_branch' (rule $lineno) [Y/n]: "
-		read ans
+		if [ "$ans" != "all" ]; then
+			printf '======\n%s' "Confirm $cmd '$src_branch' -> '$dst_branch' (rule $lineno) [Y/n/a/q]: "
+			read ans
+		fi
 
 		case "$ans" in
 			[nN]*)
 				cur_lineno=$(($lineno+1))
 				app_lineno=0
+				;;
+			[aA]*)
+				cur_lineno=$lineno
+				app_lineno=$lineno
+				ans="all"
+				;;
+			[qQ]*)
+				break
 				;;
 			*)
 				cur_lineno=$lineno
@@ -213,6 +227,7 @@ interactive_parse_rules() {
 	done
 }
 
+stop=
 parse_rules() {
 	local parser_func="${1-}"
 	local line cmd lineno=0
@@ -230,6 +245,8 @@ parse_rules() {
 		if [ -n "$parser_func" ]; then
 			$parser_func "$cmd"
 			continue
+		elif [ -n "$stop" ] && [ "$dst_branch" = "$stop" ]; then
+			 break
 		fi
 
 		branch_$cmd
@@ -278,7 +295,7 @@ branch_gendiff() {
 		new_files="$new_files $name"
 }
 
-TEMP=`getopt -n $PROG -o a,r:,I,V,v,h -l add,rules:,no-interactive,version,verbose,help -- "$@"` ||
+TEMP=`getopt -n $PROG -o a,r:,s:,I,V,v,h -l add,rules:,stop:,no-interactive,version,verbose,help -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
@@ -291,6 +308,8 @@ while :; do
 		-a|--add) add_new_files=1
 			;;
 		-r|--rules) shift; rules="$1"
+			;;
+		-s|--stop) shift; stop="$1"; no_interactive=1
 			;;
 		-v|--verbose) verbose=-v
 			;;
