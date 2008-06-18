@@ -28,6 +28,7 @@ PROGRAMS = \
 	gear-buildreq \
 	gear-commit \
 	gear-create-tag \
+	gear-changelog \
 	gear-hsh \
 	gear-hsh-build \
 	gear-merge \
@@ -44,9 +45,12 @@ HELPERS = \
 	gear-command-remote-build \
 	gear-command-rpmbuild \
 	gear-command-tar \
+	gear-changelog-deb \
+	gear-changelog-gnu \
+	gear-changelog-rpm \
 	#
 MAN1PAGES = $(PROGRAMS:=.1)
-MAN5PAGES = gear-rules.5 gear-merge-rules.5
+MAN5PAGES = gear-rules.5 gear-merge-rules.5 gear-changelog-rules.5
 MANPAGES = $(MAN1PAGES) $(MAN5PAGES)
 HTMLPAGES = $(MANPAGES:=.html)
 TARGETS = gear-sh-functions $(MANPAGES)

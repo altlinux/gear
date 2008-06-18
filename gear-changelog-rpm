@@ -1,0 +1,48 @@
+#!/bin/sh -efu
+#
+# Copyright (C) 2008  Alexey Gladkov <legion@altlinux.org>
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+
+format_group() {
+	printf '%s\n' "- $1:" |
+		fmt -w"$cwidth"
+}
+
+format_header() {
+	local stamp="$(LC_TIME=C date '+%a %b %d %Y')"
+	printf '%s\n' "* $stamp $releaser ${pkg_version:-VERSION}-${pkg_release:-RELEASE}"
+}
+
+format_commit() {
+	local m='+' s='  '
+
+	[ -z "$no_groups" -a -z "$no_rules" ] ||
+		{ m='-'; s=''; }
+
+	local str="$(printf '%s\n' "$s$m $subj" |
+		fmt -w$cwidth |
+		sed -e "s/^$s[^$m]/  &/")"
+
+	[ "$releaser" = "$aname <$aemail>" ] ||
+		str="$str (thx $aname)"
+
+	printf '%s\n' "$str."
+}
+
+format_footer() {
+	printf '\n'
+}
