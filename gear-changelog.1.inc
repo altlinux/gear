@@ -41,4 +41,5 @@ Specifies a committer name.
 Specifies a committer email.
 
 [SEE ALSO]
-.BR gear (1).
+.BR gear (1),
+.BR gear-changelog-rules (5).

@@ -22,7 +22,7 @@ gear\-changelog\-rules \- rule file for gear\-changelog
 .SH DESCRIPTION
 .
 The rule file specifies actions of
-.BR gear-chnagelog (1)
+.BR gear-changelog (1)
 required to merge branches in the package repository. There are two types of
 directives: global and sectional. Global directives should be defined before
 any sections.
@@ -78,6 +78,35 @@ The
 expect to find rules, unless another name is specified by the
 .BI \-\-rules= filename
 option.
+.
+.
+.SH EXAMPLES
+.nf
+[localhost]$ cat .gear/changelog <<EOF
+group: gear-changelog utility changes
+regexp: ^gear-changelog(-rules.5.in)?: 
+filter: s/^gear-changelog: //
+filter: s/^gear-changelog-rules.5.in: /Documentation: /
+
+group: gear-merge utility changes
+regexp: ^gear-merge:
+filter: s/^gear-merge: //
+EOF
+
+[localhost]$ gear-changelog
+* Wed Jun 18 2008 Alexey Gladkov <legion@altlinux.org> 1.4.0-alt1
+- gear-changelog utility changes:
+  + Replace /bin/ash with /bin/sh.
+  + Documentation: Fix typo.
+  + Read first commit too.
+  + Fix typo.
+- gear-merge utility changes:
+  + Fix spacing in help message.
+  + Update copyrights.
+  + More choices in interactive merge mode (thx Alexey I. Froloff).
+  + Document --no-interactive option (thx Alexey I. Froloff).
+  + Implement --stop option (thx Alexey I. Froloff).
+.fi
 .
 .
 .SH AUTHOR
