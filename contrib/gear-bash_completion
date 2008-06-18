@@ -34,6 +34,8 @@ _gear() {
 			;;
 		-*)	COMPREPLY=($(compgen -W "$_gear_shrt_options" -- $cur))
 			;;
+		*)	_filedir
+			;;
 	esac
 
 	case "$prev" in
@@ -62,6 +64,9 @@ _gear_update() {
 			;;
 		-*)
 			COMPREPLY=($(compgen -W '-a -c -f -h -s -t -v -V' -- $cur))
+			;;
+		*)
+			_filedir
 			;;
 	esac
 
@@ -241,6 +246,8 @@ _gear_srpmimport() {
 		--*)	COMPREPLY=($(compgen -W '--add --rules --version --version --help' -- $cur))
 			;;
 		-*)	COMPREPLY=($(compgen -W '-a -h -r -v -V' -- $cur))
+			;;
+		*)	_filedir
 			;;
 	esac
 
