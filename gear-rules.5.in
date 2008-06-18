@@ -1,5 +1,6 @@
 .\" Copyright (C) 2007  Sergey Vlasov <vsu@altlinux.org>
 .\" Copyright (C) 2007  Dmitry V. Levin <ldv@altlinux.org>
+.\" Copyright (C) 2008  Alexey Gladkov <legion@altlinux.org>
 .\"
 .\" Documentation for the .gear-rules file format.
 .\"
@@ -154,6 +155,27 @@ must match at least one file in the main tree.
 Glob patterns specified in this directive may contain multiple directory
 components separated by \*(lq/\*(rq.
 Wildcards are interpreted only in the last component of the pattern.
+.
+.TP
+.BI "compress: " type=<TYPE>\ \fR[\fIname=<NAME>\fR]\ \fR[\fIoptions\fR]\ --\ \fIglob_pattern\fR...
+Like
+.BR copy ,
+but can additionally compress the copied file by specified in
+.I <TYPE>
+method.
+.RS
+.TP
+.BI type= <TYPE>
+Set compression method. Valid values is: copy, zip, gzip, bzip2 and lzma.
+File will be copied into output directory if 'copy' method is specified.
+.TP
+.BI name= <NAME>
+Set new name of destination file in output directory. In this case
+.I glob_pattern
+should match only one file.
+.RE
+.IP
+You can specify compress options if method is zip, gzip, bzip2 or lzma.
 .
 .TP
 .BI "gzip: " glob_pattern\fR...
