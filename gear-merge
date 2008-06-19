@@ -46,14 +46,16 @@ sources and/or patch branches) into single master branch.
 
 Options:
 
-  -I, --no-interactive   merge branches non-interactively;
-  -a, --add              add new patches in git repository;
-  -r, --rules=FILENAME   name of file with rules, default is .gear/merge;
-  -s, --stop=BRANCH      stop merge when BRANCH shows in <to-branch>,
-                         implies --no-interactive;
-  -v, --verbose          print a message for each action;
-  -V, --version          print program version and exit;
-  -h, --help             show this text and exit.
+  -I, --no-interactive    merge branches non-interactively;
+  -a, --add               add new patches in git repository;
+  -r, --rules=FILENAME    name of file with rules, default is .gear/merge;
+  -s, --stop=BRANCH       stop merge when BRANCH shows in <to-branch>,
+                          implies --no-interactive;
+      --ignore-changed    do not bail if index changed;
+      --ignore-untracked  do not bail if untracked or modified files found;
+  -v, --verbose           print a message for each action;
+  -V, --version           print program version and exit;
+  -h, --help              show this text and exit.
 
 Report bugs to http://bugzilla.altlinux.org/
 
@@ -296,12 +298,14 @@ branch_gendiff() {
 		new_files="$new_files $name"
 }
 
-TEMP=`getopt -n $PROG -o a,r:,s:,I,V,v,h -l add,rules:,stop:,no-interactive,version,verbose,help -- "$@"` ||
+TEMP=`getopt -n $PROG -o a,r:,s:,I,V,v,h -l add,rules:,stop:,no-interactive,ignore-changed,ignore-untracked,version,verbose,help -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
 no_interactive=
 rules='.gear/merge'
+skip_changed=
+skip_untracked=
 while :; do
 	case "$1" in
 		-I|--no-interactive) no_interactive=1
@@ -311,6 +315,10 @@ while :; do
 		-r|--rules) shift; rules="$1"
 			;;
 		-s|--stop) shift; stop="$1"; no_interactive=1
+			;;
+		--ignore-changed) skip_changed=1
+			;;
+		--ignore-untracked) skip_untracked=1
 			;;
 		-v|--verbose) verbose=-v
 			;;
@@ -333,14 +341,18 @@ git_dir="$(readlink -ev -- "$git_dir")"
 # Change to toplevel directory.
 chdir_to_toplevel
 
-out="$(git diff-index --cached --name-only HEAD)"
-[ -z "$out" ] ||
-	fatal "Changed files found in the index."
+if [ -z "$skip_changed" ]; then
+	out="$(git diff-index --cached --name-only HEAD)"
+	[ -z "$out" ] ||
+		fatal "Changed files found in the index."
+fi
 
-out="$(git diff --name-only &&
-       git ls-files --directory --others --exclude-per-directory=.gitignore)"
-[ -z "$out" ] ||
-	fatal "Untracked or modified files found."
+if [ -z "$skip_untracked" ]; then
+	out="$(git diff --name-only &&
+	       git ls-files --directory --others --exclude-per-directory=.gitignore)"
+	[ -z "$out" ] ||
+		fatal "Untracked or modified files found."
+fi
 
 set_current_branch
 restore_branch="$cur_branch"
