@@ -1,5 +1,5 @@
 .\" Copyright (C) 2007  Sergey Vlasov <vsu@altlinux.org>
-.\" Copyright (C) 2007  Dmitry V. Levin <ldv@altlinux.org>
+.\" Copyright (C) 2007-2008  Dmitry V. Levin <ldv@altlinux.org>
 .\" Copyright (C) 2008  Alexey Gladkov <legion@altlinux.org>
 .\"
 .\" Documentation for the .gear-rules file format.
@@ -157,27 +157,6 @@ components separated by \*(lq/\*(rq.
 Wildcards are interpreted only in the last component of the pattern.
 .
 .TP
-.BI "compress: " type=<TYPE>\ \fR[\fIname=<NAME>\fR]\ \fR[\fIoptions\fR]\ --\ \fIglob_pattern\fR...
-Like
-.BR copy ,
-but can additionally compress the copied file by specified in
-.I <TYPE>
-method.
-.RS
-.TP
-.BI type= <TYPE>
-Set compression method. Valid values is: copy, zip, gzip, bzip2 and lzma.
-File will be copied into output directory if 'copy' method is specified.
-.TP
-.BI name= <NAME>
-Set new name of destination file in output directory. In this case
-.I glob_pattern
-should match only one file.
-.RE
-.IP
-You can specify compress options if method is zip, gzip, bzip2 or lzma.
-.
-.TP
 .BI "gzip: " glob_pattern\fR...
 .PD 0
 .TP
@@ -185,11 +164,32 @@ You can specify compress options if method is zip, gzip, bzip2 or lzma.
 .PD
 Like
 .BR copy ,
-but additionally compress the copied file with
+but additionally compress the copied files with
 .BR gzip (1)
 or
 .BR bzip2 (1)
 and add the appropriate suffix to the copied file name.
+.
+.TP
+.BI "compress: " \fRtype=\fITYPE \ \fR[name=\fINAME\fR]\ \fR[\fIoptions\fR]\ --\ \fIglob_pattern\fR...
+Like
+.BR copy ,
+but can additionally compress the copied files with
+.I TYPE
+method.
+.RS
+.TP
+.BI type= TYPE
+Specify compression method.
+Supported values are: copy, bzip2, gzip, lzma and zip.
+.TP
+.BI name= <NAME>
+Specify destination file name in output directory. In this case
+.I glob_pattern
+should match only one file.
+.RE
+.IP
+All methods except copy accept compress options.
 .
 .TP
 .BI "copy?: " glob_pattern\fR...
@@ -198,6 +198,8 @@ and add the appropriate suffix to the copied file name.
 .BI "gzip?: " glob_pattern\fR...
 .TP
 .BI "bzip2?: " glob_pattern\fR...
+.TP
+.BI "compress?: " \fRtype=\fITYPE \ \fR[name=\fINAME\fR]\ \fR[\fIoptions\fR]\ --\ \fIglob_pattern\fR...
 .PD
 Like the corresponding directives without \*(lq?\*(rq, but unmatched
 patterns are ignored instead of causing errors.

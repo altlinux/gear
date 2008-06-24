@@ -141,22 +141,62 @@ exit_handler()
 	exit $rc
 }
 
+write_compressed_file()
+{
+	local file="$outdir/${1##*/}"; shift
+	local name="${1##*/}"; shift
+	local cmd="$1"; shift
+
+	[ -z "$name" ] ||
+		name="$outdir/$name"
+
+	case "$cmd" in
+		zip|gzip|bzip2|lzma)
+			type "$cmd" >/dev/null 2>&1 ||
+				rules_error "Compress command not found: $cmd"
+			[ $# -gt 0 ] ||
+				set -- -9
+			if [ -n "$name" ]; then
+				local tmp_name
+				tmp_name="$(mktemp -- "$name".XXXXXX)"
+				$cmd "$@" <"$file" >"$tmp_name"
+				mv -f -- "$tmp_name" "$name"
+				verbose "Compressed file \`${file##*/}' into \`${name##*/}' using \`$cmd $*'"
+			else
+				$cmd "$@" "$file" </dev/null >/dev/null
+				verbose "Compressed file \`${file##*/}' using \`$cmd $*'"
+			fi
+			;;
+		copy)
+			[ $# -eq 0 ] ||
+				rules_error "Unsupported options for copy method specified: $*"
+			if [ -n "$name" -a "$file" != "$name" ]; then
+				mv -f -- "$file" "$name"
+				verbose "Wrote file \`${file##*/}' as \`${name##*/}'"
+			fi
+			;;
+		*)
+			rules_error "Unrecognized compress type specified: $cmd"
+			;;
+	esac
+}
+
 compress_file()
 {
 	local cmd="$1" && shift
-	local file="$1" && shift
+	local file="${1##*/}" && shift
 
 	case "$cmd" in
 		gzip|*.gz)
-			gzip -9 "$file"
-			printf '%s' "$file.gz"
+			write_compressed_file "$file" '' gzip
+			printf '%s' "$outdir/$file.gz"
 			;;
 		bzip2|*.bz2)
-			bzip2 -9 "$file"
-			printf '%s' "$file.bz2"
+			write_compressed_file "$file" '' bzip2
+			printf '%s' "$outdir/$file.bz2"
 			;;
 		*)
-			printf '%s' "$file"
+			printf '%s' "$outdir/$file"
 			;;
 	esac
 }
@@ -235,28 +275,30 @@ make_tar()
 	local cmd="$1" && shift
 	local tree="$1" && shift
 	local dir="$1" && shift
-	local name="$1" && shift
+	local name="${1##*/}" && shift
 	tar_base="$1" && shift
 	local suffix="$1" && shift
 
 	[ "$tar_base" != ' ' ] ||
 		tar_base="$name"
 
-	local id rc=0
+	local id
 	id="$(traverse_tree "$tree" "$dir" "$optional")" ||
+		{
+			[ $? -gt 1 ] && return 0 ||
+				exit 1
+		}
 		rc=$?
-	if [ "$rc" = 1 ]; then exit 1
-	elif [ "$rc" != 0 ]; then return 0
-	fi
 
 	git archive --format="$format" ${tar_base:+--prefix="$tar_base"/} "$id" >"$outdir/$name.$format"
+	verbose "Extracted archive: $name.$format"
 	local archive_name
-	archive_name="$(compress_file "$cmd" "$outdir/$name.$format")"
+	archive_name="$(compress_file "$cmd" "$name.$format")"
 	if [ "$suffix" != ' ' -a "$archive_name" != "$outdir/$name$suffix" ]; then
 		mv "$archive_name" "$outdir/$name$suffix"
 		archive_name="$outdir/$name$suffix"
 	fi
-	verbose "Extracted archive: ${archive_name##*/}"
+	verbose "Wrote archive: ${archive_name##*/}"
 }
 
 make_archive()
@@ -312,6 +354,7 @@ get_diff_name()
 	subst_key_in_vars '@old_dir@' "$old_dir" $subst_vars
 	subst_key_in_vars '@new_dir@' "$new_dir" $subst_vars
 	subst_NVR_from_spec "$spec" $subst_vars
+	check_name 'diff name' "$diff_name"
 }
 
 make_diff()
@@ -322,28 +365,26 @@ make_diff()
 	local old_dir="$1" && shift
 	local new_tree="$1" && shift
 	local new_dir="$1" && shift
-	local name="$1" && shift
+	local name="${1##*/}" && shift
 
-	local old_id new_id rc
+	local old_id new_id
 
-	rc=0
 	old_id="$(traverse_tree "$old_tree" "$old_dir" "$optional")" ||
-		rc=$?
-	if [ "$rc" = 1 ]; then exit 1
-	elif [ "$rc" != 0 ]; then return 0
-	fi
+		{
+			[ $? -gt 1 ] && return 0 ||
+				exit 1
+		}
 
-	rc=0
 	new_id="$(traverse_tree "$new_tree" "$new_dir" "$optional")" ||
-		rc=$?
-	if [ "$rc" = 1 ]; then exit 1
-	elif [ "$rc" != 0 ]; then return 0
-	fi
+		{
+			[ $? -gt 1 ] && return 0 ||
+				exit 1
+		}
 
 	git diff-tree --patch-with-stat --text --no-renames --no-ext-diff \
 		"$old_id" "$new_id" >"$outdir/$name"
 	verbose "Extracted diff: $name"
-	compress_file "$cmd" "$outdir/$name" > /dev/null
+	compress_file "$cmd" "$name"> /dev/null
 }
 
 make_difference()
@@ -376,119 +417,99 @@ make_difference()
 	make_diff "$optional" "$cmd" "$diff_old_tree" "$old_dir" "$diff_new_tree" "$new_dir" "$diff_name"
 }
 
-make_compress_file() {
-	local cmd= file= name=
-	cmd="$1"; shift
-	name="$1"; shift
-	file="$1"; shift
+extract_pattern()
+{
+	# format: "$optional pattern target_name cmd [args]"
+	local optional="$1"; shift
+	local pattern="$1"; shift
+	local target_name="$1"; shift
+	local cmd="$1"; shift
 
-	[ -n "$name" ] &&
-		name="${file%/*}/$name" ||
-		name="$file"
+	[ -z "$(printf %s "$pattern" |tr -d '[:alnum:]_.?*-/')" ] ||
+		rules_error "Invalid extract pattern specified: $pattern"
+	local dir_name base_name tree
 
-	case "$cmd" in
-		zip|gzip|bzip2|lzma)
-			type "$cmd" >/dev/null 2>&1 ||
-				rules_error "Compress command not found: $cmd"
+	dir_name="$(dirname "$pattern")"
+	base_name="$(basename "$pattern")"
+	tree="$(traverse_tree "$main_tree_id" "$dir_name" "$optional")" ||
+		{
+			[ $? -gt 1 ] && return 0 ||
+				exit 1
+		}
+	git ls-tree "$tree" >"$workdir/blobs"
+	echo >>"$workdir/blobs"
 
-			if [ "$file" != "$name" ]; then
-				$cmd "$@" < "$file" > "$name"
-			else
-				$cmd "$@" "$file"
-			fi
-			;;
-		copy)
-			[ "$file" = "$name" ] ||
-				mv -f -- "$file" "$name"
-			;;
-		*)
-			rules_error "Invalid type specified: $cmd"
-			;;
-	esac
+	local mode otype id name found=
+	while read -r mode otype id name; do
+		# ignore non-blobs.
+		[ "$otype" = blob ] ||
+			continue
+		# ignore invalid filenames.
+		[ "$name" = "${name#*/}" -a \
+		  "$name" = "${name%/*}" ] ||
+			continue
+		# ignore unmatched.
+		[ -z "${name##$base_name}" -o \
+		  -z "${name%%$base_name}" ] ||
+			continue
+
+		local ex_pattern sample
+		sample="$dir_name/$name"
+		for ex_pattern in $exclude_pattern_list; do
+			# ignore excluded.
+			[ -n "${sample##$ex_pattern}" -a \
+			  -n "${sample%%$ex_pattern}" ] ||
+				continue 2
+		done
+
+		git cat-file blob "$id" >"$outdir/$name"
+		verbose "Extracted file by pattern \"$pattern\": $name"
+		[ -n "${mode%%*7??}" ] ||
+			chmod a+x "$outdir/$name"
+		write_compressed_file "$name" "$target_name" "$cmd" "$@"
+		found=1
+	done <"$workdir/blobs"
+	[ -n "$found" -o "$optional" = 1 ] ||
+		rules_error "Unmatched pattern specified: $pattern"
 }
 
-make_compress() {
+make_compress()
+{
 	# format: "$optional options -- patterns..."
 	local optional="$1"; shift
-	local new_name= cmd= args= patterns=
+	local target_name= cmd= args=
 
-	while [ "$#" -gt 0 ]; do
+	while [ $# -gt 0 ]; do
 		case "$1" in
 			name=*)
-				new_name="${1#name=}"
-				new_name="${new_name##*/}"
-				new_name="$(quote_shell "$new_name")"
+				target_name="${1#name=}"
+				check_name 'target name' "$target_name"
 				;;
 			type=*)
-				cmd="$(quote_shell "${1#type=}")"
+				cmd="${1#type=}"
 				;;
 			--)
-				patterns=' '
+				shift; break
 				;;
 			*)
-				[ -n "$patterns" ] &&
-					patterns="$patterns \"$(quote_shell "$1")\"" ||
-					args="$args \"$(quote_shell "$1")\""
+				[ -z "${1##-*}" ] ||
+					rules_error "Invalid option specified: $1"
+				args="$args \"$(quote_shell "$1")\""
 				;;
 		esac
 		shift
 	done
-	[ -n "$patterns" ] ||
+	[ $# -gt 0 ] ||
 		rules_error 'No pattern specified'
+	[ -n "$cmd" ] ||
+		rules_error 'No extract type specified'
 
-	eval set $patterns
-
-	local pattern dir_name base_name tree
+	local pattern
 	for pattern; do
-		[ -z "$(printf %s "$pattern" |tr -d '[:alnum:]_.?*-/')" ] ||
-			rules_error "Invalid copy pattern specified: $pattern"
-
-		dir_name="$(dirname "$pattern")"
-		base_name="$(basename "$pattern")"
-		tree="$(traverse_tree "$main_tree_id" "$dir_name" "$optional")" ||
-			{
-				[ "$?" -gt 1 ] ||
-					exit 1
-				return 0
-			}
-		git ls-tree "$tree" >"$workdir/blobs"
-		echo >>"$workdir/blobs"
-
-		local mode otype id name found=
-		while read -r mode otype id name; do
-			# ignore non-blobs.
-			[ "$otype" = blob ] ||
-				continue
-
-			# ignore invalid filenames.
-			[ "$name" = "${name#*/}" -a \
-			  "$name" = "${name%/*}" ] ||
-				continue
-
-			# ignore unmatched.
-			[ -z "${name##$base_name}" -o \
-			  -z "${name%%$base_name}" ] ||
-				continue
-
-			local ex_pattern sample
-			sample="$dir_name/$name"
-			for ex_pattern in $exclude_pattern_list; do
-				# ignore excluded.
-				[ -n "${sample##$ex_pattern}" -a \
-				  -n "${sample%%$ex_pattern}" ] ||
-				  	continue 2
-			done
-
-			git cat-file blob "$id" >"$outdir/$name"
-			verbose "Extracted file by pattern \"$pattern\": $name"
-			[ -n "${mode%%*7??}" ] ||
-				chmod a+x "$outdir/$name"
-
-			eval make_compress_file "\"$cmd\"" "\"$new_name\"" "\"$outdir/$name\"" $args
-			found=1
-		done <"$workdir/blobs"
-		[ -n "$found" -o "$optional" = 1 ] ||
-			rules_error "Unmatched pattern specified: $pattern"
+		eval extract_pattern "\"$optional\"" \
+			"\"$(quote_shell "$pattern")\"" \
+			"\"$(quote_shell "$target_name")\"" \
+			"\"$(quote_shell "$cmd")\"" $args
 	done
 }
 
@@ -549,15 +570,12 @@ parse_rules()
 					rules_error 'Failed to make diff'
 				;;
 			copy|gzip|bzip2)
-				[ -n "$options" ] ||
-					rules_error 'No pattern specified'
-
-				make_compress "$optional" type=$cmd -- $options ||
-					rules_error 'Failed to copy by pattern'
+				make_compress "$optional" "type=$cmd" -- $options ||
+					rules_error 'Failed to extract by pattern'
 				;;
 			compress)
 				make_compress "$optional" $options ||
-					rules_error 'Failed to copy by pattern'
+					rules_error 'Failed to extract by pattern'
 				;;
 			*)
 				rules_info "Unrecognized directive ignored: $cmd"
@@ -643,16 +661,16 @@ done
 out_file=
 if [ -n "$hasher$rpmbuild$command" ]; then
 	# At least one argument, please.
-	[ "$#" -ge 1 ] ||
+	[ $# -ge 1 ] ||
 		show_usage 'Not enough arguments.'
 elif [ -n "$outdir$describe" ]; then
-	[ "$#" -eq 0 ] ||
+	[ $# -eq 0 ] ||
 		show_usage 'Too many arguments.'
 else
 	# Exactly one argument, please.
-	[ "$#" -ge 1 ] ||
+	[ $# -ge 1 ] ||
 		show_usage 'Not enough arguments.'
-	[ "$#" -eq 1 ] ||
+	[ $# -eq 1 ] ||
 		show_usage 'Too many arguments.'
 	out_file="$1"
 	shift
