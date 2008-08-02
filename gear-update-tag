@@ -40,7 +40,7 @@ $PROG version $PROG_VERSION
 Written by Sergey Vlasov <vsu@altlinux.org>
 
 Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
-Copyright (C) 2006  Sir Raorn <raorn@altlinux.org>
+Copyright (C) 2006,2008  Sir Raorn <raorn@altlinux.org>
 Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 This is free software; see the source for copying conditions.  There is NO
@@ -533,6 +533,8 @@ if [ -n "$all$clean$verify" ]; then
 		show_usage 'Too many arguments'
 	[ -z "$delete" ] ||
 		show_usage '--delete cannot be used with --all, --clean or --verify'
+	[ -z "$verify" -o -z "$all$clean" ] ||
+		show_usage '--verify cannot be used with --all or --clean'
 elif [ -n "$delete" ]; then
 	# 1 argument when deleting a tag.
 	[ "$#" -ge 1 ] ||
@@ -614,16 +616,16 @@ else
 
 	if [ -n "$verify" ]; then
 		verify_used_tags ||
-			fatal "You have outdated tags"
+			fatal 'Outdated tag detected'
 		exit 0
-	else
-		if [ -n "$all" ]; then
-			update_used_tags
-		fi
+	fi
 
-		if [ -n "$clean" ]; then
-			delete_unused_tags
-		fi
+	if [ -n "$all" ]; then
+		update_used_tags
+	fi
+
+	if [ -n "$clean" ]; then
+		delete_unused_tags
 	fi
 fi
 
