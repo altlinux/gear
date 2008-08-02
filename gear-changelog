@@ -36,14 +36,13 @@ Usage: $PROG [options] [<since>]
 
 Options:
 
-  --no-rules          do not use rules at all. It means that changelog entries
-                      will be written without aggregation (grouping,
-                      filtering, etc);
-  --no-groups         do not group entries as it is described in a rules file;
+  --no-rules          do not use rules at all, changelog entries will be
+                      written without aggregation (grouping, filtering, etc);
+  --no-groups         do not group entries as described in a rules file;
   --no-specfile       do not use information from specfile;
-  -f, --format=TYPE   define source type: 'deb', 'rpm' or 'gnu',
+  -f, --format=TYPE   specify source type: 'deb', 'rpm' or 'gnu',
                       default is 'rpm';
-  -r, --rules=RULES   name of file with rules, default is .gear/changelog;
+  -r, --rules=RULES   name of a rules file, default is .gear/changelog;
   -V, --version       print program version and exit;
   -h, --help          show this text and exit.
 
@@ -77,7 +76,7 @@ find_changelog_rules() {
 num_groups=0
 write_group() {
 	[ -n "$regexp" ] ||
-		fatal "Group with empty regexp found."
+		fatal 'Group with empty regexp found.'
 
 	mkdir -p -- "$workdir/$num_groups"
 	printf '%s\n' "$group"  >"$workdir/$num_groups/descr"
@@ -98,13 +97,13 @@ parse_changelog_rules() {
 				;;
 			width:)
 				[ -z "$group" ] ||
-					fatal "Directive should be defined globally."
+					fatal "Directive \`$cmd' cannot be specified inside group."
 
 				cwidth="$(opt_check_number width "$value")"
 				;;
 			group:)
 				[ -n "$value" ] ||
-					fatal "Directive should have non empty value."
+					fatal "Directive \`$cmd' cannot be specified without a value."
 
 				[ -z "$group" -o "$group" = "$value" ] ||
 					write_group "$num_groups"
@@ -152,7 +151,7 @@ while :; do
 			;;
 		-f|--format) shift
 			[ -z "$1" ] &&
-				fatal "Empty format does not make sense!" ||
+				fatal 'Empty format does not make sense!' ||
 				format="$1"
 			;;
 		-h|--help) show_help
@@ -185,7 +184,7 @@ if [ -z "$no_specfile" ]; then
 	find_specfile
 
 	[ -s "$specfile" ] ||
-		fatal "No specfile found."
+		fatal 'No specfile found.'
 fi
 
 if [ -z "$no_rules" ]; then
@@ -193,7 +192,7 @@ if [ -z "$no_rules" ]; then
 		find_changelog_rules
 
 		[ -s "$changelog_rules" ] ||
-			fatal "No rules found."
+			fatal 'No rules found.'
 	fi
 	parse_changelog_rules
 fi
