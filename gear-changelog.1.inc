@@ -17,17 +17,19 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-gear\-changelog - generate changelog entry from git commit logs
+gear\-changelog \- generate changelog entry from git commit logs
 
 [DESCRIPTION]
-The utility makes filtering and reformatting git commit messages according
-predefined rules. Rules file should be present into repository.
+The utility filters and formats git commit messages according to
+rules file present in git repository.
 
-The utility shows only commits between
-.IR <since>
-and HEAD if
-.IR <since>
-present. Otherwise, last named commit used.
+If
+.I <since>
+is specified, then
+.B gear\-changelog
+shows only commits between
+.I <since>
+and HEAD. Otherwise, last named commit used.
 
 [ENVIRONMENT]
 .TP
@@ -42,4 +44,4 @@ Specifies a committer email.
 
 [SEE ALSO]
 .BR gear (1),
-.BR gear-changelog-rules (5).
+.BR gear\-changelog\-rules (5).
