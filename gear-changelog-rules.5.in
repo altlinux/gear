@@ -14,7 +14,7 @@
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 .
-.TH "GEAR-CHNAGELOG-RULES" "28" "Mar 2008" "gear @VERSION@" "File Formats"
+.TH "GEAR-CHNAGELOG-RULES" "5" "Mar 2008" "gear @VERSION@" "File Formats"
 .SH NAME
 gear\-changelog\-rules \- rule file for gear\-changelog
 .
@@ -23,8 +23,8 @@ gear\-changelog\-rules \- rule file for gear\-changelog
 .
 The rule file specifies actions of
 .BR gear-changelog (1)
-required to merge branches in the package repository. There are two types of
-directives: global and sectional. Global directives should be defined before
+required to filter and format got commit messages.  There are two types of
+directives: global and sectional.  Global directives should be defined before
 any sections.
 .
 .
@@ -46,7 +46,7 @@ Directive arguments are delimited by whitespace characters.
 .
 .TP
 .BI "width: <number>
-Set width of changelog messages 
+Set width of changelog messages.  Default is 70 symbols.
 .
 .
 .
@@ -54,20 +54,20 @@ Set width of changelog messages
 .
 .TP
 .BI "group: <TEXT>
-Directive begin new section. It contains a description of the group. This
-description will be used as group message for changelog.
+This directive begins a new section.  It should contain a description for this group.
+This description will be used as a group message in the changelog.
 .TP
 .BI "regexp: <PATTERN>
 Specifies the
 .IR <PATTERN>
-on which a commit message can be attributed to this group. You can specify
-more than one directives.
+on which a commit message can be attributed to this group.
+You can specify more than one directive of this kind.
 .TP
 .BI "filter: <SED-COMMAND>
-Directive set commands for
+Specify commands for
 .BR sed(1)
-utility to able change commit message before it will be written into
-changelog. You can specify more than one directives.
+utility to transform each commit message before it will be written into
+changelog.  You can specify more than one directive of this kind.
 .
 .
 .SH FILES
