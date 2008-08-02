@@ -1,7 +1,7 @@
 # Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 
 Name: gear
-Version: 1.4.0
+Version: 1.5.0
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -40,13 +40,26 @@ asciidoc QUICKSTART.ru.koi8
 
 %install
 %make_install install DESTDIR=%buildroot
+install -pDm644 contrib/gear-bash_completion %buildroot/etc/bash_completion.d/gear
 
 %files
+%config /etc/bash_completion.d/*
 %_bindir/*
 %_mandir/man?/*
 %doc QUICKSTART* ABOUT*
 
 %changelog
+* Fri Aug 01 2008 Dmitry V. Levin <ldv@altlinux.org> 1.5.0-alt1
+- gear-changelog: New utility for preparing changelog records
+  based on git commit messages (Alexey Gladkov).
+- gear-update-tag: New --verify option (Alexey Froloff).
+- gear-update: Add .gitignore file into empty directories like
+  gear-srpmimport does (Alexey Gladkov).
+- gear: New "compress" rule (Alexey Gladkov, me).
+- Added bash-completion functions for gear utilities (Alexey Gladkov).
+- gear-merge: Numerous changes (Alexey Froloff, Alexey Gladkov).
+- Various manpage cleanups (me).
+
 * Mon Mar 17 2008 Dmitry V. Levin <ldv@altlinux.org> 1.4.0-alt1
 - Changes made by Alexey Gladkov:
   + gear-merge: New utility to merge branches.
