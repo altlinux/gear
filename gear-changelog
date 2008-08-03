@@ -23,7 +23,7 @@
 
 rules="${RULES-}"
 main_tree_id='HEAD'
-releaser="$GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>"
+releaser="${GIT_AUTHOR_NAME-GIT_AUTHOR_NAME} <${GIT_AUTHOR_EMAIL-GIT_AUTHOR_EMAIL}>"
 changelog_rules='.gear/changelog'
 cwidth=70
 format='rpm'
