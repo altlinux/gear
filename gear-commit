@@ -28,6 +28,25 @@ rules="${RULES-}"
 main_tree_id=${TREE_ID:-HEAD}
 commitlog=
 
+show_help()
+{
+	cat <<EOF
+Usage: $PROG [options] [git-commit options] [--] <filepattern>...
+
+Options:
+
+  --spec=FILE         do not look for specfile in repository,
+                      use given FILE instead;
+  -m, --message=TEXT  use given TEXT for commit message;
+  -V, --version       print program version and exit;
+  -h, --help          show this text and exit.
+
+Report bugs to http://bugzilla.altlinux.org/
+
+EOF
+	exit
+}
+
 workdir=
 exit_handler()
 {
@@ -70,10 +89,7 @@ while :; do
 			[ -z "$specfile" ] ||
 				show_usage "Options --spec and --message are mutually exclusive."
 			;;
-		-h|--help)
-			git commit -h 2>&1 |
-				sed "s,\(/usr/bin/\)\?git-commit,$PROG [-h | --help] | [-V | --version] | [--spec <file>],g"
-			exit
+		-h|--help) show_help
 			;;
 		-V|--version) print_version
 			;;

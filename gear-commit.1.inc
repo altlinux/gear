@@ -21,24 +21,6 @@
 [NAME]
 gear\-commit \- invoke git\-commit using last changelog entry from spec file for commit message
 
-[OPTIONS]
-.TP
-\fB\-\-spec=\fR\fIFILE\fR
-do not look for specfile in repository, use given
-.I FILE
-instead;
-.TP
-\fB\-m\fR, \fB\-\-message\fR=\fITEXT\fR
-use given
-.I TEXT
-for commit message;
-.TP
-\fB\-V\fR, \fB\-\-version\fR
-print program version and exit;
-.TP
-\fB\-h\fR, \fB\-\-help\fR
-show this text and exit.
-
 [ENVIRONMENT]
 .TP
 .B GIT_DIR
