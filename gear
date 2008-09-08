@@ -598,8 +598,9 @@ command_helper='gear-command-tar'
 outdir=
 describe=
 do_commit=
-tar_compress=--gzip
 main_tree_id=HEAD
+gear_config_option tar_compress compress --gzip
+gear_config_option rules rules "$rules"
 while :; do
 	case "$1" in
 		--) shift; break
