@@ -668,7 +668,6 @@ gear_config_option()
 	subcmd=".${PROG#gear-}"
 	[ "$subcmd" != '.gear' ] || subcmd=
 	val="$(git config --get "gear$subcmd.$opt_name")" ||
-		val="$(git config --get "gear.$opt_name")" ||
 		val="$def_val"
 
 	eval "$var_name=\"$(quote_shell "$val")\""
