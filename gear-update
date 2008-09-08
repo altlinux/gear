@@ -221,13 +221,11 @@ update_destdir()
 workdir=
 destdir=
 dest_create=
-exit_handler()
+cleanup_handler()
 {
-	local rc=$?
-	trap - EXIT
 	[ -z "$workdir" ] ||
 		rm -rf -- "$workdir"
-	if [ "$rc" -gt 0 ]; then
+	if [ "$*" != 0 ]; then
 		# Rollback actions
 		if [ -d "$destdir" ]; then
 			find "$destdir" -mindepth 1 -maxdepth 1 \! -name '.git' -print0 |
@@ -243,7 +241,6 @@ exit_handler()
 		fi
 		message 'failed to update target directory.'
 	fi
-	exit $rc
 }
 
 TEMP=`getopt -n $PROG -o a,c,f,t:,s:,v,V,h -l all,create,exclude:,ignore-exclude,force,type:,subdir:,verbose,version,help -- "$@"` || show_usage
@@ -350,7 +347,7 @@ fi
 validate_subdir
 
 # Trap for rollback
-trap exit_handler HUP INT QUIT TERM EXIT
+install_cleanup_handler cleanup_handler
 
 # Remove $destdir
 if [ -z "$dest_create" ]; then

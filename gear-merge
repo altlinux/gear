@@ -89,18 +89,15 @@ set_current_branch() {
 
 restore_branch=
 workdir=
-exit_handler() {
-	local rc=$?
-	trap - EXIT
+cleanup_handler()
+{
 	[ -z "$workdir" ] ||
 		rm -rf -- "$workdir"
-
-	if [ "$rc" -eq 0 ]; then
+	if [ "$*" = 0 ]; then
 		set_current_branch
 		[ "$cur_branch" = "$restore_branch" ] ||
 			git checkout "$restore_branch"
 	fi
-	exit $rc
 }
 
 main_tree_id='HEAD'
@@ -357,7 +354,7 @@ fi
 set_current_branch
 restore_branch="$cur_branch"
 
-trap exit_handler HUP PIPE INT QUIT TERM EXIT
+install_cleanup_handler cleanup_handler
 workdir="$(mktemp -dt "$PROG.XXXXXXXX")"
 
 find_merge_rules

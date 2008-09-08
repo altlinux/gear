@@ -48,12 +48,9 @@ EOF
 }
 
 workdir=
-exit_handler()
+cleanup_handler()
 {
-	local rc=$?
-	trap - EXIT
 	[ -z "$workdir" ] || rm -rf -- "$workdir"
-	exit $rc
 }
 
 print_version()
@@ -110,14 +107,14 @@ chdir_to_toplevel
 
 if [ -z "$specfile" ]; then
 	if git cat-file -t "$main_tree_id" >/dev/null 2>&1; then
-		trap exit_handler HUP INT QUIT TERM EXIT
+		install_cleanup_handler cleanup_handler
 		workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
 
 		# Get specfile from archive.
 		find_specfile
 
 		rm -rf -- "$workdir"
-		trap - HUP INT QUIT TERM EXIT
+		uninstall_cleanup_handler
 		unset rules main_tree_id workdir
 	else
 		specfile="$(set +f; find_specfile_in_cwd '' *)" ||:

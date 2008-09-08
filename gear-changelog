@@ -124,11 +124,9 @@ parse_changelog_rules() {
 }
 
 workdir=
-exit_handler() {
-	local rc=$?
-	trap - EXIT
+cleanup_handler()
+{
 	[ -z "$workdir" ] || rm -rf -- "$workdir"
-	exit $rc
 }
 
 TEMP=`getopt -n $PROG -o 'f:,r:,h,V' -l 'format:,no-groups,no-rules,no-spec,rules:,help,version' -- "$@"` ||
@@ -176,7 +174,7 @@ chdir_to_toplevel
 [ -n "${since-}" ] ||
 	since="$(git describe --abbrev=0)"
 
-trap exit_handler HUP INT QUIT TERM EXIT
+install_cleanup_handler cleanup_handler
 workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
 
 if [ -z "$no_specfile" ]; then

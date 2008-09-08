@@ -85,11 +85,9 @@ sisyphus=
 repos=
 indir=
 
-exit_handler()
+cleanup_handler()
 {
-	local rc=$?
-	trap - EXIT
-	if [ "$rc" -eq 0 ]; then
+	if [ "$*" = 0 ]; then
 		if [ -n "$cleanup_repo" ]; then
 			rm -rf $verbose -- "$indir"
 		else
@@ -99,7 +97,6 @@ exit_handler()
 		[ -z "$indir" ] ||
 			message "Build failed.  You may wish to check \`\`$indir'' for leftovers."
 	fi
-	exit $rc
 }
 
 TEMP=$(getopt -n $PROG -o +h,q,V,v -l cleanup-repo,export-dir:,hasher:,prefix:,repo:,sisyphus,target:,help,quiet,verbose,version -- "$@")
@@ -172,7 +169,7 @@ done
 	verbose "No repositories given, assuming $repos..."
 }
 
-trap exit_handler HUP INT QUIT TERM EXIT
+install_cleanup_handler cleanup_handler
 
 save_IFS="$IFS"
 IFS="

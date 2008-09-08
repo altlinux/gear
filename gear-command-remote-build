@@ -156,13 +156,10 @@ remote_rpm()
 	EOF
 }
 
-exit_handler()
+cleanup_handler()
 {
-	local rc=$?
-	trap - EXIT
 	[ -z "${gear_command_cleanup-}" ] ||
 		remote_cleanup
-	exit $rc
 }
 
 [ -n "$method" ] ||
@@ -174,7 +171,7 @@ case "$method" in
 esac
 
 remote_srcdir="$workdir/$gear_pkg_name#$method"
-trap exit_handler HUP PIPE INT QUIT TERM EXIT
+install_cleanup_handler cleanup_handler
 
 args=
 while [ $# -gt 0 ]; do

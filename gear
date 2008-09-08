@@ -124,10 +124,8 @@ EOF
 
 tmpdir=
 tmp_commit_id=
-exit_handler()
+cleanup_handler()
 {
-	local rc=$?
-	trap - EXIT
 	if [ -n "$tmp_commit_id" ]; then
 		if [ "$(get_object_sha1 HEAD)" = "$tmp_commit_id" ] &&
 		   git reset --soft HEAD^; then
@@ -138,7 +136,6 @@ exit_handler()
 	fi
 	[ -z "$tmpdir" ] ||
 		rm -rf -- "$tmpdir"
-	exit $rc
 }
 
 write_compressed_file()
@@ -697,8 +694,8 @@ if [ -n "$update_spec" ]; then
 		fatal 'Unable to update specfile without appropriate command.'
 fi
 
+install_cleanup_handler cleanup_handler
 tmpdir="$(mktemp -dt "$PROG.XXXXXXXX")"
-trap exit_handler HUP PIPE INT QUIT TERM EXIT
 workdir="$tmpdir/work"
 mkdir "$workdir"
 if [ -z "$outdir" ]; then

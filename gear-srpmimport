@@ -62,10 +62,10 @@ EOF
 	exit
 }
 
-exit_handler()
+tmpdir=
+cleanup_handler()
 {
-	local rc=$?
-	trap - EXIT
+	[ -n "$tmpdir" ] || return 0
 	cd "$saved_cwd"
 	# Recover index file.
 	if [ -z "$index_already_recovered" ]; then
@@ -77,7 +77,6 @@ exit_handler()
 	# Recover HEAD.
 	[ "$branch_orig" = "refs/heads/$branch_import" ] ||
 		git symbolic-ref HEAD "$branch_orig"
-	exit $rc
 }
 
 # Heuristically shorten tar directory name.
@@ -542,8 +541,8 @@ chdir_to_toplevel
 # Save current work directory.
 saved_cwd="$(/bin/pwd)"
 
+install_cleanup_handler cleanup_handler
 tmpdir="$(mktemp -dt "$PROG.XXXXXXXX")"
-trap exit_handler HUP PIPE INT QUIT TERM EXIT
 workdir="$tmpdir/work"
 
 # Backup index file.

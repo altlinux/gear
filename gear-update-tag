@@ -25,12 +25,9 @@
 . gear-sh-functions
 
 tmpdir=
-exit_handler()
+cleanup_handler()
 {
-	local rc=$?
-	trap - EXIT
 	[ -z "$tmpdir" ] || rm -rf -- "$tmpdir"
-	exit $rc
 }
 
 print_version()
@@ -578,8 +575,8 @@ if [ -n "$tag_name" ] && [ -z "$delete" ]; then
 		fatal "Object $tag_value does not point to a commit"
 fi
 
+install_cleanup_handler cleanup_handler
 tmpdir="$(mktemp -dt "$PROG.XXXXXXXX")"
-trap exit_handler HUP PIPE INT QUIT TERM EXIT
 workdir="$tmpdir/work"
 mkdir "$workdir"
 tmp_tag_dir="$tmpdir/tags"

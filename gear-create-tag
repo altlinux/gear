@@ -61,12 +61,9 @@ EOF
 }
 
 workdir=
-exit_handler()
+cleanup_handler()
 {
-	local rc=$?
-	trap - EXIT
 	[ -z "$workdir" ] || rm -rf -- "$workdir"
-	exit $rc
 }
 
 TEMP=`getopt -n $PROG -o f,m:,n:,r:,u:,v,V,h -l force,key-id:,message:,name:,rules:,verbose,version,help -- "$@"` ||
@@ -118,11 +115,11 @@ chdir_to_toplevel
 main_commit_sha1="$(get_commit_sha1 "$main_tree_id")" ||
 	fatal "$main_tree_id: Invalid commit object name"
 
-trap exit_handler HUP INT QUIT TERM EXIT
+install_cleanup_handler cleanup_handler
 workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
 find_specfile
 rm -rf -- "$workdir"
-trap - HUP INT QUIT TERM EXIT
+uninstall_cleanup_handler
 
 [ -n "$tag_name" ] ||
 	tag_name='@version@-@release@'
