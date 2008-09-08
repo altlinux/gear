@@ -662,3 +662,15 @@ subst_NVR_from_spec_file()
 
 	subst_spec_keywords "$spec_name" "$spec_version" "$spec_release" "$@"
 }
+
+gear_config_option()
+{
+	local var_name="$1" opt_name="$2" def_val="$3"
+	local subcmd val
+
+	subcmd="${PROG#gear-}"
+	val="$(git config --get "gear.$subcmd.$opt_name" ||:)"
+	[ -n "$val" ] || val="$def_val"
+
+	eval "$var_name=\"$(quote_shell "$val")\""
+}
