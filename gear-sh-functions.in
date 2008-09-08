@@ -31,9 +31,6 @@ PROG_VERSION='@VERSION@'
 gear_short_options='r:,t:,h,q,v,V'
 gear_long_options='no-compress,commit,bzip2,gzip,command,hasher,rpmbuild,update-spec,export-dir:,describe,rules:,tree-ish:,help,quiet,verbose,version'
 
-quiet=
-verbose=
-
 lineno=
 rules=
 rules_error()
@@ -676,3 +673,8 @@ gear_config_option()
 
 	eval "$var_name=\"$(quote_shell "$val")\""
 }
+
+gear_config_option verbose verbose ''
+[ -z "$verbose" ] || verbose=-v
+gear_config_option quiet quiet ''
+[ -z "$quiet" ] || quiet=-q
