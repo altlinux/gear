@@ -76,8 +76,8 @@ eval set -- "$TEMP"
 force=
 keyid=
 opt_s='-s'
-tag_msg=
-tag_name=
+gear_config_option tag_name name '@version@-@release@'
+gear_config_option tag_msg message '@name@ @version@-@release@'
 main_tree_id='HEAD'
 while :; do
 	case "$1" in
@@ -123,11 +123,6 @@ workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
 find_specfile
 rm -rf -- "$workdir"
 trap - HUP INT QUIT TERM EXIT
-
-[ -n "$tag_name" ] ||
-	tag_name='@version@-@release@'
-[ -n "$tag_msg" ] ||
-	tag_msg='@name@ @version@-@release@'
 
 subst_NVR_from_spec_file '' tag_name tag_msg
 
