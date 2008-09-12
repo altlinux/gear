@@ -223,7 +223,7 @@ destdir=
 dest_create=
 cleanup_handler()
 {
-	[ -z "$workdir" ] ||
+	[ -z "$workdir" -o ! -d "$workdir" ] ||
 		rm -rf -- "$workdir"
 	if [ "$*" != 0 ]; then
 		# Rollback actions
@@ -386,6 +386,9 @@ case "$source_type" in
 esac
 [ -d "$destdir" ] ||
 	fatal "$destdir: result of extraction is not a directory."
+
+[ -z "$workdir" -o ! -d "$workdir" ] ||
+	rm -rf -- "$workdir"
 
 if [ -n "$exclude_pattern" ]; then
 	cd "$destdir"
