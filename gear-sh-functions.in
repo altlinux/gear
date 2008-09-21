@@ -31,9 +31,6 @@ PROG_VERSION='@VERSION@'
 gear_short_options='r:,t:,h,q,v,V'
 gear_long_options='no-compress,commit,bzip2,gzip,command,hasher,rpmbuild,update-spec,export-dir:,describe,rules:,tree-ish:,help,quiet,verbose,version'
 
-quiet=
-verbose=
-
 __cleanup_handler_name=
 __cleanup_handler()
 {
@@ -694,3 +691,21 @@ subst_NVR_from_spec_file()
 
 	subst_spec_keywords "$spec_name" "$spec_version" "$spec_release" "$@"
 }
+
+gear_config_option()
+{
+	local var_name="$1" opt_name="$2" def_val="$3"
+	local subcmd val
+
+	subcmd=".${PROG#gear-}"
+	[ "$subcmd" != '.gear' ] || subcmd=
+	val="$(git config --get "gear$subcmd.$opt_name")" ||
+		val="$def_val"
+
+	eval "$var_name=\"$(quote_shell "$val")\""
+}
+
+gear_config_option verbose verbose ''
+[ -z "$verbose" ] || verbose=-v
+gear_config_option quiet quiet ''
+[ -z "$quiet" ] || quiet=-q
