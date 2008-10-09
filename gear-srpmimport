@@ -416,7 +416,7 @@ import()
 	if spec="$(find_specfile_in_cwd "${srpm##*/}: " ${filelist})"; then
 		[ -z "${spec##$def_spec_pattern}" -o -z "${spec%%$def_spec_pattern}" ] ||
 			printf 'spec: %s\n' "$spec" >>"$gear_rules"
-		spec_version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$spec")"
+		spec_version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$spec" |sed 's/[[:space:]]\+$//')"
 	fi
 
 	rm -f "$index_orig"
