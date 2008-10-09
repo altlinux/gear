@@ -321,13 +321,13 @@ make_archive()
 
 get_diff_name()
 {
-	local old_dir="$1" && shift
-	local new_dir="$1" && shift
+	local old_d="$1" && shift
+	local new_d="$1" && shift
 
-	[ "$old_dir" != '.' ] || old_dir=
-	[ "$new_dir" != '.' ] || new_dir=
+	[ "$old_d" != '.' ] || old_d=
+	[ "$new_d" != '.' ] || new_d=
 
-	if [ -z "$new_dir" ]; then
+	if [ -z "$new_d" ]; then
 		diff_name='@name@-@version@-@release@.patch'
 	else
 		diff_name='@new_dir@-@version@-@release@.patch'
@@ -348,10 +348,18 @@ get_diff_name()
 	done
 
 	local subst_vars='diff_name diff_old_tree diff_new_tree'
-	subst_key_in_vars '@old_dir@' "$old_dir" $subst_vars
-	subst_key_in_vars '@new_dir@' "$new_dir" $subst_vars
-	subst_NVR_from_spec "$spec" $subst_vars
+	subst_key_in_vars '@old_dir@' "$old_d" $subst_vars
+	subst_key_in_vars '@new_dir@' "$new_d" $subst_vars
+	subst_NVR_from_spec "$spec" old_d new_d $subst_vars
 	check_name 'diff name' "$diff_name"
+	if [ -n "$old_d" -a "$old_d" != "$old_dir" ]; then
+		check_name 'old dir name' "$old_d"
+		old_dir="$old_d"
+	fi
+	if [ -n "$new_d" -a "$new_d" != "$new_dir" ]; then
+		check_name 'new dir name' "$new_d"
+		new_dir="$new_d"
+	fi
 }
 
 make_diff()
