@@ -1,11 +1,11 @@
 # Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 
 Name: gear
-Version: 1.5.0
+Version: 1.5.1
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
-License: GPL
+License: GPLv2+
 Group: Development/Other
 Packager: Dmitry V. Levin <ldv@altlinux.org>
 BuildArch: noarch
@@ -49,6 +49,23 @@ install -pDm644 contrib/gear-bash_completion %buildroot/etc/bash_completion.d/ge
 %doc QUICKSTART* ABOUT*
 
 %changelog
+* Thu Oct 09 2008 Dmitry V. Levin <ldv@altlinux.org> 1.5.1-alt1
+- gear-commit: Fix help message (Alexey Gladkov; closes: #16690).
+- gear-changelog: Use git-config if GIT_AUTHOR_* is not set (Alexey Gladkov; closes: #16705).
+- gear-update (Alexey Gladkov; closes: #17075):
+  + Don't try to remove destdir in empty repository.
+  + Remove temp directory before adding destdir into repository.
+- gear-sh-functions.in (Alexey Froloff):
+  + gear_config_option: New function, to use git config for option storage.
+  + Fetch --verbose and --quiet options defaults from git config.
+- gear-create-tag: Fetch --name and --message defaults from git config (Alexey Froloff).
+- gear-changelog: Fetch releaser name and email defaults from git config (Alexey Froloff).
+- gear: Fetch compress method and --rules options from git config (Alexey Froloff).
+- Fixed signal handler exit code.
+- gear-sh-functions.in (get_NVR_from_spec), gear-srpmimport:
+  Allow and strip trailing whitespaces in name/version/release.
+- gear: Implement keywords substitution in directory names.
+
 * Fri Aug 01 2008 Dmitry V. Levin <ldv@altlinux.org> 1.5.0-alt1
 - gear-changelog: New utility for preparing changelog records
   based on git commit messages (Alexey Gladkov).
