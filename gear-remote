@@ -32,6 +32,7 @@ show_help()
 	<workdir>  - working directory onto <hostname>.
 
 	Options:
+	  --remote-repo         make remote repository and do not download results;
 	  --build-only          do not download results onto current host;
 	  --cleanup-repo        cleanup hasher workdir on remote host;
 	  --commit              make temporary commit prior to extract;
@@ -74,13 +75,16 @@ esac
 
 GETOPT_ALLOW_UNKNOWN=1
 GETOPT_ALLOW_ABBREV=
-TEMP=`getopt -n $PROG -o m:,o:,r:,t:,v,V,h -l build-only,cleanup,commit,method:,rules:,target:,tree-ish:,outdir:,verbose,version,help -- "$@"` ||
+TEMP=`getopt -n $PROG -o m:,o:,r:,t:,v,V,h -l build-only,cleanup,commit,method:,remote-repo,rules:,target:,tree-ish:,outdir:,verbose,version,help -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
 rules=
 do_commit=
 main_tree_id=
+
+gear_command_remote_repo=
+gear_command_build_only=
 
 while :; do
 	case "$1" in
@@ -93,10 +97,17 @@ while :; do
 	    --commit)
 		do_commit=1
 		;;
+	    --remote-repo)
+		[ "$gear_command_method" != 'rpm' ] ||
+			show_usage 'Option --method=rpm with --remote-repo does not make sense.'
+		gear_command_remote_repo=1
+		;;
 	    --target) shift
 		gear_command_target="$1"
 		;;
 	    -m|--method) shift
+		[ "$1" != 'rpm' -o -z "$gear_command_remote_repo" ] ||
+			show_usage 'Option --method=rpm with --remote-repo does not make sense.'
 		gear_command_method="$1"
 		;;
 	    -o|--outdir)
@@ -143,6 +154,7 @@ done
 
 export gear_command_server gear_command_workdir gear_command_method gear_command_target
 export gear_command_outdir gear_command_build_only gear_command_cleanup
+export gear_command_remote_repo
 
 eval gear \
 	$verbose \

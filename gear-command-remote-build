@@ -29,6 +29,9 @@ server="${gear_command_server-}"
 workdir="${gear_command_workdir-}"
 method="${gear_command_method-}"
 
+not_remote_repo=1
+[ -z "${gear_command_remote_repo-}" ] || not_remote_repo=
+
 args=
 remote_srcdir=
 
@@ -51,8 +54,8 @@ remote_prepare()
 	ssh "$server" "sh -efu"<<-EOF
 	rm -rf -- '$workdir/out'
 	mkdir $verbose -p -- \
-		'$workdir/out/bin' \
-		'$workdir/out/src' \
+		${not_remote_repo:+'$workdir/out/bin'} \
+		${not_remote_repo:+'$workdir/out/src'} \
 		'$workdir/build' \
 		'$remote_srcdir'
 	EOF
@@ -90,8 +93,8 @@ remote_hsh()
 	$target \
 	   hsh $args \
 	      ${target:+--target='$target'} \
-	      --repo-bin='$workdir/out/bin' \
-	      --repo-src='$workdir/out/src' \
+	      ${not_remote_repo:+--repo-bin='$workdir/out/bin'} \
+	      ${not_remote_repo:+--repo-src='$workdir/out/src'} \
 	      -- '$workdir/build' '$remote_srcdir/$pkgname'
 	EOF
 }
@@ -122,8 +125,8 @@ remote_gear()
 	   gear $verbose --hasher -- \
 	      hsh $args \
 	         ${target:+--target='$target'} \
-	         --repo-bin='$workdir/out/bin' \
-	         --repo-src='$workdir/out/src' \
+	         ${not_remote_repo:+--repo-bin='$workdir/out/bin'} \
+	         ${not_remote_repo:+--repo-src='$workdir/out/src'} \
 	         -- '$workdir/build'
 	EOF
 }
@@ -182,5 +185,5 @@ done
 remote_prepare
 remote_$method
 
-[ -n "${gear_command_build_only-}" ] ||
+[ -n "${gear_command_build_only-}" -o -z "$not_remote_repo" ] ||
 	rsync $verbose -rtlp "$server:$workdir/out/" "$outdir/"
