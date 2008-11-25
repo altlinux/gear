@@ -259,6 +259,7 @@ get_tar_name()
 	if [ -n "$dir" -a "$dir" != "$dir_name_base" ]; then
 		check_name 'dir name' "$dir"
 		dir_name="$dir_name_prefix$dir"
+		check_path 'dir path' "$dir_name"
 	fi
 	check_name 'tar name' "$tar_name"
 	[ -n "${subst_vars##*tar_base*}" ] ||
@@ -371,10 +372,12 @@ get_diff_name()
 	if [ -n "$old_d" -a "$old_d" != "$old_dir" ]; then
 		check_name 'old dir name' "$old_d"
 		old_dir="$old_d_prefix$old_d"
+		check_path 'old dir path' "$old_dir"
 	fi
 	if [ -n "$new_d" -a "$new_d" != "$new_dir" ]; then
 		check_name 'new dir name' "$new_d"
 		new_dir="$new_d_prefix$new_d"
+		check_path 'new dir path' "$new_dir"
 	fi
 }
 
