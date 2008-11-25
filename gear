@@ -214,7 +214,7 @@ get_tar_name()
 	local dir_name_prefix="${dir_name%/*}"
 	local dir_name_base="${dir_name##*/}"
 
-	if [ "$dir_name" = "$dir_name_prefix" ]; then
+	if [ -z "$dir_name_prefix" -o "$dir_name" = "$dir_name_prefix" ]; then
 		dir_name_prefix=
 	else
 		dir_name_prefix="$dir_name_prefix/"
@@ -324,6 +324,22 @@ get_diff_name()
 	local old_d="$1" && shift
 	local new_d="$1" && shift
 
+	local old_d_prefix="${old_d%/*}"
+	if [ -z "$old_d_prefix" -o "$old_d" = "$old_d_prefix" ]; then
+		old_d_prefix=
+	else
+		old_d_prefix="$old_d_prefix/"
+	fi
+	old_d="${old_d##*/}"
+
+	local new_d_prefix="${new_d%/*}"
+	if [ -z "$new_d_prefix" -o "$new_d" = "$new_d_prefix" ]; then
+		new_d_prefix=
+	else
+		new_d_prefix="$new_d_prefix/"
+	fi
+	new_d="${new_d##*/}"
+
 	[ "$old_d" != '.' ] || old_d=
 	[ "$new_d" != '.' ] || new_d=
 
@@ -354,11 +370,11 @@ get_diff_name()
 	check_name 'diff name' "$diff_name"
 	if [ -n "$old_d" -a "$old_d" != "$old_dir" ]; then
 		check_name 'old dir name' "$old_d"
-		old_dir="$old_d"
+		old_dir="$old_d_prefix$old_d"
 	fi
 	if [ -n "$new_d" -a "$new_d" != "$new_dir" ]; then
 		check_name 'new dir name' "$new_d"
-		new_dir="$new_d"
+		new_dir="$new_d_prefix$new_d"
 	fi
 }
 
@@ -412,7 +428,7 @@ make_difference()
 	diff_new_tree="${new_dir%%:*}"
 	new_dir="${new_dir#*:}"
 
-	get_diff_name "$(basename -- "$old_dir")" "$(basename -- "$new_dir")" "$@"
+	get_diff_name "$old_dir" "$new_dir" "$@"
 
 	diff_old_tree="$(resolve_tree_base_name "$diff_old_tree")" ||
 		rules_error "Invalid old tree: $diff_old_tree"
