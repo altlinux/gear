@@ -128,9 +128,9 @@ if [ -z "$commitlog" ]; then
 	vr="$(sed -ne '/^[[:space:]]*%changelog[[:space:]]*$/{n; s/\* .* \([^[:space:]]\+\)$/\1/p}' "$specfile")"
 	ch="$(sed -ne '0,/^[[:space:]]*%changelog[[:space:]]*$/d;2,/^* /{/^* /!p}' "$specfile")"
 	[ -z "$vr$ch" ] ||
-		commitlog="\"$(quote_shell "${vr:+$vr}
+		commitlog="\"$(quote_shell "$vr
 
-$ch")\""
+$ch" |sed s/%%/%/g)\""
 	unset ch vr specfile
 fi
 
