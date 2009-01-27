@@ -397,7 +397,14 @@ if [ -n "$exclude_pattern" ]; then
 	cd - >/dev/null
 fi
 
-find "$destdir" -type d -empty -exec touch -- '{}/.gitignore' ';'
+if [ -n "$(find "$destdir" -maxdepth 0 -empty)" ]; then
+	echo '.gitattributes export-ignore' >"$destdir/export-ignore"
+else
+	export_ignore="$(mktemp -- "$destdir/$PROG.XXXXXXXX")"
+	echo '.gitattributes export-ignore' >"$export_ignore"
+	find "$destdir" -type d -empty -exec ln -- "$export_ignore" '{}/.gitattributes' ';'
+	rm -- "$export_ignore"
+fi
 
 if [ -n "$ignore_exclude" ]; then
 	git ls-files -z -- "$destdir" |

@@ -264,10 +264,12 @@ import_tree()
 	esac || broken=1
 	chmod -Rf u+rwX,go-w "$subdir" || broken=1
 
-	# Add empty .gitignore file to each empty directory.
-	[ -n "$broken" ] ||
-		find "$subdir" -type d -empty -exec touch -- '{}/.gitignore' ';' ||
+	if [ -z "$broken" ]; then
+		# Add .gitattributes export-ignore file to each empty directory.
+		echo '.gitattributes export-ignore' >"$tmpdir/export-ignore" &&
+		find "$subdir" -type d -empty -exec ln -- "$tmpdir/export-ignore" '{}/.gitattributes' ';' ||
 			broken=1
+	fi
 
 	if [ -n "$broken" ]; then
 		# Archive is broken, store it as a file.
