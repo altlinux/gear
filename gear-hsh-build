@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 #
-# Copyright (C) 2006-2007  Sir Raorn <raorn@altlinux.org>
+# Copyright (C) 2006-2007  Alexey I. Froloff <raorn@altlinux.org>
 # Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 #
@@ -27,9 +27,9 @@ print_version()
 {
     cat <<EOF
 $PROG version $PROG_VERSION
-Written by Sir Raorn <raorn@altlinux.org>
+Written by Alexey I. Froloff <raorn@altlinux.org>
 
-Copyright (C) 2006-2007  Sir Raorn <raorn@altlinux.org>
+Copyright (C) 2006-2007  Alexey I. Froloff <raorn@altlinux.org>
 Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 This is free software; see the source for copying conditions.  There is NO

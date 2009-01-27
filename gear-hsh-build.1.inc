@@ -1,4 +1,4 @@
-.\" Copyright (C) 2006  Sir Raorn <raorn@altlinux.org>
+.\" Copyright (C) 2006  Alexey I. Froloff <raorn@altlinux.org>
 .\" Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 .\" Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 .\"

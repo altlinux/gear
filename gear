@@ -1,7 +1,7 @@
 #!/bin/sh -efu
 #
 # Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
-# Copyright (C) 2006  Sir Raorn <raorn@altlinux.org>
+# Copyright (C) 2006,2008  Alexey I. Froloff <raorn@altlinux.org>
 # Copyright (C) 2006-2008  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 # Copyright (C) 2006  Fr. Br. George <george@altlinux.org>
@@ -76,7 +76,7 @@ $PROG version $PROG_VERSION
 Written by Dmitry V. Levin <ldv@altlinux.org>
 
 Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
-Copyright (C) 2006  Sir Raorn <raorn@altlinux.org>
+Copyright (C) 2006,2008  Alexey I. Froloff <raorn@altlinux.org>
 Copyright (C) 2006-2008  Alexey Gladkov <legion@altlinux.org>
 Copyright (C) 2006-2007  Sergey Vlasov <vsu@altlinux.org>
 Copyright (C) 2006  Fr. Br. George <george@altlinux.org>

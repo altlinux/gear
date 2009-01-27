@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2007  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2007-2008  Dmitry V. Levin <ldv@altlinux.org>
+# Copyright (C) 2008  Alexey I. Froloff <raorn@altlinux.org>
 #
 # gear-create-tag - create a signed release tag object.
 #
