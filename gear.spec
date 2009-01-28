@@ -28,15 +28,15 @@ BuildPreReq: asciidoc, git-core, help2man, libshell >= 0:0.0.3-alt1
 
 %description
 This package contains a few utilities for managing gear repositories.
-See %_docdir/%name-%version/QUICKSTART.ru_RU.KOI8-R for details.
+See %_docdir/%name-%version/QUICKSTART.ru_RU.UTF-8 for details.
 
 %prep
 %setup -q
 
 %build
 %make_build
-asciidoc ABOUT.ru.koi8
-asciidoc QUICKSTART.ru.koi8
+asciidoc ABOUT.ru.utf8
+asciidoc QUICKSTART.ru.utf8
 
 %install
 %make_install install DESTDIR=%buildroot
