@@ -1,7 +1,7 @@
 # Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 
 Name: gear
-Version: 1.5.1
+Version: 1.5.2
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -49,6 +49,18 @@ install -pDm644 contrib/gear-bash_completion %buildroot/etc/bash_completion.d/ge
 %doc QUICKSTART* ABOUT*
 
 %changelog
+* Wed Jan 28 2009 Dmitry V. Levin <ldv@altlinux.org> 1.5.2-alt1
+- gear: make_compress(): Added keywords support in the name option (Alexey Gladkov).
+- gear-update-tag: Added 'compress' directive (Alexey Gladkov; closes: #17624).
+- gear-remote: Added --remote-repo (Alexey Gladkov; closes: #17865).
+- gear: Fixed "diff" rule misbehavior (closes: ALT#17751).
+- gear (get_tar_name, get_diff_name): Do check_path on modified path.
+- gear-update-tag: chdir to toplevel directory (closes: ALT#18029).
+- gear-commit: Unquote %%%% in changelog text.
+- gear-srpmimport, gear-update: Use .gitattributes export-ignore
+  instead of .gitignore to import empty directories.
+- ABOUT.ru, QUICKSTART.ru: Converted from koi8r to utf8.
+
 * Thu Oct 09 2008 Dmitry V. Levin <ldv@altlinux.org> 1.5.1-alt1
 - gear-commit: Fix help message (Alexey Gladkov; closes: #16690).
 - gear-changelog: Use git-config if GIT_AUTHOR_* is not set (Alexey Gladkov; closes: #16705).
