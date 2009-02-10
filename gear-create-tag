@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 #
-# Copyright (C) 2007  Alexey Gladkov <legion@altlinux.org>
+# Copyright (C) 2007-2009  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2007-2008  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2008  Alexey I. Froloff <raorn@altlinux.org>
 #
@@ -50,7 +50,6 @@ Options:
   -m, --message=TEXT    override custom tag message (default: <NAME> <VERSION>-<RELEASE>);
   -n, --name=TEXT       override custom tag name (default: <VERSION>-<RELEASE>);
   -r, --rules=FILENAME  override rules file name;
-  -q, --quiet           try to be more quiet;
   -v, --verbose         print a message for each action;
   -V, --version         print program version and exit;
   -h, --help            show this text and exit.
