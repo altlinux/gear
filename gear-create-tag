@@ -47,9 +47,12 @@ Usage: $PROG [commit-ish]
 Options:
   -f, --force           replace an existing tag (instead of failing);
   -u, --key-id=KEYID    use the given GPG key to create a signed tag;
-  -m, --message=TEXT    override custom tag message (default: <NAME> <VERSION>-<RELEASE>);
-  -n, --name=TEXT       override custom tag name (default: <VERSION>-<RELEASE>);
+  -m, --message=TEXT    override custom tag message
+                        (default: <NAME> <VERSION>-<RELEASE>);
+  -n, --name=TEXT       override custom tag name
+                        (default: <VERSION>-<RELEASE>);
   -r, --rules=FILENAME  override rules file name;
+  -t, --time=DATE-FMT   set the date used in tag;
   -v, --verbose         print a message for each action;
   -V, --version         print program version and exit;
   -h, --help            show this text and exit.
@@ -66,7 +69,7 @@ cleanup_handler()
 	[ -z "$workdir" ] || rm -rf -- "$workdir"
 }
 
-TEMP=`getopt -n $PROG -o f,m:,n:,r:,u:,v,V,h -l force,key-id:,message:,name:,rules:,verbose,version,help -- "$@"` ||
+TEMP=`getopt -n $PROG -o f,m:,n:,r:,t:,u:,v,V,h -l force,key-id:,message:,name:,rules:,time:,verbose,version,help -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
@@ -85,6 +88,10 @@ while :; do
 	    -n|--name) shift; tag_name="$1"
 		;;
 	    -r|--rules) shift; rules="$1"
+		;;
+	    -t|--time) shift
+		[ -z "$1" ] ||
+			export GIT_COMMITTER_DATE="$1"
 		;;
 	    -u|--key-id) shift; keyid="$1"; opt_s=
 		;;
