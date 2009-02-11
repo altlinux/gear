@@ -85,7 +85,7 @@ shorten_dir_name()
 	local name="$1"; shift
 	local short
 	short="$(printf %s "$name" |
-		 LC_COLLATE=C sed -e 's/\(-[[:alpha:]]*[0-9]\+\([.[:alpha:]]\+[.[:alnum:]]*\)\?\)\+$//')"
+		 LC_COLLATE=C sed 's/\(-[[:alpha:]]*[0-9]\+\([.[:alpha:]]\+[.[:alnum:]]*\)\?\)\+$//')"
 	if [ -n "$short" -a "$short" != "$name" ] &&
 	   [ ! -e "$short" ]; then
 		name="$short"
@@ -101,22 +101,22 @@ optimize_rules()
 	[ -s "$rules" ] || return 0
 
 	tmp="$(mktemp rules.XXXXXX)"
-	sed -ne 's/^[^:]\+: [^ ]*\.\([^ .]\+\).*/\1/p' "$rules" |
+	sed -n 's/^[^:]\+: [^ ]*\.\([^ .]\+\).*/\1/p' "$rules" |
 		LC_COLLATE=C sort -u |
 		while read suffix; do
 			local quoted
 			quoted="$(quote_sed_regexp "$suffix")"
-			method="$(sed -ne 's/^\([^:]\+\): [^ ]*\.'"$quoted"'$/\1/p' "$rules" |LC_COLLATE=C sort -u)"
+			method="$(sed -n 's/^\([^:]\+\): [^ ]*\.'"$quoted"'$/\1/p' "$rules" |LC_COLLATE=C sort -u)"
 			case "$method" in
 				copy|gzip|bzip2)
 					printf '%s: *.%s\n' "$method" "$suffix"
 					;;
 				*)
-					sed -ne 's/^[^:]\+: [^ ]*\.'"$quoted"'$/&/p' "$rules"
+					sed -n 's/^[^:]\+: [^ ]*\.'"$quoted"'$/&/p' "$rules"
 					;;
 			esac
 		done >"$tmp"
-	sed -ne 's/^[^:]\+: \([^ ]\+ .*\|[^ .]\+$\)/&/p' "$rules" >>"$tmp"
+	sed -n 's/^[^:]\+: \([^ ]\+ .*\|[^ .]\+$\)/&/p' "$rules" >>"$tmp"
 	mv "$tmp" "$rules"
 	git update-index --add ${verbose:+--verbose} -- "$rules"
 }
@@ -134,7 +134,7 @@ list_tar_toplevel_nondir()
 	local f="$1"; shift
 
 	tar -tvf "$f" |
-		sed -ne 's/^[^d]\([^[:space:]]\+[[:space:]]\+\)\{5\}\([^/]\+\)$/\2/p'
+		sed -n 's/^[^d]\([^[:space:]]\+[[:space:]]\+\)\{5\}\([^/]\+\)$/\2/p'
 }
 
 list_zip_toplevel_nondir()
@@ -142,7 +142,7 @@ list_zip_toplevel_nondir()
 	local f="$1"; shift
 
 	zipinfo --h-t -- "$f" |
-		sed -ne 's/^[^d]\([^[:space:]]\+[[:space:]]\+\)\{8\}\([^/]\+\)$/\2/p'
+		sed -n 's/^[^d]\([^[:space:]]\+[[:space:]]\+\)\{8\}\([^/]\+\)$/\2/p'
 }
 
 spec_version=
@@ -399,8 +399,8 @@ import()
 		fatal "$srpm: Not a valid source rpm package"
 
 	author="$(rpmquery -p --qf '%|CHANGELOGNAME?{%{CHANGELOGNAME}}|' -- "$srpm" |
-		sed -ne 's/^\([^<]*<[^@]\+\(@\| at \)[^@]\+>\).*/\1/p' |
-		sed -e s/alt-linux/altlinux/g)"
+		sed -n 's/^\([^<]*<[^@]\+\(@\| at \)[^@]\+>\).*/\1/p' |
+		sed s/alt-linux/altlinux/g)"
 
 	# Use own directory for checkout.
 	rm -rf "$workdir"
