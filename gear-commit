@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 #
-# Copyright (C) 2006-2008  Alexey Gladkov <legion@altlinux.org>
+# Copyright (C) 2006-2009  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 #
@@ -37,6 +37,8 @@ Options:
 
   --spec=FILE         do not look for specfile in repository,
                       use given FILE instead;
+  --no-edit           do not edit the message taken from changelog
+                      entry or with -m option;
   -m, --message=TEXT  use given TEXT for commit message;
   -V, --version       print program version and exit;
   -h, --help          show this text and exit.
@@ -59,7 +61,7 @@ print_version()
 $PROG version $PROG_VERSION
 Written by Alexey Gladkov <legion@altlinux.org>
 
-Copyright (C) 2006-2008  Alexey Gladkov <legion@altlinux.org>
+Copyright (C) 2006-2009  Alexey Gladkov <legion@altlinux.org>
 Copyright (C) 2006-2007  Dmitry V. Levin <ldv@altlinux.org>
 Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 This is free software; see the source for copying conditions.  There is NO
@@ -69,9 +71,10 @@ EOF
 }
 
 GETOPT_ALLOW_UNKNOWN=1
-TEMP=`getopt -n $PROG -o 'm:,h,V' -l 'message:,spec:,help,version' -- "$@"` || show_usage
+TEMP=`getopt -n $PROG -o 'm:,h,V' -l 'message:,no-edit,spec:,help,version' -- "$@"` || show_usage
 eval set -- "$TEMP"
 
+do_edit='--edit'
 commitlog=
 specfile=
 while :; do
@@ -80,6 +83,8 @@ while :; do
 			specfile="$1"
 			[ -z "$commitlog" ] ||
 				show_usage "Options --spec and --message are mutually exclusive."
+			;;
+		--no-edit) do_edit=
 			;;
 		-m|--message) shift
 			commitlog="$1"
@@ -134,4 +139,4 @@ $ch" |sed s/%%/%/g)\""
 	unset ch vr specfile
 fi
 
-eval git commit ${commitlog:+-m "$commitlog" --edit} $args
+eval git commit ${commitlog:+-m "$commitlog" $do_edit} $args
