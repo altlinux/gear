@@ -28,7 +28,7 @@ print_version()
 $PROG version $PROG_VERSION
 Written by Dmitry V. Levin <ldv@altlinux.org>
 
-Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
+Copyright (C) 2006-2009  Dmitry V. Levin <ldv@altlinux.org>
 Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -388,19 +388,33 @@ import()
 	verbose "Processing $srpm"
 	srpm="$(readlink -ev -- "$srpm")"
 
-	local header name verrel buildtime filelist changelog author
+	local header name verrel buildtime filelist changelogname changelog author_name author_email
 	header="$(od -A n -N 8 -t x1 -- "$srpm")" &&
 	[ -n "$header" -a -z "${header## ed ab ee db ?? ?? 00 01}" ] &&
 	name="$(rpmquery -p --qf '%{NAME}' -- "$srpm")" &&
 	verrel="$(rpmquery -p --qf '%{VERSION}-%{RELEASE}' -- "$srpm")" &&
 	buildtime="$(rpmquery -p --qf '%{BUILDTIME}' -- "$srpm")" &&
+	changelogname="$(rpmquery -p --qf '%|changelogname?{%{changelogname}}|' -- "$srpm")" &&
 	changelog="$(rpmquery -p --qf '%|CHANGELOGTEXT?{%{CHANGELOGTEXT}}|' -- "$srpm")" &&
 	filelist="$(rpm2cpio "$srpm" |cpio --list --quiet )" ||
 		fatal "$srpm: Not a valid source rpm package"
 
-	author="$(rpmquery -p --qf '%|CHANGELOGNAME?{%{CHANGELOGNAME}}|' -- "$srpm" |
-		sed -n 's/^\([^<]*<[^@]\+\(@\| at \)[^@]\+>\).*/\1/p' |
+	author_name="$(printf '%s\n' "$changelogname" |
+		sed -n 's/^\([^<]\+\)<[^@]\+\(@\| at \)[^@]\+>.*/\1/p' |
+		sed -e 's/^[[:space:]]\+//' -e 's/[[:space:]]\+$//')"
+	author_email="$(printf '%s\n' "$changelogname" |
+		sed -n 's/^[^<]*<\([^@]\+\(@\| at \)[^@]\+\)>.*/\1/p' |
+		sed -e 's/^[[:space:]]\+//' -e 's/[[:space:]]\+$//' |
 		sed s/alt-linux/altlinux/g)"
+	local GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
+	if [ -n "$author_name" ]; then
+		GIT_AUTHOR_NAME="$author_name"
+		export GIT_AUTHOR_NAME
+	fi
+	if [ -n "$author_email" ]; then
+		GIT_AUTHOR_EMAIL="$author_email"
+		export GIT_AUTHOR_EMAIL
+	fi
 
 	# Use own directory for checkout.
 	rm -rf "$workdir"
@@ -469,7 +483,7 @@ import()
 	fi
 
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
-		$git_commit_fast ${quiet:+-q} -a -m "$message" ${author:+--author "$author"} ||
+		$git_commit_fast ${quiet:+-q} -a -m "$message" ||
 			fatal "Failed to commit $srpm"
 	verbose "Committed $name $verrel"
 	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
