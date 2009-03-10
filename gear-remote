@@ -137,11 +137,8 @@ done
 [ "$#" -ge 2 ] ||
 	show_help
 
-gear_command_server="$1"; shift
-gear_command_workdir="$1"; shift
-
 args="$verbose"
-while [ $# -gt 0 ]; do
+while [ $# -gt 2 ]; do
 	case "$1" in
 		--target=*)
 			target="${1#--target=}"
@@ -151,6 +148,9 @@ while [ $# -gt 0 ]; do
 	args="$args \"$(quote_shell "$1")\""
 	shift
 done
+
+gear_command_server="$1"; shift
+gear_command_workdir="$1"; shift
 
 export gear_command_server gear_command_workdir gear_command_method gear_command_target
 export gear_command_outdir gear_command_build_only gear_command_cleanup
