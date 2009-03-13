@@ -28,7 +28,8 @@ Conflicts: hasher < 0:1.0.30
 BuildPreReq: asciidoc, git-core, help2man, libshell >= 0:0.0.3-alt1
 
 %description
-This package contains a few utilities for managing gear repositories.
+This package contains utilities for building RPM packages from GEAR
+repositories and managing GEAR repositories.
 See %_docdir/%name-%version/QUICKSTART.ru_RU.UTF-8 for details.
 
 %prep
