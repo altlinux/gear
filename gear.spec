@@ -1,7 +1,7 @@
 # Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 
 Name: gear
-Version: 1.5.2
+Version: 1.5.3
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -51,6 +51,14 @@ install -pDm644 contrib/gear-bash_completion %buildroot/etc/bash_completion.d/ge
 %doc QUICKSTART* ABOUT*
 
 %changelog
+* Fri Mar 13 2009 Dmitry V. Levin <ldv@altlinux.org> 1.5.3-alt1
+- gear-create-tag: Fixed usage, added --time option (Alexey Gladkov).
+- gear-srpmimport: Made --quiet mode more quiet.
+- gear-srpmimport: Enhanced changelog name parser.
+- gear-commit: Added --no-edit option (Alexey Gladkov).
+- gear-remote: Fixed options order (Alexey Gladkov; closes: #19073).
+- Added URL, updated %%description (closes: #18852).
+
 * Wed Jan 28 2009 Dmitry V. Levin <ldv@altlinux.org> 1.5.2-alt1
 - gear: make_compress(): Added keywords support in the name option (Alexey Gladkov).
 - gear-update-tag: Added 'compress' directive (Alexey Gladkov; closes: #17624).
