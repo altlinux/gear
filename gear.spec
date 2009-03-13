@@ -7,6 +7,7 @@ Release: alt1
 Summary: Get Every Archive from git package Repository
 License: GPLv2+
 Group: Development/Other
+Url: http://www.altlinux.org/Gear
 Packager: Dmitry V. Levin <ldv@altlinux.org>
 BuildArch: noarch
 
