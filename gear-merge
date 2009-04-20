@@ -153,17 +153,8 @@ parse_rule() {
 	done
 }
 
-quote_shell_light() {
-	local out="$*"
-	if [ -z "${out##*[\$\`\\\\]*}" ]; then
-		out="$(printf %s "$out" |sed -e 's/[$`\\]/\\&/g')" ||
-		return 1
-	fi
-	printf %s "$out"
-}
-
 interactive_parse_rules() {
-	local ans app_lineno cur_lineno max_lineno lineno
+	local ans args app_lineno cur_lineno max_lineno line lineno
 
 	cur_lineno=1
 	app_lineno=0
@@ -186,8 +177,9 @@ interactive_parse_rules() {
 				continue
 			fi
 
-			line="$(quote_shell_light "$line")"
-			eval parse_rule "$line"
+			quote_shell_args args "$line"
+			eval "set -- $args"
+			parse_rule "$@"
 
 			if [ $lineno -eq $app_lineno ]; then
 				branch_$cmd
