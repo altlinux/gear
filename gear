@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 #
-# Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
+# Copyright (C) 2006-2009  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006,2008  Alexey I. Froloff <raorn@altlinux.org>
 # Copyright (C) 2006-2008  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
@@ -75,7 +75,7 @@ print_version()
 $PROG version $PROG_VERSION
 Written by Dmitry V. Levin <ldv@altlinux.org>
 
-Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
+Copyright (C) 2006-2009  Dmitry V. Levin <ldv@altlinux.org>
 Copyright (C) 2006,2008  Alexey I. Froloff <raorn@altlinux.org>
 Copyright (C) 2006-2008  Alexey Gladkov <legion@altlinux.org>
 Copyright (C) 2006-2007  Sergey Vlasov <vsu@altlinux.org>
@@ -657,6 +657,7 @@ while :; do
 		--export-dir)
 			outdir="$(opt_check_dir "$1" "$2")"
 			shift
+			command_helper=
 			[ -z "$hasher$rpmbuild$describe$command" ] ||
 				show_usage 'Options --hasher, --rpmbuild, --export-dir, --command and --describe are mutually exclusive.'
 			;;
@@ -766,6 +767,9 @@ if [ -n "$update_spec" ]; then
 	cmp -s "$specfile" "$workdir/specfile" ||
 		fatal "Unable to update specfile: file $specfile differs from original specfile."
 fi
+
+[ -n "$command_helper$*" ] ||
+	exit 0
 
 gear_commit_id="${tmp_commit_id:-$main_commit_id}"
 gear_commit_id="$(get_object_sha1 "$gear_commit_id")" ||
