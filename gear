@@ -228,10 +228,8 @@ get_tar_name()
 	else
 		tar_name='@dir@-@version@'
 	fi
-	# Special non-empty marker.
-	tar_base=' '
 
-	local opt spec=
+	local opt spec= tar_base_set= tar_suffix_set=
 
 	for opt; do
 		case "$opt" in
@@ -241,8 +239,10 @@ get_tar_name()
 			name=*) tar_name="${opt#name=}"
 				;;
 			base=*) tar_base="${opt#base=}"
+				tar_base_set=1
 				;;
 			suffix=*) tar_suffix="${opt#suffix=}"
+				tar_suffix_set=1
 				;;
 			*) rules_error "Unrecognized option: $opt"
 				;;
@@ -250,8 +250,10 @@ get_tar_name()
 	done
 
 	local subst_vars='tar_name tar_tree'
-	[ -z "$tar_base" -o "$tar_base" = ' ' ] ||
+	[ -z "$tar_base" -o -z "$tar_base_set" ] ||
 		subst_vars="$subst_vars tar_base"
+	[ -z "$tar_suffix" -o -z "$tar_suffix_set" ] ||
+		subst_vars="$subst_vars tar_suffix"
 
 	subst_NVR_from_spec "$spec" dir $subst_vars
 	subst_key_in_vars '@dir@' "$dir" $subst_vars
@@ -264,6 +266,8 @@ get_tar_name()
 	check_name 'tar name' "$tar_name"
 	[ -n "${subst_vars##*tar_base*}" ] ||
 		check_name 'tar base' "$tar_base"
+	[ -n "${subst_vars##*tar_suffix*}" ] ||
+		check_name 'tar suffix' "$tar_suffix"
 }
 
 make_tar()
@@ -274,10 +278,10 @@ make_tar()
 	local tree="$1" && shift
 	local dir="$1" && shift
 	local name="${1##*/}" && shift
-	tar_base="$1" && shift
+	local tar_base="$1" && shift
 	local suffix="$1" && shift
 
-	[ "$tar_base" != ' ' ] ||
+	[ "$tar_base" != '/' ] ||
 		tar_base="$name"
 
 	local id
@@ -292,7 +296,7 @@ make_tar()
 	verbose "Extracted archive: $name.$format"
 	local archive_name
 	archive_name="$(compress_file "$cmd" "$name.$format")"
-	if [ "$suffix" != ' ' -a "$archive_name" != "$outdir/$name$suffix" ]; then
+	if [ "$suffix" != '/' -a "$archive_name" != "$outdir/$name$suffix" ]; then
 		mv "$archive_name" "$outdir/$name$suffix"
 		archive_name="$outdir/$name$suffix"
 	fi
@@ -313,7 +317,10 @@ make_archive()
 	local dir_name="${tree_path#*:}"
 	tar_tree="${tree_path%%:*}"
 
-	local tar_suffix=' '
+	local tar_base tar_suffix
+	# Special non-empty marker.
+	tar_base='/'
+	tar_suffix='/'
 	get_tar_name "$@"
 
 	tar_tree="$(resolve_tree_base_name "$tar_tree")" || return 1
