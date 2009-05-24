@@ -114,7 +114,7 @@ find_tags_in_tar_options()
 	for opt; do
 		case "$opt" in
 			spec=*) spec="${opt#spec=}"
-				check_path specfile "$spec"
+				check_pathname specfile "$spec"
 				;;
 			name=*|base=*)
 				;;
@@ -158,7 +158,7 @@ find_tags_in_diff_options()
 	for opt; do
 		case "$opt" in
 			spec=*) spec="${opt#spec=}"
-				check_path specfile "$spec"
+				check_pathname specfile "$spec"
 				;;
 			name=*)
 				;;

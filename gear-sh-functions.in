@@ -163,7 +163,9 @@ cat_blob()
 		rules_error "blob \"$name\" not found in \"$tree\""
 }
 
-check_path()
+# Check that given variable contains non-empty path without directory
+# traversal.
+check_pathname()
 {
 	local name="$1" && shift
 	local value="$1" && shift
@@ -179,7 +181,9 @@ check_path()
 		rules_error "Invalid $name \"$value\" specified"
 }
 
-check_name()
+# Check that given variable contains non-empty file name without directory
+# separators or directory traversal.
+check_filename()
 {
 	local name="$1" && shift
 	local value="$1" && shift
@@ -187,7 +191,8 @@ check_name()
 	[ -n "$value" ] ||
 		rules_error "Empty $name \"$value\" specified"
 
-	[ -z "$(printf %s "$value" |tr -d '[:alnum:]_.+-')" ] ||
+	[ "$value" != '..' -a \
+	  -n "${value##*/*}" ] ||
 		rules_error "Invalid $name \"$value\" specified"
 }
 
@@ -272,7 +277,7 @@ get_filename_from_rules()
 
 	[ `printf %s "$file" |wc -l` -le 0 ] ||
 		rules_error "More than one $name specified"
-	check_path "$name" "$file"
+	check_pathname "$name" "$file"
 	printf %s "$file"
 }
 
@@ -596,7 +601,7 @@ parse_tree_path()
 		path="$value"
 		value=".:$value"
 	fi
-	check_path "$name" "$path"
+	check_pathname "$name" "$path"
 	printf %s "$value"
 }
 
@@ -651,7 +656,7 @@ subst_key()
 	eval "var_value=\"\$$var_name\""
 
 	if [ "$var_value" != "${var_value#*$key_name*}" ]; then
-		check_name "$key_name" "$key_value"
+		check_filename "$key_name" "$key_value"
 		quoted="$(quote_sed_regexp "$key_value")"
 		var_value="$(printf %s "$var_value" |sed "s/$key_name/$quoted/g")"
 		eval "$var_name=\"$(quote_shell "$var_value")\""

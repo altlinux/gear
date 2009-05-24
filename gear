@@ -238,7 +238,7 @@ get_tar_name()
 	for opt; do
 		case "$opt" in
 			spec=*) spec="${opt#spec=}"
-				check_path specfile "$spec"
+				check_pathname specfile "$spec"
 				;;
 			name=*) tar_name="${opt#name=}"
 				;;
@@ -263,15 +263,15 @@ get_tar_name()
 	subst_key_in_vars '@dir@' "$dir" $subst_vars
 
 	if [ -n "$dir" -a "$dir" != "$dir_name_base" ]; then
-		check_name 'dir name' "$dir"
+		check_filename 'dir name' "$dir"
 		dir_name="$dir_name_prefix$dir"
-		check_path 'dir path' "$dir_name"
+		check_pathname 'dir path' "$dir_name"
 	fi
-	check_name 'tar name' "$tar_name"
+	check_filename 'tar name' "$tar_name"
 	[ -n "${subst_vars##*tar_base*}" ] ||
-		check_name 'tar base' "$tar_base"
+		check_filename 'tar base' "$tar_base"
 	[ -n "${subst_vars##*tar_suffix*}" ] ||
-		check_name 'tar suffix' "$tar_suffix"
+		check_filename 'tar suffix' "$tar_suffix"
 }
 
 write_git_archive()
@@ -366,7 +366,7 @@ get_diff_name()
 	for opt; do
 		case "$opt" in
 			spec=*) spec="${opt#spec=}"
-				check_path specfile "$spec"
+				check_pathname specfile "$spec"
 				;;
 			name=*) diff_name="${opt#name=}"
 				;;
@@ -379,16 +379,16 @@ get_diff_name()
 	subst_key_in_vars '@old_dir@' "$old_d" $subst_vars
 	subst_key_in_vars '@new_dir@' "$new_d" $subst_vars
 	subst_NVR_from_spec "$spec" old_d new_d $subst_vars
-	check_name 'diff name' "$diff_name"
+	check_filename 'diff name' "$diff_name"
 	if [ -n "$old_d" -a "$old_d" != "$old_dir" ]; then
-		check_name 'old dir name' "$old_d"
+		check_filename 'old dir name' "$old_d"
 		old_dir="$old_d_prefix$old_d"
-		check_path 'old dir path' "$old_dir"
+		check_pathname 'old dir path' "$old_dir"
 	fi
 	if [ -n "$new_d" -a "$new_d" != "$new_dir" ]; then
-		check_name 'new dir name' "$new_d"
+		check_filename 'new dir name' "$new_d"
 		new_dir="$new_d_prefix$new_d"
-		check_path 'new dir path' "$new_dir"
+		check_pathname 'new dir path' "$new_dir"
 	fi
 }
 
@@ -419,7 +419,7 @@ write_git_diff()
 	git diff-tree --patch-with-stat --text --no-renames --no-ext-diff \
 		"$old_id" "$new_id" >"$outdir/$name"
 	verbose "Extracted diff: $name"
-	compress_file "$cmd" "$name"> /dev/null
+	compress_file "$cmd" "$name" >/dev/null
 }
 
 make_difference()
@@ -519,7 +519,7 @@ make_compress()
 			name=*)
 				target_name="${1#name=}"
 				subst_NVR_from_spec_file '' target_name
-				check_name 'target name' "$target_name"
+				check_filename 'target name' "$target_name"
 				;;
 			type=*)
 				cmd="${1#type=}"
