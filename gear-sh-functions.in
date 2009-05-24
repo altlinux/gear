@@ -168,6 +168,9 @@ check_path()
 	local name="$1" && shift
 	local value="$1" && shift
 
+	[ -n "$value" ] ||
+		rules_error "Empty $name \"$value\" specified"
+
 	[ "$value" != '..' -a \
 	  -n "${value##/*}" -a \
 	  -n "${value##../*}" -a \
