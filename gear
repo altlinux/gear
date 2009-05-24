@@ -27,22 +27,18 @@
 #  rules is plain text file, where each meaningful line has following format:
 #  directive: args
 #
-#  Valid directives are:
-#    spec, tags, copy, diff, diff.gz, diff.bz2, gzip, bzip2, exclude,
-#    tar, tar.gz, tar.bz2, zip
-#
 #  Each directive has own args syntax:
 #  spec: path_to_file
 #  tags: path_to_directory
-#  (copy|gzip|bzip2): glob_pattern..
-#  (copy|gzip|bzip2)?: glob_pattern..
+#  (copy|gzip|bzip2|lzma|xz): glob_pattern..
+#  (copy|gzip|bzip2|lzma|xz)?: glob_pattern..
 #  exclude: glob_pattern..
-#  tar(|.gz|.bz2): tree_path [options]
-#  tar(|.gz|.bz2)?: tree_path [options]
+#  tar(|.gz|.bz2|lzma|xz): tree_path [options]
+#  tar(|.gz|.bz2|lzma|xz)?: tree_path [options]
 #  zip: tree_path [options]
 #  zip?: tree_path [options]
-#  diff(|.gz|.bz2): old_tree_path new_tree_path options
-#  diff(|.gz|.bz2)?: old_tree_path new_tree_path options
+#  diff(|.gz|.bz2|lzma|xz): old_tree_path new_tree_path options
+#  diff(|.gz|.bz2|lzma|xz)?: old_tree_path new_tree_path options
 #
 #  tree_path may be a plain path or commit:path, where commit is specified
 #  by tag name (keywords may be used) or full SHA-1.
@@ -148,7 +144,7 @@ write_compressed_file()
 		name="$outdir/$name"
 
 	case "$cmd" in
-		zip|gzip|bzip2|lzma)
+		zip|gzip|bzip2|lzma|xz)
 			type "$cmd" >/dev/null 2>&1 ||
 				rules_error "Compress command not found: $cmd"
 			[ $# -gt 0 ] ||
@@ -191,6 +187,14 @@ compress_file()
 		bzip2|*.bz2)
 			write_compressed_file "$file" '' bzip2
 			printf '%s' "$outdir/$file.bz2"
+			;;
+		lzma|*.lzma)
+			write_compressed_file "$file" '' lzma
+			printf '%s' "$outdir/$file.lzma"
+			;;
+		xz|*.xz)
+			write_compressed_file "$file" '' xz
+			printf '%s' "$outdir/$file.xz"
 			;;
 		*)
 			printf '%s' "$outdir/$file"
@@ -589,7 +593,7 @@ parse_rules()
 			spec|exclude|tags)
 				continue
 				;;
-			tar|tar.gz|tar.bz2)
+			tar|tar.gz|tar.bz2|tar.lzma|tar.xz)
 				make_archive 'tar' "$optional" "$cmd" $options ||
 					rules_error 'Failed to make archive'
 				;;
@@ -597,11 +601,11 @@ parse_rules()
 				make_archive 'zip' "$optional" "$cmd" $options ||
 					rules_error 'Failed to make archive'
 				;;
-			diff|diff.gz|diff.bz2)
+			diff|diff.gz|diff.bz2|diff.lzma|diff.xz)
 				make_difference "$optional" "$cmd" $options ||
 					rules_error 'Failed to make diff'
 				;;
-			copy|gzip|bzip2)
+			copy|gzip|bzip2|lzma|xz)
 				make_compress "$optional" "type=$cmd" -- $options ||
 					rules_error 'Failed to extract by pattern'
 				;;

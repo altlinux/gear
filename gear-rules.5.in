@@ -161,13 +161,15 @@ Wildcards are interpreted only in the last component of the pattern.
 .PD 0
 .TP
 .BI "bzip2: " glob_pattern\fR...
+.TP
+.BI "lzma: " glob_pattern\fR...
+.TP
+.BI "xz: " glob_pattern\fR...
 .PD
 Like
 .BR copy ,
 but additionally compress the copied files with
-.BR gzip (1)
-or
-.BR bzip2 (1)
+.BR gzip "(1), " bzip2 "(1), " lzma "(1) or " xz (1),
 and add the appropriate suffix to the copied file name.
 .
 .TP
@@ -181,7 +183,7 @@ method.
 .TP
 .BI type= TYPE
 Specify compression method.
-Supported values are: copy, bzip2, gzip, lzma and zip.
+Supported values are: copy, bzip2, gzip, lzma, xz and zip.
 .TP
 .BI name= <NAME>
 Specify destination file name in output directory. In this case
@@ -198,6 +200,10 @@ All methods except copy accept compress options.
 .BI "gzip?: " glob_pattern\fR...
 .TP
 .BI "bzip2?: " glob_pattern\fR...
+.TP
+.BI "lzma?: " glob_pattern\fR...
+.TP
+.BI "xz?: " glob_pattern\fR...
 .TP
 .BI "compress?: " \fRtype=\fITYPE \ \fR[name=\fINAME\fR]\ \fR[\fIoptions\fR]\ --\ \fIglob_pattern\fR...
 .PD
@@ -290,13 +296,15 @@ is \*(lq.\*(rq and must not be used in the path part of
 .PD 0
 .TP
 .BI "tar.bz2: " "tree_path " \fR[ options \fR...]
+.TP
+.BI "tar.lzma: " "tree_path " \fR[ options \fR...]
+.TP
+.BI "tar.xz: " "tree_path " \fR[ options \fR...]
 .PD
 Like
 .BR tar ,
 but additionally compress the generated tar archive with
-.BR gzip (1)
-or
-.BR bzip2 (1)
+.BR gzip "(1), " bzip2 "(1), " lzma "(1) or " xz (1),
 and add the appropriate suffix to the archive file name (unless the
 .B suffix
 option is specified, which overrides both the
@@ -323,6 +331,10 @@ suffix to the archive file name instead of
 .BI "tar.gz?: " "tree_path " \fR[ options \fR...]
 .TP
 .BI "tar.bz2?: " "tree_path " \fR[ options \fR...]
+.TP
+.BI "tar.lzma?: " "tree_path " \fR[ options \fR...]
+.TP
+.BI "tar.xz?: " "tree_path " \fR[ options \fR...]
 .TP
 .BI "zip?: " "tree_path " \fR[ options \fR...]
 .PD
@@ -393,13 +405,15 @@ is \*(lq.\*(rq.
 .PD 0
 .TP
 .BI "diff.bz2: " "old_tree_path new_tree_path \fR[\fIoptions\fR...]"
+.TP
+.BI "diff.lzma: " "old_tree_path new_tree_path \fR[\fIoptions\fR...]"
+.TP
+.BI "diff.xz: " "old_tree_path new_tree_path \fR[\fIoptions\fR...]"
 .PD
 Like
 .BR diff ,
 but additionally compress the generated diff file with
-.BR gzip (1)
-or
-.BR bzip2 (1)
+.BR gzip "(1), " bzip2 "(1), " lzma "(1) or " xz (1),
 and add the appropriate suffix to the diff file name.
 .
 .TP
@@ -409,6 +423,10 @@ and add the appropriate suffix to the diff file name.
 .BI "diff.gz?: " "old_tree_path new_tree_path \fR[\fIoptions\fR...]"
 .TP
 .BI "diff.bz2?: " "old_tree_path new_tree_path \fR[\fIoptions\fR...]"
+.TP
+.BI "diff.lzma?: " "old_tree_path new_tree_path \fR[\fIoptions\fR...]"
+.TP
+.BI "diff.xz?: " "old_tree_path new_tree_path \fR[\fIoptions\fR...]"
 .PD
 Like the corresponding directives without \*(lq?\*(rq, but do not fail
 if paths specified by
