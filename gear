@@ -528,8 +528,9 @@ make_compress()
 				shift; break
 				;;
 			*)
-				[ -z "${1##-*}" ] ||
+				[ -n "$1" -a -z "${1##-*}" ] ||
 					rules_error "Invalid option specified: $1"
+				check_filename 'command args' "$1"
 				args="$args \"$(quote_shell "$1")\""
 				;;
 		esac
