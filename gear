@@ -177,27 +177,21 @@ write_compressed_file()
 compress_file()
 {
 	local cmd="$1" && shift
-	local file="${1##*/}" && shift
+	local file="$1" && shift
+	local dest="$1" && shift
 
 	case "$cmd" in
 		gzip|*.gz)
-			write_compressed_file "$file" '' gzip
-			printf '%s' "$outdir/$file.gz"
+			write_compressed_file "$file" "$dest" gzip
 			;;
 		bzip2|*.bz2)
-			write_compressed_file "$file" '' bzip2
-			printf '%s' "$outdir/$file.bz2"
+			write_compressed_file "$file" "$dest" bzip2
 			;;
 		lzma|*.lzma)
-			write_compressed_file "$file" '' lzma
-			printf '%s' "$outdir/$file.lzma"
+			write_compressed_file "$file" "$dest" lzma
 			;;
 		xz|*.xz)
-			write_compressed_file "$file" '' xz
-			printf '%s' "$outdir/$file.xz"
-			;;
-		*)
-			printf '%s' "$outdir/$file"
+			write_compressed_file "$file" "$dest" xz
 			;;
 	esac
 }
@@ -285,8 +279,9 @@ write_git_archive()
 	local tar_base="$1" && shift
 	local suffix="$1" && shift
 
-	[ "$tar_base" != '/' ] ||
+	if [ "$tar_base" = '/' ]; then
 		tar_base="$name"
+	fi
 
 	local id
 	id="$(traverse_tree "$tree" "$dir" "$optional")" ||
@@ -298,13 +293,12 @@ write_git_archive()
 
 	git archive --format="$format" ${tar_base:+--prefix="$tar_base"/} "$id" >"$outdir/$name.$format"
 	verbose "Extracted archive: $name.$format"
-	local archive_name
-	archive_name="$(compress_file "$cmd" "$name.$format")"
-	if [ "$suffix" != '/' -a "$archive_name" != "$outdir/$name$suffix" ]; then
-		mv "$archive_name" "$outdir/$name$suffix"
-		archive_name="$outdir/$name$suffix"
+
+	local output_name=
+	if [ "$suffix" != '/' ]; then
+		output_name="$name$suffix"
 	fi
-	verbose "Wrote archive: ${archive_name##*/}"
+	compress_file "$cmd" "$name.$format" "$output_name"
 }
 
 make_archive()
@@ -419,7 +413,8 @@ write_git_diff()
 	git diff-tree --patch-with-stat --text --no-renames --no-ext-diff \
 		"$old_id" "$new_id" >"$outdir/$name"
 	verbose "Extracted diff: $name"
-	compress_file "$cmd" "$name" >/dev/null
+
+	compress_file "$cmd" "$name" ''
 }
 
 make_difference()
