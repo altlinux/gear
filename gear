@@ -589,28 +589,33 @@ parse_rules()
 				continue
 				;;
 		esac
+
+		local opts
+		quote_shell_args opts "$options"
+		eval "set -- $opts"
+
 		case "$cmd" in
 			spec|exclude|tags)
 				continue
 				;;
 			tar|tar.gz|tar.bz2|tar.lzma|tar.xz)
-				make_archive 'tar' "$optional" "$cmd" $options ||
+				make_archive 'tar' "$optional" "$cmd" "$@" ||
 					rules_error 'Failed to make archive'
 				;;
 			zip)
-				make_archive 'zip' "$optional" "$cmd" $options ||
+				make_archive 'zip' "$optional" "$cmd" "$@" ||
 					rules_error 'Failed to make archive'
 				;;
 			diff|diff.gz|diff.bz2|diff.lzma|diff.xz)
-				make_difference "$optional" "$cmd" $options ||
+				make_difference "$optional" "$cmd" "$@" ||
 					rules_error 'Failed to make diff'
 				;;
 			copy|gzip|bzip2|lzma|xz)
-				make_compress "$optional" "type=$cmd" -- $options ||
+				make_compress "$optional" "type=$cmd" -- "$@" ||
 					rules_error 'Failed to extract by pattern'
 				;;
 			compress)
-				make_compress "$optional" $options ||
+				make_compress "$optional" "$@" ||
 					rules_error 'Failed to extract by pattern'
 				;;
 			*)
