@@ -270,7 +270,7 @@ get_tar_name()
 		check_name 'tar suffix' "$tar_suffix"
 }
 
-make_tar()
+write_git_archive()
 {
 	local format="$1" && shift
 	local optional="$1" && shift
@@ -324,7 +324,7 @@ make_archive()
 	get_tar_name "$@"
 
 	tar_tree="$(resolve_tree_base_name "$tar_tree")" || return 1
-	make_tar "$format" "$optional" "$cmd" "$tar_tree" "$dir_name" "$tar_name" "$tar_base" "$tar_suffix"
+	write_git_archive "$format" "$optional" "$cmd" "$tar_tree" "$dir_name" "$tar_name" "$tar_base" "$tar_suffix"
 }
 
 get_diff_name()
@@ -388,7 +388,7 @@ get_diff_name()
 	fi
 }
 
-make_diff()
+write_git_diff()
 {
 	local optional="$1" && shift
 	local cmd="$1" && shift
@@ -445,7 +445,7 @@ make_difference()
 	diff_new_tree="$(resolve_tree_base_name "$diff_new_tree")" ||
 		rules_error "Invalid new tree: $diff_new_tree"
 
-	make_diff "$optional" "$cmd" "$diff_old_tree" "$old_dir" "$diff_new_tree" "$new_dir" "$diff_name"
+	write_git_diff "$optional" "$cmd" "$diff_old_tree" "$old_dir" "$diff_new_tree" "$new_dir" "$diff_name"
 }
 
 extract_pattern()
