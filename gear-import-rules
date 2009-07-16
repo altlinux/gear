@@ -1,0 +1,41 @@
+# ant-SNAPSHOT-20071102
+pattern: ^([0-9_-]+[-_])?([a-z_-]+)-([0-9]+)([-_](bin|build|dev|linux|package|pkg|releases?|snap(shot)?s?|sources?|src|unix|fx\+.*)){0,}$
+name: \2
+version: \3
+
+# 0000-foo-bar_1.2.3-1
+pattern: ^([0-9_-]+[-_])?([a-z0-9.-]+)_([0-9][a-z0-9.-]+)([-_](bin|build|dev|linux|package|pkg|releases?|snap(shot)?s?|sources?|src|unix|fx\+.*)){0,}$
+name: \2
+version: \3
+replace-name: s/(-(bin|src)){0,}$//
+replace-version: s/([-_](bin|src)){0,}$//
+
+# 0000-foo-bar-1.2.3
+pattern: ^([0-9_-]+[-_])?([a-z0-9_+-]+)-([0-9][a-z0-9._]+)([-_](bin|build|dev|linux|package|pkg|releases?|snap(shot)?s?|sources?|src|unix|fx\+.*)){0,}$
+name: \2
+version: \3
+replace-name: s/[-_](bin|src){0,}$//
+
+# 389-admin-1.1.7-alt2
+pattern: ^([0-9_-]+[-_])?([a-z0-9_+-]+)-([0-9][a-z0-9.]+[-_][a-z0-9]+)([-_](bin|build|dev|linux|package|pkg|releases?|snap(shot)?s?|sources?|src|unix|fx\+.*)){0,}$
+name: \2
+version: \3
+replace-name: s/([-_](bin|src)){0,}$//
+
+# 14870-Winamp5-XMMS
+pattern: ^([0-9_-]+[-_])?([a-z0-9_-]+)([-_](bin|build|dev|linux|package|pkg|releases?|snap(shot)?s?|sources?|src|unix|fx\+.*)){0,}$
+name: \2
+version:
+replace-name: s/([-_](bin|src)){0,}$//
+
+# arptables-v0.0.3-3
+pattern: ^([0-9_-]+[-_])?([a-z0-9_-]+)-([a-z]+[0-9.]+-[a-z]?[a-z0-9]+)([-_](bin|build|dev|linux|package|pkg|releases?|snap(shot)?s?|sources?|src|unix|fx\+.*)){0,}$
+name: \2
+version: \3
+replace-name: s/([-_](bin|src)){0,}$//
+
+# ALDConvert.08062912
+pattern: ^([0-9_-]+[-_])?([a-z0-9_-]+)[-_.]([0-9.-]+)([-_](bin|build|dev|linux|package|pkg|releases?|snap(shot)?s?|sources?|src|unix|fx\+.*)){0,}$
+name: \2
+version: \3
+replace-name: s/([-_](bin|src)){0,}$//

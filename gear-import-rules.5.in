@@ -1,0 +1,96 @@
+.\" Copyright (C) 2009  Alexey Gladkov <legion@altlinux.org>
+.\"
+.\" This file is free software; you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation; either version 2 of the License, or
+.\" (at your option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+.
+.TH "GEAR-IMPORT-RULES" "5" "July 2009" "gear @VERSION@" "File Formats"
+.SH NAME
+gear\-import\-rules \- rule file for gear\-import
+.
+.
+.SH DESCRIPTION
+.
+The rule file specifies parser patterns for
+.BR gear-import (1)
+required to parse archive filename.
+.
+.
+.SH FORMAT
+.
+A rule file consists of lines of the following format:
+.RS 4
+.PP
+.IB directive\^ :
+.IR <value>
+.RE
+.
+.PP
+Empty lines and lines beginning with \*(lq#\*(rq are ignored.
+.
+.
+.SH DIRECTIVES
+.
+.TP
+.BI "pattern: "<REGEXP>
+Extended posix regexp that applies to archive filename (without path).
+If pattern matches, name and version are generated using regexp back-reference.
+.
+.TP
+.BI "name: " \[rs]<DIGIT>
+Matches the DIGIT-th parenthesized subexpression that match name.
+.
+.TP
+.BI "version: " \[rs]<DIGIT>
+Matches the DIGIT-th parenthesized subexpression that match version.
+.
+.TP
+.BI "case-sanse: "yes
+Makes `sed' match REGEXP in a case-sensitive manner. 
+.
+.TP
+.BI "replace-name: "<sed-expression>
+.TP
+.BI "replace-version: "<sed-expression>
+Finally, if
+.B replace-name
+or
+.B replace-version
+directives defined, it applied to generated name of version as sed expression.
+.
+.
+.SH EXAMPLES
+.nf
+pattern: ^([0-9_-]+[-_])?([a-z0-9.-]+)_([0-9][a-z0-9.-]+)$
+name: \\2
+version: \\3
+replace-name: s/(-(bin|src)){0,}$//
+replace-version: s/([-_](bin|src)){0,}$//
+.fi
+.
+.
+.SH AUTHOR
+.PP
+This manual page written by Alexey Gladkov  <legion@altlinux.org>.
+.PP
+Authors and contributors of the programs included in the
+.B gear
+package are listed in the manual pages for these programs.
+.
+.
+.SH SEE ALSO
+.PP
+.na
+.nh
+.tr -\(hy
+.BR gear-import (1).

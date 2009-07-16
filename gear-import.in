@@ -1,0 +1,344 @@
+#!/bin/sh -efu
+#
+# Copyright (C) 2009  Alexey Gladkov <legion@altlinux.org>
+#
+# Incrementally import source packages to git repository.
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+
+. gear-sh-functions
+. shell-error
+. shell-var
+. shell-getopt
+
+show_help()
+{
+	cat <<-EOF
+	Usage: $PROG [options] <archive> [<archive>...]
+
+	Options:
+	  --dry-run              show parser results and exit;
+	  --no-commit            do not commit new changes;
+	  --no-tag               do not add tag;
+	  --time=STR             use time described by STR;
+	  --time=FILE            use the last modification time of FILE;
+	  --ignore-exclude       pass --ignore-exclude to gear-update;
+	  -C, --create           pass --create to gear-update;
+	  -f, --force            pass --force to gear-update;
+	  -s, --sign             add sign to commit and tag;
+	  -S, --subdir=DIR       unpack archives into DIR;
+	  -c, --commit=MSG       use MSG as commit message;
+	  -t, --tag=NAME         use NAME as tag name;
+	  -T, --tag-messgae=MSG  use MSG as tag message;
+	  -r, --rules=FILE       override import rules file name;
+	  -v, --verbose          print a message for each action;
+	  -V, --version          print program version and exit;
+	  -h, --help             show this text and exit.
+
+	Report bugs to http://bugzilla.altlinux.org/
+
+	EOF
+	exit
+}
+
+print_version()
+{
+	cat <<-EOF
+	$PROG version $PROG_VERSION
+	Written by Alexey Gladkov <legion@altlinux.org>
+
+	Copyright (C) 2009  Alexey Gladkov <legion@altlinux.org>
+	This is free software; see the source for copying conditions.  There is NO
+	warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+	EOF
+	exit
+}
+
+archive=
+archive_name=
+archive_version=
+expand_string()
+{
+	local __var="$1" __mess="$2" __oldmess=
+	while [ "$__mess" != "$__oldmess" ]; do
+		__oldmess="$__mess"
+		case "$__mess" in
+			*@archive@*)
+				__mess="${__mess%%@archive@*}$archive${__mess#*@archive@}"
+				;;
+			*@name@*)
+				__mess="${__mess%%@archive_name@*}$archive_name${__mess#*@archive_name@}"
+				;;
+			*@version@*)
+				__mess="${__mess%%@archive_version@*}$archive_version${__mess#*@archive_version@}"
+				;;
+		esac
+	done
+	eval "$__var=\"\$__mess\""
+}
+
+remove_suffix()
+{
+	local __outvar __archive __fn __fo=
+	__outvar="$1"; shift
+	__archive="$1"; shift
+
+	__fn="$__archive"
+	while [ "$__fn" != "$__fo" ]; do
+		__fo="$__fn"
+		case "$__fn" in
+			*.tar)	__fn="${__fn%.tar}"  ;;
+			*.bz2)	__fn="${__fn%.bz2}"  ;;
+			*.gz)	__fn="${__fn%.gz}"   ;;
+			*.tbz)	__fn="${__fn%.tbz}"  ;;
+			*.tbz2)	__fn="${__fn%.tbz2}" ;;
+			*.tgz)	__fn="${__fn%.tgz}"  ;;
+			*.zip)	__fn="${__fn%.zip}"  ;;
+			*.[Zz]) __fn="${__fn%.[Zz]}" ;;
+			*.lzma) __fn="${__fn%.lzma}" ;;
+			*.cpio) __fn="${__fn%.cpio}" ;;
+			*.xpi)  __fn="${__fn%.xpi}"  ;;
+			*.jar)  __fn="${__fn%.jar}"  ;;
+		esac
+	done
+	# We should ignore the program if it does not have all the well-known suffix.
+	[ "$__archive" != "$__fn" ] ||
+		return 1
+	eval "$__outvar=\"\$__fn\""
+}
+
+archive_name=
+archive_version=
+parse_archive()
+{
+	local archive pattern name version
+	archive="$1"; shift
+	pattern="$1"; shift
+	name="$1"   ; shift
+	version="$1"; shift
+
+	archive_name=
+	if [ -n "$name" ]; then
+		archive_name="$(printf '%s' "$archive" |
+		                sed -r -n "s#$pattern#$name#${sed_i}p")"
+		[ -n "$archive_name" ] ||
+			return 1
+	fi
+
+	archive_version=
+	if [ -n "$version" ]; then
+		archive_version="$(printf '%s' "$archive" |
+		                   sed -r -n "s#$pattern#$version#${sed_i}p")"
+		[ -n "$archive_version" ] ||
+			return 1
+	fi
+}
+
+process_rule()
+{
+	if [ -n "$pattern" ] && parse_archive "$archive" "$pattern" "$name" "$version"; then
+		[ -z "$replace_name" ] ||
+			archive_name="$(printf '%s' "$archive_name" |
+			                sed -r -- "$replace_name")" ||
+			fatal "$patterns: Unable to use expression"
+		[ -z "$replace_version" ] ||
+			archive_version="$(printf '%s' "$archive_version" |
+			                   sed -r -- "$replace_version")" ||
+			fatal "$patterns: Unable to use expression"
+		return 0
+	fi
+	# reset optional params
+	replace_version= replace_name= sed_i='i'
+	return 1
+}
+
+rulesfile=
+parse_rules()
+{
+	local archive="$1"
+	local eof= keyword value
+	local pattern= name= version= replace_version= replace_name= sed_i='i'
+
+	while [ -z "$eof" ]; do
+		read -r keyword value ||
+			eof=1
+		case "$keyword" in
+			pattern:)
+				! process_rule || return 0
+				pattern="$value"
+				;;
+			name:)
+				name="$value"
+				;;
+			version:)
+				version="$value"
+				;;
+			replace-name:)
+				replace_name="$value"
+				;;
+			replace-version:)
+				replace_version="$value"
+				;;
+			case-sense:)
+				! shell_var_is_yes "$value" ||
+					sed_i=
+				;;
+		esac
+	done < "$rulesfile"
+	process_rule ||:
+}
+
+no_commit=
+no_tag=
+sign=
+tag_format=
+tag_msg_format=
+commit_msg_format=
+force=
+subdir=
+dest_create=
+ignore_exclude=
+timestamp=
+dry_run=
+
+gear_config_option rulesfile rules \
+	"${IMPORT_RULES:-@geardatadir@/gear-import-rules}"
+
+gear_config_option tag_format tag ""
+gear_config_option tag_msg_format tag-message ""
+gear_config_option commit_msg_format commit-message ""
+
+TEMP=`getopt -n $PROG -o f,c:,C,r:,s,S:,t:,T:,v,V,h -l commit:,create,dry-run,force,no-commit,no-tag,ignore-exclude,rules:,sign,subdir:,tag:,tag-message:,time:,verbose,version,help -- "$@"` ||
+	show_usage
+eval set -- "$TEMP"
+
+while :; do
+	case "$1" in
+		--no-commit) no_commit=1
+			;;
+		--no-tag) no_tag=1
+			;;
+		--time) shift; timestamp="$1"
+			;;
+		--ignore-exclude) ignore_exclude=1
+			;;
+		--dry-run) dry_run=1
+			;;
+		-c|--commit) shift; commit_msg_format="$1"
+			;;
+		-t|--tag) shift; tag_format="$1"
+			;;
+		-T|--tag-messge) shift; tag_msg_format="$1"
+			;;
+		-f|--force) force=1
+			;;
+		-C|--create) dest_create=1
+			;;
+		-r|--rules) shift; rulesfile="$1"
+			;;
+		-s|--sign) sign=-s
+			;;
+		-S|--subdir) shift; subdir="$1"
+			;;
+		-h|--help) show_help
+			;;
+		-V|--version) print_version
+			;;
+		-v|--verbose) verbose=-v
+			;;
+		--) shift; break
+			;;
+		*) fatal "Unrecognized option: $1"
+			;;
+	esac
+	shift
+done
+
+rulesfile="$(readlink -ev "$rulesfile")"
+
+[ -s "$rulesfile" ] ||
+	fatal "$rulesfile: file empty."
+
+faketime="$(which faketime 2>/dev/null)" ||
+	fatal "faketime not found."
+
+if [ -n "$timestamp" ]; then
+	[ -e "$timestamp" ] &&
+		faketime="$faketime -r" ||
+		faketime="$faketime -d"
+	$faketime "$timestamp" true
+else
+	faketime="$faketime -r"
+fi
+
+# Change to toplevel directory
+chdir_to_toplevel
+
+for archive_file; do
+	archive="${archive_file##*/}"
+	archive_name=
+	archive_version=
+
+	if ! remove_suffix archive "$archive"; then
+		message "Unknown archive format: $archive"
+		continue
+	fi
+
+	if ! parse_rules "$archive"; then
+		message "Unknown archive format: $archive"
+		continue
+	fi
+
+	if [ -n "$dry_run" ]; then
+		printf 'archive: %s\n'   "$archive"
+		printf '   name: %s\n'   "$archive_name"
+		printf 'version: %s\n\n' "$archive_version"
+		continue
+	fi
+
+	extra_args=
+	if [ ! -d "$archive_name" ]; then
+		[ -n "$dest_create" ] ||
+			fatal "Unable to parse archive: $archive"
+		extra_args='--create'
+	fi
+
+	[ -z "$ignore_exclude" ] ||
+		extra_args="$extra_args --ignore-exclude"
+
+	[ -z "$force" ] ||
+		extra_args="$extra_args --force"
+
+	git clean -f -d "${subdir:-$archive_name}"
+
+	gear-update $extra_args -- "$archive_file" "${subdir:-$archive_name}"
+
+	[ -z "$no_commit" ] ||
+		continue
+
+	expand_string tag "${tag_format:-v$archive_version}"
+	expand_string tag_msg "${tag_msg_format:-$archive_name $archive_version}"
+	expand_string commit_msg "${commit_msg_format:-Import archive $archive}"
+
+	$faketime "${timestamp:-$archive_file}" -- \
+		git commit $sign -a -m "$commit_msg"
+
+	[ -z "$no_tag" ] ||
+		continue
+
+	$faketime "${timestamp:-$archive_file}" -- \
+		git tag $sign -f -m "$tag_msg" "$tag"
+done

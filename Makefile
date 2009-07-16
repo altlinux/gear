@@ -37,6 +37,7 @@ PROGRAMS = \
 	gear-remote-rpm \
 	gear-rpm \
 	gear-srpmimport \
+	gear-import \
 	gear-update \
 	gear-update-tag \
 	#
@@ -58,14 +59,17 @@ HELPERS = \
 	gear-update-src-tar \
 	gear-update-src-zip \
 	#
+DATAFILES = gear-import-rules
 MAN1PAGES = $(PROGRAMS:=.1)
-MAN5PAGES = gear-rules.5 gear-merge-rules.5 gear-changelog-rules.5
+MAN5PAGES = gear-rules.5 gear-merge-rules.5 gear-changelog-rules.5 \
+	    gear-import-rules.5
 MANPAGES = $(MAN1PAGES) $(MAN5PAGES)
 HTMLPAGES = $(MANPAGES:=.html)
-TARGETS = gear-sh-functions $(MANPAGES)
+TARGETS = gear-sh-functions gear-import $(MANPAGES)
 
 bindir = /usr/bin
 datadir = /usr/share
+geardatadir = $(datadir)/$(PROJECT)
 mandir = $(datadir)/man
 man1dir = $(mandir)/man1
 man5dir = $(mandir)/man5
@@ -91,6 +95,7 @@ $(MAN7PAGES):
 %: %.in
 	sed \
 		-e 's,@VERSION@,$(VERSION),g' \
+		-e 's,@geardatadir@,$(geardatadir),g' \
 		<$< >$@
 	$(TOUCH_R) $< $@
 	chmod --reference=$< $@
@@ -122,6 +127,8 @@ install: all
 	$(INSTALL) -p -m644 $(MAN1PAGES) $(DESTDIR)$(man1dir)/
 	$(MKDIR_P) -m755 $(DESTDIR)$(man5dir)
 	$(INSTALL) -p -m644 $(MAN5PAGES) $(DESTDIR)$(man5dir)/
+	$(MKDIR_P) -m755 $(DESTDIR)$(geardatadir)
+	$(INSTALL) -p -m644 $(DATAFILES) $(DESTDIR)$(geardatadir)/
 
 clean:
 	$(RM) $(TARGETS) $(HTMLPAGES) *~
