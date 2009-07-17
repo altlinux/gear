@@ -127,7 +127,9 @@ cleanup_handler()
 		   git reset --soft HEAD^; then
 			verbose "Reverted temporary commit $tmp_commit_id."
 		else
+			printf 'bold\nsetaf 1\n' |tput -S 2>/dev/null ||:
 			message "Failed to revert temporary commit $tmp_commit_id."
+			printf 'op\nsgr0\n' |tput -S 2>/dev/null ||:
 		fi
 	fi
 	[ -z "$tmpdir" ] ||
