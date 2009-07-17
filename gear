@@ -144,7 +144,7 @@ write_compressed_file()
 		name="$outdir/$name"
 
 	case "$cmd" in
-		zip|gzip|bzip2|lzma|xz)
+		gzip|bzip2|lzma|xz)
 			type "$cmd" >/dev/null 2>&1 ||
 				rules_error "Compress command not found: $cmd"
 			[ $# -gt 0 ] ||
@@ -181,6 +181,9 @@ compress_file()
 	local dest="$1" && shift
 
 	case "$cmd" in
+		zip|tar)
+			write_compressed_file "$file" "$dest" copy
+			;;
 		gzip|*.gz)
 			write_compressed_file "$file" "$dest" gzip
 			;;
