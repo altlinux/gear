@@ -42,7 +42,7 @@ show_help()
 	  -S, --subdir=DIR       unpack archives into DIR;
 	  -c, --commit=MSG       use MSG as commit message;
 	  -t, --tag=NAME         use NAME as tag name;
-	  -T, --tag-messgae=MSG  use MSG as tag message;
+	  -T, --tag-message=MSG  use MSG as tag message;
 	  -r, --rules=FILE       override import rules file name;
 	  -v, --verbose          print a message for each action;
 	  -V, --version          print program version and exit;
@@ -241,7 +241,7 @@ while :; do
 			;;
 		-t|--tag) shift; tag_format="$1"
 			;;
-		-T|--tag-messge) shift; tag_msg_format="$1"
+		-T|--tag-message) shift; tag_msg_format="$1"
 			;;
 		-f|--force) force=1
 			;;
