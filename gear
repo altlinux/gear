@@ -183,7 +183,7 @@ compress_file()
 	local dest="$1" && shift
 
 	case "$cmd" in
-		zip|tar)
+		tar|zip)
 			write_compressed_file "$file" "$dest" copy
 			;;
 		gzip|*.gz)
