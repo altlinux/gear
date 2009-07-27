@@ -44,8 +44,8 @@ Empty lines and lines beginning with \*(lq#\*(rq are ignored.
 Directive arguments are delimited by whitespace characters.
 Whitespaces between the directive name and \*(lq:\*(rq are optional;
 whitespaces between \*(lq:\*(rq and the first argument are also optional.
-There is no support for line continuation and quoting of special
-characters.
+Arguments may contain special characters quoted using shell-alike quoting.
+There is no support for line continuation.
 .
 .
 .SH PATHS
