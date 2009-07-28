@@ -26,6 +26,7 @@ Requires: libshell >= 0:0.1.0
 Conflicts: hasher < 0:1.0.30
 
 BuildPreReq: asciidoc, git-core, help2man, libshell >= 0:0.0.3-alt1
+%{?!_without_check:%{?!_disable_check:BuildRequires: lzma-utils, unzip}}
 
 %description
 This package contains utilities for building RPM packages from GEAR
@@ -39,6 +40,7 @@ See %_docdir/%name-%version/QUICKSTART.ru_RU.UTF-8 for details.
 %make_build
 asciidoc ABOUT.ru.utf8
 asciidoc QUICKSTART.ru.utf8
+%{?!__buildreqs:%{?!_without_check:%{?!_disable_check:make check}}}
 
 %install
 %make_install install DESTDIR=%buildroot

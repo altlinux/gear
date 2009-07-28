@@ -1,0 +1,49 @@
+#!/bin/sh -efu
+
+gear_rules_copy_glob_simple()
+{
+	local spec=file.spec
+	local n=some
+	local v=1
+	local r=2
+	local name=foo.bar
+	local rule; rule="$1"; shift
+
+	printf 'Name:%s\nVersion: %s\nRelease:	%s' "$n" "$v" "$r" >"$spec"
+	printf '%s\n' "$rule" >.gear-rules
+	echo "test $gear_directive" >$name
+	git add "$spec" .gear-rules $name
+	git commit -q -a -m 1
+
+	finalize_repo
+
+	$GEAR "$GEAR_OUT"
+	check_pkgtar_list "$spec
+./
+./$spec
+./$name$compress_suffix"
+	check_pkgtar_spec "$GEAR_OUT" "$spec"
+	unpack_pkgtar_to .out
+	result="$($decompress_prog ".out/$name$compress_suffix")"
+	assertEquals "test $gear_directive" "$result"
+}
+
+gear_rules_copy_glob_simple_prefix() # test entry point
+{
+	gear_rules_copy_glob_simple "$gear_directive: *.bar"
+}
+
+gear_rules_copy_glob_simple_suffix() # test entry point
+{
+	gear_rules_copy_glob_simple "$gear_directive: foo.*"
+}
+
+gear_rules_copy_compress_glob_simple_prefix() # test entry point
+{
+	gear_rules_copy_glob_simple "compress: type=$gear_directive -- *.bar"
+}
+
+gear_rules_copy_compress_glob_simple_suffix() # test entry point
+{
+	gear_rules_copy_glob_simple "compress: type=$gear_directive -- foo.*"
+}

@@ -71,7 +71,7 @@ MKDIR_P = mkdir -p
 TOUCH_R = touch -r
 CHMOD = chmod
 
-.PHONY:	all install clean
+.PHONY:	all check install clean
 
 all: $(TARGETS)
 
@@ -100,6 +100,9 @@ $(MAN7PAGES):
 		$@
 
 html: $(HTMLPAGES)
+
+check: tests/run
+	cd tests && ./run
 
 install: all
 	$(MKDIR_P) -m755 $(DESTDIR)$(bindir)

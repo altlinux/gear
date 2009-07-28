@@ -1,0 +1,18 @@
+#!/bin/sh -efu
+
+gear_rules_absent() # test entry point
+{
+	local spec=file.spec
+
+	touch "$spec"
+	git add "$spec"
+	git commit -q -a -m 1
+
+	finalize_repo
+
+	$GEAR "$GEAR_OUT"
+	check_pkgtar_list "$spec
+./
+./$spec"
+	check_pkgtar_spec "$GEAR_OUT" "$spec"
+}

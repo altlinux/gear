@@ -1,0 +1,40 @@
+#!/bin/sh -efu
+
+gear_rules_spec() # test entry point
+{
+	local spec=file.spec
+	local n=foo
+	local v=1
+	local r=99
+	local dir=a
+	local name=a-21
+	local i result
+
+	for i in 1 2 3; do
+		printf 'Name:%s\nVersion: %s\nRelease:	%s' "$n" "$i$v" "$r" >"$i$spec"
+		git add "$i$spec"
+	done
+	spec="2$spec"
+	mkdir -p .gear "$dir/b/c"
+	echo "test $gear_directive" >"$dir/b/c/file"
+	printf 'tar: %s\nspec: %s\n' "$dir" "$spec" >.gear/rules
+	git add .gear "$dir"
+	git commit -q -a -m 1
+
+	finalize_repo
+
+	$GEAR "$GEAR_OUT"
+	check_pkgtar_list "$spec
+./
+./$spec
+./$name.tar"
+	check_pkgtar_spec "$GEAR_OUT" "$spec"
+	unpack_pkgtar_to .out
+	check_archive_list .out/"$name.tar" "$name/
+$name/b/
+$name/b/c/
+$name/b/c/file"
+	unpack_archive_into .out/"$name.tar" .out2
+	result="$(cat -- ".out2/$name/b/c/file")"
+	assertEquals "test $gear_directive" "$result"
+}

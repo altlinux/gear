@@ -1,0 +1,183 @@
+#!/bin/sh -efu
+
+. shell-quote
+. shell-unittest
+
+srcdir="$(readlink -ev ..)"
+testdir="$(pwd)"
+workdir=
+finalize_repo=
+gear_directive=
+tar_compress=
+compress_suffix=
+decompress_prog=
+GEAR=
+GEAR_OUT=
+LC_ALL=C
+PATH="$srcdir:$PATH"
+export testdir workdir finalize_repo gear_directive tar_compress compress_suffix decompress_prog GEAR GEAR_OUT LC_ALL PATH
+finalize_repo_cwd=
+finalize_repo_bare=change_to_bare_repo
+
+calc_pkgtar_spec()
+{
+	local file="$1"; shift
+	tar -tvf "$file" |
+		sed '/^V---------[[:space:]]\+0\/0[[:space:]]\+0[[:space:]]\+[^[:space:]]\+[[:space:]]\+[^[:space:]]\+[[:space:]]\+/!d;s///;s/--Volume Header--$//;q'
+}
+
+check_pkgtar_spec()
+{
+	local file="$1"; shift
+	local spec="$1"; shift
+	local result
+
+	result="$(calc_pkgtar_spec "$file")"
+	assertEquals "$spec" "$result"
+}
+
+check_pkgtar_list()
+{
+	local expected="$1"; shift
+	local result
+
+	result="$(tar -tf "$GEAR_OUT")" || exit 1
+	assertEquals "$expected" "$result"
+}
+
+check_archive_list()
+{
+	local file="$1"; shift
+	local expected="$1"; shift
+	local result
+
+	if [ "$gear_directive" = 'zip' ]; then
+		result="$(unzip -qq -l -- "$file" |
+			sed -n 's/^[[:space:]]*[^[:space:]]\+[[:space:]]\+[^[:space:]]\+[[:space:]]\+[^[:space:]]\+[[:space:]]\+//p')"
+	else
+		result="$(tar -t $tar_compress -f "$file")"
+	fi || exit 1
+	assertEquals "$expected" "$result"
+}
+
+unpack_pkgtar_to()
+{
+	local to="$1"; shift
+
+	mkdir -- "$to"
+	tar -C "$to" -xf "$GEAR_OUT" || exit 1
+}
+
+unpack_archive_into()
+{
+	local file="$1"; shift
+	local to="$1"; shift
+
+	mkdir -- "$to"
+	if [ "$gear_directive" = 'zip' ]; then
+		unzip -qq -d "$to" -- "$file"
+	else
+		tar -C "$to" -x $tar_compress -f "$file"
+	fi || exit 1
+}
+
+change_to_bare_repo()
+{
+	local baredir="$workdir/.bare"
+	git clone -q --bare "$workdir" "$baredir"
+	cd .empty
+	GIT_DIR="$baredir"
+	export GIT_DIR
+	git update-ref current master
+	git symbolic-ref HEAD refs/heads/nowhere
+	GEAR="$GEAR -t current"
+	GEAR_OUT="$workdir/$GEAR_OUT"
+}
+
+finalize_repo()
+{
+	$finalize_repo
+}
+
+define_test()
+{
+	local n; n="$1"; shift
+	local s; s="$1"; shift
+	local f; f="$1"; shift
+	f="${n}${f}_$s"
+	eval "$f() { finalize_repo=\$finalize_repo_$s $* $n; }"
+	appendTests $f
+}
+
+append_test()
+{
+	local n; n="$1"; shift
+	local s; s="$1"; shift
+
+	case $n in
+		gear_rules_archive_*)
+		define_test "$n" "$s" _tar "gear_directive=tar"
+		define_test "$n" "$s" _tar_gz "gear_directive=tar.gz tar_compress=--gzip"
+		define_test "$n" "$s" _tar_bz2 "gear_directive=tar.bz2 tar_compress=--bzip2"
+		define_test "$n" "$s" _tar_lzma "gear_directive=tar.lzma tar_compress=--lzma"
+		define_test "$n" "$s" _zip "gear_directive=zip"
+		;;
+		gear_rules_copy_*)
+		define_test "$n" "$s" _copy "gear_directive=copy decompress_prog=cat"
+		define_test "$n" "$s" _gzip "gear_directive=gzip compress_suffix=.gz decompress_prog='gzip -d -c'"
+		define_test "$n" "$s" _bzip2 "gear_directive=bzip2 compress_suffix=.bz2 decompress_prog='bzip2 -d -c'"
+		define_test "$n" "$s" _lzma "gear_directive=lzma compress_suffix=.lzma decompress_prog='lzma -d -c'"
+		;;
+		*)
+		define_test "$n" "$s" ''
+		;;
+	esac
+}
+
+register_tests()
+{
+	local f="$1"; shift
+	local n
+	n="$(sed -n 's/^\([[:alnum:]_]\+\)().*[[:space:]]\+#[[:space:]]\+test entry point.*/\1/p' "$f")"
+	set -- $n
+	if [ $# -ge 1 ]; then
+		. ./"$f"
+		for n; do
+			append_test "$n" cwd
+			append_test "$n" bare
+		done
+	fi
+}
+
+setUp()
+{
+	unset GIT_DIR
+	finalize_repo=
+	gear_directive=
+	tar_compress=
+	compress_suffix=
+	decompress_prog=
+	GEAR='gear'
+	GEAR_OUT=pkg.tar
+	workdir="$(mktemp -dt "$PROG.XXXXXXXXX")"
+	cd "$workdir"
+	mkdir .empty
+	git init -q
+}
+
+tearDown()
+{
+	cd "$testdir"
+	rm -rf -- "$workdir"
+}
+
+if [ $# -eq 0 ]; then
+	set +f
+	set -- *.test
+	set -f
+fi
+for f; do
+	register_tests "$f"
+done
+
+runUnitTests

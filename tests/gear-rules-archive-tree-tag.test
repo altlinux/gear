@@ -1,0 +1,42 @@
+#!/bin/sh -efu
+
+gear_rules_archive_tree_tag() # test entry point
+{
+	local spec=file.spec
+	local n=foo
+	local v=1
+	local r=2
+	local dir=a/aa/aaa
+	local name=aaa-1
+	local result
+
+	printf 'Name:%s\nVersion: %s\nRelease:	%s' "$n" "$v" "$r" >"$spec"
+	mkdir -p "$dir/b/c"
+	echo "test $gear_directive" >"$dir/b/c/file"
+	git add "$spec" "$dir"
+	git commit -q -a -m 1
+	git tag -a -m t1 v1
+	mkdir .gear
+	printf '%s\n' "$gear_directive: v1:$dir" >.gear/rules
+	git add .gear/rules
+	gear-update-tag -a
+	git rm -q -f "$dir/b/c/file"
+	git commit -q -a -m 2
+
+	finalize_repo
+
+	$GEAR "$GEAR_OUT"
+	check_pkgtar_list "$spec
+./
+./$spec
+./$name.$gear_directive"
+	check_pkgtar_spec "$GEAR_OUT" "$spec"
+	unpack_pkgtar_to .out
+	check_archive_list .out/"$name.$gear_directive" "$name/
+$name/b/
+$name/b/c/
+$name/b/c/file"
+	unpack_archive_into .out/"$name.$gear_directive" .out2
+	result="$(cat -- ".out2/$name/b/c/file")"
+	assertEquals "test $gear_directive" "$result"
+}

@@ -1,0 +1,57 @@
+#!/bin/sh -efu
+
+gear_rules_archive_tree_suffix()
+{
+	local suff="$1"; shift
+	local spec=file.spec
+	local n=foo
+	local v=1
+	local r=2
+	local dir=a
+	local name=a-1
+	local result
+
+	printf 'Name:%s\nVersion: %s\nRelease:	%s' "$n" "$v" "$r" >"$spec"
+	mkdir -p .gear "$dir/b/c"
+	echo "test $gear_directive" >"$dir/b/c/file"
+	printf '%s\n' "$gear_directive: $dir suffix=$suff" >.gear/rules
+	git add "$spec" .gear "$dir"
+	git commit -q -a -m 1
+
+	finalize_repo
+
+	$GEAR "$GEAR_OUT"
+	check_pkgtar_list "$spec
+./
+./$spec
+./$name$suff"
+	check_pkgtar_spec "$GEAR_OUT" "$spec"
+	unpack_pkgtar_to .out
+	check_archive_list .out/"$name$suff" "$name/
+$name/b/
+$name/b/c/
+$name/b/c/file"
+	unpack_archive_into .out/"$name$suff" .out2
+	result="$(cat -- ".out2/$name/b/c/file")"
+	assertEquals "test $gear_directive" "$result"
+}
+
+gear_rules_archive_tree_suffix_empty() # test entry point
+{
+	gear_rules_archive_tree_suffix ''
+}
+
+gear_rules_archive_tree_suffix_long() # test entry point
+{
+	gear_rules_archive_tree_suffix .longenough
+}
+
+gear_rules_archive_tree_suffix_exotic() # test entry point
+{
+	gear_rules_archive_tree_suffix '$PATH:.;~'
+}
+
+gear_rules_archive_tree_suffix_misleading() # test entry point
+{
+	gear_rules_archive_tree_suffix '.tar.gz'
+}

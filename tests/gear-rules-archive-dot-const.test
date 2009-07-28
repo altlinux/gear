@@ -1,0 +1,25 @@
+#!/bin/sh -efu
+
+gear_rules_archive_dot_const() # test entry point
+{
+	local spec=file.spec
+	local name=foo
+
+	touch "$spec"
+	printf '%s\n' "$gear_directive: . name=$name" >.gear-rules
+	git add "$spec" .gear-rules
+	git commit -q -a -m 1
+
+	finalize_repo
+
+	$GEAR "$GEAR_OUT"
+	check_pkgtar_list "$spec
+./
+./$spec
+./$name.$gear_directive"
+	check_pkgtar_spec "$GEAR_OUT" "$spec"
+	unpack_pkgtar_to .out
+	check_archive_list .out/"$name.$gear_directive" "$name/
+$name/.gear-rules
+$name/$spec"
+}
