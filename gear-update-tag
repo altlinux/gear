@@ -197,13 +197,13 @@ find_tags_in_rules()
 				;;
 		esac
 		case "$cmd" in
-			spec|tags|compress|copy|gzip|bzip2|exclude)
+			spec|tags|compress|copy|gzip|bzip2|lzma|xz|exclude)
 				continue
 				;;
-			tar|tar.gz|tar.bz2|zip)
+			tar|tar.gz|tar.bz2|tar.lzma|tar.xz|zip)
 				find_tags_in_tar_options $options
 				;;
-			diff|diff.gz|diff.bz2)
+			diff|diff.gz|diff.bz2|diff.lzma|diff.xz)
 				find_tags_in_diff_options $options
 				;;
 			*)
