@@ -155,6 +155,7 @@ write_compressed_file()
 				local tmp_name
 				tmp_name="$(mktemp -- "$name".XXXXXX)"
 				$cmd "$@" <"$file" >"$tmp_name"
+				rm -- "$file"
 				mv -f -- "$tmp_name" "$name"
 				verbose "Compressed file \`${file##*/}' into \`${name##*/}' using \`$cmd $*'"
 			else
