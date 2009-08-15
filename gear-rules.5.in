@@ -183,7 +183,7 @@ method.
 .TP
 .BI type= TYPE
 Specify compression method.
-Supported values are: copy, bzip2, gzip, lzma, xz and zip.
+Supported values are: copy, bzip2, gzip, lzma and xz.
 .TP
 .BI name= <NAME>
 Specify destination file name in output directory. In this case
