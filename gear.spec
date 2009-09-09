@@ -40,7 +40,9 @@ See %_docdir/%name-%version/QUICKSTART.ru_RU.UTF-8 for details.
 %make_build
 asciidoc ABOUT.ru.utf8
 asciidoc QUICKSTART.ru.utf8
-%{?!__buildreqs:%{?!_without_check:%{?!_disable_check:make check}}}
+
+%check
+make check
 
 %install
 %make_install install DESTDIR=%buildroot
