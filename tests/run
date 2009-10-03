@@ -119,6 +119,7 @@ append_test()
 		define_test "$n" "$s" _tar "gear_directive=tar"
 		define_test "$n" "$s" _tar_gz "gear_directive=tar.gz tar_compress=--gzip"
 		define_test "$n" "$s" _tar_bz2 "gear_directive=tar.bz2 tar_compress=--bzip2"
+		define_test "$n" "$s" _tar_xz "gear_directive=tar.xz tar_compress=--xz"
 		define_test "$n" "$s" _tar_lzma "gear_directive=tar.lzma tar_compress=--lzma"
 		define_test "$n" "$s" _zip "gear_directive=zip"
 		;;
@@ -126,6 +127,7 @@ append_test()
 		define_test "$n" "$s" _copy "gear_directive=copy decompress_prog=cat"
 		define_test "$n" "$s" _gzip "gear_directive=gzip compress_suffix=.gz decompress_prog='gzip -d -c'"
 		define_test "$n" "$s" _bzip2 "gear_directive=bzip2 compress_suffix=.bz2 decompress_prog='bzip2 -d -c'"
+		define_test "$n" "$s" _xz "gear_directive=xz compress_suffix=.xz decompress_prog='xz -d -c'"
 		define_test "$n" "$s" _lzma "gear_directive=lzma compress_suffix=.lzma decompress_prog='lzma -d -c'"
 		;;
 		*)
