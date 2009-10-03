@@ -1,0 +1,41 @@
+#!/bin/sh -efu
+
+gear_rules_diff_tree_tree_simple() # test entry point
+{
+	local spec=file.spec
+	local n=foo
+	local v=1
+	local r=2
+	local src=a/bb/ccc/dddd/src
+	local dst=1/22/333/4444/55555/dst
+	local patch="${dst##*/}-$v-$r.patch${gear_directive#diff}"
+
+	printf 'Name:%s\nVersion: %s\nRelease:	%s' "$n" "$v" "$r" >"$spec"
+	echo "$gear_directive: $src $dst" >.gear-rules
+	mkdir -p $src $dst
+	echo one >$src/file
+	echo two >$dst/file
+	git add "$spec" .gear-rules $src/file $dst/file
+	git commit -q -a -m 1
+
+	finalize_repo
+
+	$GEAR "$GEAR_OUT"
+	check_pkgtar_list "$spec
+./
+./$spec
+./$patch"
+	check_pkgtar_spec "$GEAR_OUT" "$spec"
+	unpack_pkgtar_to .out
+	result="$($decompress_prog ".out/$patch")"
+	assertEquals ' file |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/file b/file
+index 5626abf..f719efd 100644
+--- a/file
++++ b/file
+@@ -1 +1 @@
+-one
++two' "$result"
+}
