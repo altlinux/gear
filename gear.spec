@@ -1,7 +1,7 @@
 # Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 
 Name: gear
-Version: 1.5.3
+Version: 1.6.0
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -55,6 +55,24 @@ install -pDm644 contrib/gear-bash_completion %buildroot/etc/bash_completion.d/ge
 %doc QUICKSTART* ABOUT*
 
 %changelog
+* Mon Oct 05 2009 Dmitry V. Levin <ldv@altlinux.org> 1.6.0-alt1
+- Bugfixes:
+  + gear-merge: Use quote_shell_args() from libshell (Alexey Gladkov).
+  + gear-command-hasher: Use gear-command-tar.
+  + gear-command-tar, gear-command-remote-build: Fixed tar --create.
+  + gear --export-dir: Avoid creating useless output tarball.
+  + gear: Remove original file after compression.
+- Improvements:
+  + gear: Enabled quoting support in rules syntax (Alexey Gladkov, me).
+  + gear-rules.5.in: Added a note about special characters quoting support.
+  + gear, gear-update-tag, gear-rules.5.in:
+    Added and documented lzma/xz support.
+  + gear-update: Read --exclude pattern defaults from git-config
+    variable gear.update.exclude-pattern (Alexey Froloff).
+  + gear: Use bold red color in the warning about unreverted
+    temporary commit.
+  + Added tests for basic gear rules.
+
 * Fri Mar 13 2009 Dmitry V. Levin <ldv@altlinux.org> 1.5.3-alt1
 - gear-create-tag: Fixed usage, added --time option (Alexey Gladkov).
 - gear-srpmimport: Made --quiet mode more quiet.
