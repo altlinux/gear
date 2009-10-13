@@ -27,6 +27,29 @@ Each archive is added as subdirectory by individual commit and has the
 tag with its version. Subdirectory name and tag name is calculated
 from the archive name.
 
+[CONFIGURATION]
+\fBgear-import\fR reads following configuration options from git\-config:
+.PP
+gear.import.commit-message
+.RS 4
+commit message template, defaults to 'Import archive @archive@'.
+.RE
+.PP
+gear.import.rules
+.RS 4
+rules file name, defaults to /usr/share/gear/gear-import-rules.
+.RE
+.PP
+gear.import.tag
+.RS 4
+tag name template, defaults to 'v@archive_version@'.
+.RE
+.PP
+gear.import.tag-message
+.RS 4
+tag message template, defaults to '@archive_name@ @archive_version@'.
+.RE
+
 [ENVIRONMENT]
 .TP
 .B IMPORT_RULES
@@ -34,4 +57,5 @@ Specifies a custom gear-import rules filename.
 
 [SEE ALSO]
 .BR gear-update (1),
-.BR gear-import-rules (5)
+.BR gear-import-rules (5),
+.BR git-config (1).
