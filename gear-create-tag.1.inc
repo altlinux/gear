@@ -20,6 +20,19 @@
 [NAME]
 gear\-create\-tag \- create a signed release tag object
 
+[CONFIGURATION]
+\fBgear\-create\-tag\fR reads following configuration options from git\-config:
+.PP
+gear.create\-tag.message
+.RS 4
+tag message template, defaults to '@name@ @version@-@release@'.
+.RE
+.PP
+gear.create\-tag.name
+.RS 4
+tag name template, defaults to '@version@-@release@'.
+.RE
+
 [ENVIRONMENT]
 .TP
 .B GIT_DIR
@@ -31,4 +44,5 @@ the default for the base of the repository.
 [SEE ALSO]
 .BR gear (1),
 .BR git\-tag (1),
+.BR git-config (1),
 .BR gpg (1).

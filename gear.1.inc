@@ -76,6 +76,19 @@ does not accept any non-option arguments.  In this mode
 strings found in the spec file, and does not proceed to
 extract source files from the repository.
 
+[CONFIGURATION]
+\fBgear\fR reads following configuration options from git\-config:
+.PP
+gear.compress
+.RS 4
+compression method, defaults to \-\-gzip.
+.RE
+.PP
+gear.rules
+.RS 4
+rules file name.
+.RE
+
 [ENVIRONMENT]
 .TP
 .B GIT_DIR
@@ -100,4 +113,5 @@ fields.
 .BR gear\-update (1),
 .BR hsh (1),
 .BR git (7),
+.BR git-config (1),
 .BR rpmbuild (8).

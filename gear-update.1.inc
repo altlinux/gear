@@ -19,6 +19,14 @@
 [NAME]
 gear\-update \- update subdirectory from source directory or archive file
 
+[CONFIGURATION]
+\fBgear\-update\fR reads following configuration options from git\-config:
+.PP
+gear.update.exclude\-pattern
+.RS 4
+default expression for \-\-pattern option.
+.RE
+
 [ENVIRONMENT]
 .TP
 .B GIT_DIR
@@ -29,4 +37,5 @@ the default for the base of the repository.
 
 [SEE ALSO]
 .BR gear (1),
-.BR gear\-rules (5)
+.BR gear\-rules (5),
+.BR git-config (1).

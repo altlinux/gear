@@ -32,6 +32,19 @@ shows only commits between
 .I <since>
 and HEAD. Otherwise, last named commit used.
 
+[CONFIGURATION]
+\fBgear\-changelog\fR reads following configuration options from git\-config:
+.PP
+gear.changelog.email
+.RS 4
+author email, defaults to git user.email.
+.RE
+.PP
+gear.changelog.name
+.RS 4
+author name, defaults to git user.name.
+.RE
+
 [ENVIRONMENT]
 .TP
 .B RULES
@@ -45,4 +58,5 @@ Specifies a committer email.
 
 [SEE ALSO]
 .BR gear (1),
-.BR gear\-changelog\-rules (5).
+.BR gear\-changelog\-rules (5),
+.BR git-config (1).
