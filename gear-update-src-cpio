@@ -1,0 +1,96 @@
+#!/bin/sh -efu
+#
+# Copyright (C) 2009  Alexey Gladkov <legion@altlinux.org>
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+
+. gear-update-sh-functions
+
+source_type="${PROG##gear-update-src-}"
+
+check_source_type()
+{
+	local file_type
+	file_type="$(file -b "$gear_update_source")"
+
+	[ -n "${file_type##*cpio archive*}" ] ||
+		return 0
+
+	file_type="$(file -bz "$gear_update_source")"
+
+	[ -n "${file_type##*cpio archive *bzip2 compressed data*}" ] ||
+		return 0
+
+	[ -n "${file_type##*cpio archive *gzip compressed data*}" ] ||
+		return 0
+
+	[ -n "${file_type##*cpio archive *xz compressed data*}" ] ||
+		return 0
+
+	return 2
+}
+
+list_source()
+{
+	local compress
+
+	case "$source_type" in
+		cpio)     compress='cat' ;;
+		cpio.xz)  compress='unxz -c' ;;
+		cpio.gz)  compress='gunzip -c' ;;
+		cpio.bz2) compress='bunzip2 -c' ;;
+		*)
+			fatal "$gear_update_source: unrecognized source type: $source_type"
+			;;
+	esac
+	$compress "$gear_update_source" |
+		cpio --quiet -t
+}
+
+workdir=
+cleanup_handler()
+{
+	[ -z "$workdir" -o ! -d "$workdir" ] ||
+		rm -rf -- "$workdir"
+}
+
+unpack_source()
+{
+	local compress
+
+	case "$source_type" in
+		cpio)     compress='cat' ;;
+		cpio.xz)  compress='unxz -c' ;;
+		cpio.gz)  compress='gunzip -c' ;;
+		cpio.bz2) compress='bunzip2 -c' ;;
+		*)
+			fatal "$gear_update_source: unrecognized source type: $source_type"
+			;;
+	esac
+
+	install_cleanup_handler cleanup_handler
+	workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
+
+	cd "$workdir"
+	$compress "$gear_update_source" |
+		cpio --quiet -id ${gear_update_subdir:+"$gear_update_subdir/*"}
+	cd - >/dev/null
+
+	validate_destdir "$workdir/$gear_update_subdir" "$gear_update_destdir"
+	update_destdir move "$workdir/$gear_update_subdir" "$gear_update_destdir"
+}
+
+gear_update_handler "$@"

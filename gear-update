@@ -1,6 +1,6 @@
-#!/bin/sh -efu
+#!/bin/sh -eu
 #
-# Copyright (C) 2006-2008  Alexey Gladkov <legion@altlinux.org>
+# Copyright (C) 2006-2009  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006-2009  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 #
@@ -21,10 +21,14 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 
-. gear-sh-functions
+. gear-update-sh-functions
 
+handlers_list=
 show_help()
 {
+	local list
+	list="'$(printf '%s\n' "$handlers_list" |
+	         sed "s/\([[:alnum:]]\) \([[:alnum:]]\)/\1', '\2/g")';"
 	cat <<EOF
 $PROG - update subdirectory from source directory or archive file.
 
@@ -39,7 +43,7 @@ Options:
                       the <subdirectory> should not exist;
   -s,--subdir=DIR     extract specified directory name from archive;
   -t,--type=TYPE      define source type:
-                      'dir', 'tar', 'cpio', 'cpio.gz', 'cpio.bz2' or 'zip';
+                      $list
   -f,--force          remove files from <subdirectory> even
                       if untracked or modified files found;
   -v,--verbose        print a message for each action;
@@ -58,8 +62,8 @@ print_version()
 $PROG version $PROG_VERSION
 Written by Alexey Gladkov <legion@altlinux.org>
 
-Copyright (C) 2006-2008  Alexey Gladkov <legion@altlinux.org>
-Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
+Copyright (C) 2006-2009  Alexey Gladkov <legion@altlinux.org>
+Copyright (C) 2006-2009  Dmitry V. Levin <ldv@altlinux.org>
 Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -67,103 +71,12 @@ EOF
 	exit
 }
 
-source=
-source_type=
-get_type_by_source()
-{
-	if [ -d "$source" ]; then
-		source_type=dir
-		return
-	fi
-
-	local file_type
-	file_type="$(file -b "$source")"
-	case "$file_type" in
-		*cpio\ archive*)
-			source_type=cpio
-			return
-			;;
-		*tar\ archive*)
-			source_type=tar
-			return
-			;;
-		*Zip\ archive*)
-			source_type=zip
-			return
-			;;
-	esac
-
-	file_type="$(file -bz "$source")"
-	case "$file_type" in
-		*cpio\ archive*bzip2\ compressed\ data*)
-			source_type=cpio.bz2
-			return
-			;;
-		*cpio\ archive*gzip\ compressed\ data*)
-			source_type=cpio.gz
-			return
-			;;
-		*tar\ archive*)
-			source_type=tar
-			return
-			;;
-	esac
-
-	fatal "$source: unrecognized source type: $file_type"
-}
-
-cpio_unpack()
-{
-	local file="$1"; shift
-	local subdir="$1"; shift
-	local compress
-
-	case "$source_type" in
-		cpio)     compress='cat' ;;
-		cpio.gz)  compress='gunzip -c' ;;
-		cpio.bz2) compress='bunzip2 -c' ;;
-	esac
-	$compress "$file" |cpio --quiet -id ${subdir:+"$subdir/*"}
-}
-
-cpio_ls_cmd()
-{
-	local file="$1"; shift
-	local compress
-
-	case "$source_type" in
-		cpio)     compress='cat' ;;
-		cpio.gz)  compress='gunzip -c' ;;
-		cpio.bz2) compress='bunzip2 -c' ;;
-
-	esac
-	$compress "$file" |cpio --quiet -t
-}
-
-all_subdirs=
 subdir=
+source_handler=
 validate_subdir()
 {
-	if [ "$source_type" = dir ]; then
-		[ -z "$subdir" -o "$subdir" = "$source" ] ||
-			fatal "Invalid subdir \`$subdir' for directory source \`$source'."
-		subdir="$source"
-		return 0
-	fi
-
-	[ -z "$all_subdirs" ] ||
-		return 0
-
-	local source_ls_cmd
-	case "$source_type" in
-		tar) source_ls_cmd='tar -tf' ;;
-		zip) source_ls_cmd='zipinfo -1 --' ;;
-		cpio*) source_ls_cmd='cpio_ls_cmd' ;;
-		*) fatal "$source_type: unknown source type." ;;
-	esac
-
 	if [ -z "$subdir" ]; then
-		subdir="$($source_ls_cmd "$source")"
+		subdir="$($source_handler --ls)"
 		subdir="$(printf %s "$subdir" |
 			  sed 's#\(\([./]\+\)\?[^/]\+\)/.*#\1#g' |
 			  LC_ALL=C grep '^[^[:space:]]' |
@@ -171,60 +84,21 @@ validate_subdir()
 	fi
 
 	[ -n "$subdir" ] ||
-		fatal "$source: subdirectory not found"
+		fatal "$source: subdirectory not found."
+
 	[ `printf %s "$subdir" |wc -l` -eq 0 ] ||
 		fatal "More than one subdirectory specified: $(printf %s "$subdir" |tr -s '[:space:]' ' ')"
 
 	local quoted_subdir
 	quoted_subdir="$(quote_sed_regexp "$subdir")"
-	$source_ls_cmd "$source" |LC_ALL=C grep -qs "^$quoted_subdir\(/\|\$\)" ||
+	$source_handler --ls |LC_ALL=C grep -qs "^$quoted_subdir\(/\|\$\)" ||
 		fatal "$source: directory \`$subdir' not found in archive."
 }
 
-force=
-canon_destdir=
-validate_destdir()
-{
-	[ "$#" -eq 2 ] ||
-		fatal "validate_destdir: invalid ($#) number of arguments."
-	local src_dir="$1"; shift
-	local dst_dir="$1"; shift
-	[ -z "$force" ] ||
-		return 0
-	if [ "$dst_dir" = '.' -a -d '.git' -a -d "$src_dir/.git" ]; then
-		fatal "$canon_destdir/.git: Cowardly refusing to replace git directory."
-	fi
-}
-
-update_destdir()
-{
-	[ "$#" -eq 3 ] ||
-		fatal "update_destdir: invalid ($#) number of arguments."
-	local command="$1"; shift
-	local src_dir="$1"; shift
-	local dst_dir="$1"; shift
-	local cmd=
-	case "$command" in
-		copy) cmd="cp -a" ;;
-		move) cmd="mv" ;;
-	esac
-	[ -n "$cmd" ] ||
-		fatal "update_destdir: invalid command: $command"
-
-	[ "$dst_dir" = '.' ] ||
-		mkdir $verbose -p -- "$dst_dir"
-
-	find "$src_dir" -mindepth 1 -maxdepth 1 \! \( -name '.git' -o -name '.gear' -o -name '.gear-rules' -o -name '.gear-tags' \) -print0 |
-		xargs -r0 -i $cmd -- \{\} "$dst_dir/"
-}
-
-workdir=
 destdir=
 dest_create=
 cleanup_handler()
 {
-	[ -z "$workdir" -o ! -d "$workdir" ] ||
-		rm -rf -- "$workdir"
 	if [ "$*" != 0 ]; then
 		# Rollback actions
 		if [ -d "$destdir" ]; then
@@ -243,11 +117,25 @@ cleanup_handler()
 	fi
 }
 
+for s_handler in "${0%/*}"/gear-update-src-*; do
+	[ -f "$s_handler" ] ||
+		break
+	if [ ! -x "$s_handler" ]; then
+		message "$s_handler: Handler must be executable."
+		continue
+	fi
+	handlers_list="${handlers_list:+$handlers_list }${s_handler##*/gear-update-src-}"
+done
+set -f
+
 TEMP=`getopt -n $PROG -o a,c,f,t:,s:,v,V,h -l all,create,exclude:,ignore-exclude,force,type:,subdir:,verbose,version,help -- "$@"` || show_usage
 eval set -- "$TEMP"
 
 gear_config_option exclude_pattern exclude-pattern ''
 ignore_exclude=
+force=
+source_type=
+all_subdirs=
 while :; do
 	case "$1" in
 	    -a|--all) all_subdirs=1
@@ -259,7 +147,7 @@ while :; do
 		;;
 	    --ignore-exclude) ignore_exclude=1
 		;;
-	    -f|--force) force=1
+	    -f|--force) force=-f
 		;;
 	    -t|--type) shift; source_type="$1"
 		;;
@@ -298,21 +186,39 @@ canon_destdir="$destdir"
 [ "$source" != "$destdir" ] ||
 	fatal "\`$source' and \`$destdir' are the same place."
 [ -n "$dest_create" -o -d "$destdir" ] ||
-	fatal "$destdir: not a directory"
+	fatal "$destdir: not a directory."
 
 [ -z "$subdir" -o -z "$all_subdirs" ] ||
 	fatal "Cannot use --all and --subdir at the same time."
 
-[ -n "$source_type" ] ||
-	get_type_by_source
+# Export options
+export gear_update_all_subdirs="$all_subdirs"
+export gear_update_canon_destdir="$canon_destdir"
+export gear_update_destdir="$destdir"
+export gear_update_force="$force"
+export gear_update_source="$source"
+export gear_update_subdir="$subdir"
+export gear_update_verbose="$verbose"
 
-if [ "$source_type" = "dir" ]; then
-	[ -z "$all_subdirs" ] ||
-		fatal "Cannot use --all for updating from a directory source."
-
-	[ -z "$subdir" ] ||
-		fatal "Cannot use --subdir for updating from a directory source."
+if [ -z "$source_type" ]; then
+	for s_type in $handlers_list; do
+		rc=0
+		"${0%/*}/gear-update-src-$s_type" --check-type || rc=$?
+		case "$rc" in
+			0)
+				source_type="$s_type"
+				break
+				;;
+			1)	exit 1
+				;;
+			2)	continue
+				;;
+		esac
+	done
 fi
+source_handler="${0%/*}/gear-update-src-$source_type"
+[ -x "$source_handler" ] ||
+	fatal "$source: unrecognized source type: $source_type"
 
 # Change to toplevel directory
 chdir_to_toplevel
@@ -342,9 +248,10 @@ if [ -z "$force" -a -z "$initial_commit" ]; then
 fi
 
 [ -n "$dest_create" -o -n "$initial_commit" ] ||
-	git rm -n -r ${force:+-f} -- "$destdir" >/dev/null
+	git rm -n -r $force -- "$destdir" >/dev/null
 
-validate_subdir
+[ -n "$all_subdirs" ] ||
+	validate_subdir
 
 # Trap for rollback
 install_cleanup_handler cleanup_handler
@@ -358,37 +265,10 @@ if [ -z "$dest_create" ]; then
 fi
 
 # Copy new sources
-case "$source_type" in
-	cpio*)
-		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
-		cd "$workdir"
-		cpio_unpack "$source" "$subdir"
-		cd - >/dev/null
-		validate_destdir "$workdir/$subdir" "$destdir"
-		update_destdir move "$workdir/$subdir" "$destdir"
-		;;
-	dir)
-		validate_destdir "$subdir" "$destdir"
-		update_destdir copy "$subdir" "$destdir"
-		;;
-	tar)
-		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
-		tar -x -f "$source" -C "$workdir" -- ${subdir:+"$subdir/"}
-		validate_destdir "$workdir/$subdir" "$destdir"
-		update_destdir move "$workdir/$subdir" "$destdir"
-		;;
-	zip)
-		workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
-		unzip -q "$source" ${subdir:+"$subdir/*"} -d "$workdir"
-		validate_destdir "$workdir/$subdir" "$destdir"
-		update_destdir move "$workdir/$subdir" "$destdir"
-		;;
-esac
+$source_handler --unpack
+
 [ -d "$destdir" ] ||
 	fatal "$destdir: result of extraction is not a directory."
-
-[ -z "$workdir" -o ! -d "$workdir" ] ||
-	rm -rf -- "$workdir"
 
 if [ -n "$exclude_pattern" ]; then
 	cd "$destdir"

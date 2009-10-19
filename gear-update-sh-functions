@@ -1,0 +1,85 @@
+#!/bin/sh -eu
+#
+# Copyright (C) 2006-2009  Alexey Gladkov <legion@altlinux.org>
+# Copyright (C) 2006-2009  Dmitry V. Levin <ldv@altlinux.org>
+# Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+
+. gear-sh-functions
+
+gear_update_verbose=
+gear_update_force=
+gear_update_canon_destdir=
+
+validate_destdir()
+{
+	[ "$#" -eq 2 ] ||
+		fatal "validate_destdir: invalid ($#) number of arguments."
+	local src_dir="$1"; shift
+	local dst_dir="$1"; shift
+	[ -z "$gear_update_force" ] ||
+		return 0
+	if [ "$dst_dir" = '.' -a -d '.git' -a -d "$src_dir/.git" ]; then
+		fatal "$gear_update_canon_destdir/.git: Cowardly refusing to replace git directory."
+	fi
+}
+
+update_destdir()
+{
+	[ "$#" -eq 3 ] ||
+		fatal "update_destdir: invalid ($#) number of arguments."
+	local command="$1"; shift
+	local src_dir="$1"; shift
+	local dst_dir="$1"; shift
+	local cmd=
+	case "$command" in
+		copy) cmd="cp -a" ;;
+		move) cmd="mv" ;;
+	esac
+	[ -n "$cmd" ] ||
+		fatal "update_destdir: invalid command: $command"
+
+	[ "$dst_dir" = '.' ] ||
+		mkdir $gear_update_verbose -p -- "$dst_dir"
+
+	find "$src_dir" -mindepth 1 -maxdepth 1 \! \( -name '.git' -o -name '.gear' -o -name '.gear-rules' -o -name '.gear-tags' \) -print0 |
+		xargs -r0 -i $cmd -- \{\} "$dst_dir/"
+}
+
+check_source_type()
+{ fatal "check_source_type(): Undefined function."; }
+
+unpack_source()
+{ fatal "unpack_source(): Undefined function."; }
+
+list_source()
+{ fatal "list_source(): Undefined function."; }
+
+gear_update_handler()
+{
+	[ "$#" -gt 0 ] ||
+		fatal "More arguments required."
+
+	case "$1" in
+		--check-type) check_source_type ;;
+		--unpack)     unpack_source ;;
+		--ls)         list_source ;;
+		*)
+			fatal "unrecognized option: $1"
+			;;
+	esac
+}
