@@ -38,6 +38,7 @@ show_help()
 	  --ignore-exclude       pass --ignore-exclude to gear-update;
 	  -C, --create           pass --create to gear-update;
 	  -f, --force            pass --force to gear-update;
+	  -a, --all              pass --all to gear-update;
 	  -s, --sign             add sign to commit and tag;
 	  -S, --subdir=DIR       unpack archives into DIR;
 	  -c, --commit=MSG       use MSG as commit message;
@@ -208,6 +209,7 @@ tag_format=
 tag_msg_format=
 commit_msg_format=
 force=
+all_files=
 subdir=
 dest_create=
 ignore_exclude=
@@ -221,7 +223,7 @@ gear_config_option tag_format tag ""
 gear_config_option tag_msg_format tag-message ""
 gear_config_option commit_msg_format commit-message ""
 
-TEMP=`getopt -n $PROG -o f,c:,C,r:,s,S:,t:,T:,v,V,h -l commit:,create,dry-run,force,no-commit,no-tag,ignore-exclude,rules:,sign,subdir:,tag:,tag-message:,time:,verbose,version,help -- "$@"` ||
+TEMP=`getopt -n $PROG -o a,f,c:,C,r:,s,S:,t:,T:,v,V,h -l all,commit:,create,dry-run,force,no-commit,no-tag,ignore-exclude,rules:,sign,subdir:,tag:,tag-message:,time:,verbose,version,help -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
@@ -246,6 +248,8 @@ while :; do
 		-f|--force) force=1
 			;;
 		-C|--create) dest_create=1
+			;;
+		-a|--all) all_files=1
 			;;
 		-r|--rules) shift; rulesfile="$1"
 			;;
@@ -321,6 +325,9 @@ for archive_file; do
 
 	[ -z "$force" ] ||
 		extra_args="$extra_args --force"
+
+	[ -z "$all_files" ] ||
+		extra_args="$extra_args --all"
 
 	git clean -f -d "${subdir:-$archive_name}"
 
