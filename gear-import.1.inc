@@ -49,6 +49,23 @@ gear.import.tag-message
 .RS 4
 tag message template, defaults to '@archive_name@ @archive_version@'.
 .RE
+.PP
+gear.import.archive-pattern
+.PP
+gear.import.name-template
+.PP
+gear.import.version-template
+.PP
+gear.import.name-transform
+.PP
+gear.import.version-transform
+.PP
+gear.import.case-sense
+.RS 4
+single parser rule description, see
+.BR  gear-import-rules (5)
+for more information.
+.RE
 
 [ENVIRONMENT]
 .TP

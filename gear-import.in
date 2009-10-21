@@ -171,7 +171,16 @@ parse_rules()
 {
 	local archive="$1"
 	local eof= keyword value
-	local pattern= name= version= replace_version= replace_name= sed_i='i'
+	local pattern name version replace_version replace_name sed_i='i'
+
+	gear_config_option pattern         'archive-pattern'   ""
+	gear_config_option name            'name-template'     ""
+	gear_config_option version         'version-template'  ""
+	gear_config_option replace_name    'name-transform'    ""
+	gear_config_option replace_version 'version-transform' ""
+	gear_config_option case_sense      'case-sense'        ""
+	! shell_var_is_yes "$case_sense" ||
+		sed_i=
 
 	while [ -z "$eof" ]; do
 		read -r keyword value ||
