@@ -48,6 +48,15 @@ HELPERS = \
 	gear-changelog-deb \
 	gear-changelog-gnu \
 	gear-changelog-rpm \
+	gear-update-sh-functions \
+	gear-update-src-cpio \
+	gear-update-src-cpio.bz2 \
+	gear-update-src-cpio.gz \
+	gear-update-src-cpio.xz \
+	gear-update-src-dir \
+	gear-update-src-gem \
+	gear-update-src-tar \
+	gear-update-src-zip \
 	#
 MAN1PAGES = $(PROGRAMS:=.1)
 MAN5PAGES = gear-rules.5 gear-merge-rules.5 gear-changelog-rules.5
