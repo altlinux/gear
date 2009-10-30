@@ -36,6 +36,12 @@ check_source_type()
 	[ -z "${file_type##*tar archive*}" ] ||
 		return 2
 
+	[ -z "$gear_update_all_subdirs" ] ||
+		fatal "Cannot use --all for updating from a gem source."
+
+	[ -z "$gear_update_subdir" ] ||
+		fatal "Cannot use --subdir for updating from a gem source."
+
 	return 0
 }
 
