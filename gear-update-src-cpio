@@ -26,18 +26,18 @@ check_source_type()
 	local file_type
 	file_type="$(file -b "$gear_update_source")"
 
-	[ -n "${file_type##*cpio archive*}" ] ||
+	[ "$source_type" != "cpio" -o -n "${file_type##*cpio archive*}" ] ||
 		return 0
 
 	file_type="$(file -bz "$gear_update_source")"
 
-	[ -n "${file_type##*cpio archive *bzip2 compressed data*}" ] ||
+	[ "$source_type" != "cpio.bz2" -o -n "${file_type##*cpio archive *bzip2 compressed data*}" ] ||
 		return 0
 
-	[ -n "${file_type##*cpio archive *gzip compressed data*}" ] ||
+	[ "$source_type" != "cpio.gz" -o -n "${file_type##*cpio archive *gzip compressed data*}" ] ||
 		return 0
 
-	[ -n "${file_type##*cpio archive *xz compressed data*}" ] ||
+	[ "$source_type" != "cpio.xz" -o -n "${file_type##*cpio archive *xz compressed data*}" ] ||
 		return 0
 
 	return 2
