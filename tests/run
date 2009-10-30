@@ -137,6 +137,29 @@ append_test()
 		define_test "$n" "$s" _diff_xz "gear_directive=diff.xz decompress_prog='xz -d -c'"
 		define_test "$n" "$s" _diff_lzma "gear_directive=diff.lzma decompress_prog='lzma -d -c'"
 		;;
+		gear_update_*)
+		if [ "$s" = "cwd" ]; then
+			local dir t
+
+			for dir in . subdir; do
+				[ "$dir" = "." ] &&
+					t=dot ||
+					t=sub
+				define_test "$n" "$s" _${t}_dir      "gear_subdir='$dir' gear_type=          gear_compress=                     gear_filter="
+				define_test "$n" "$s" _${t}_gem      "gear_subdir='$dir' gear_type=.gem      gear_compress=                     gear_filter="
+				define_test "$n" "$s" _${t}_tar      "gear_subdir='$dir' gear_type=.tar      gear_compress='tar -cT - -f -'     gear_filter='cat'"
+				define_test "$n" "$s" _${t}_tar_gz   "gear_subdir='$dir' gear_type=.tar.gz   gear_compress='tar -cT - -f -'     gear_filter='gzip -c'"
+				define_test "$n" "$s" _${t}_tar_bz2  "gear_subdir='$dir' gear_type=.tar.bz2  gear_compress='tar -cT - -f -'     gear_filter='bzip2 -c'"
+				# tar fails do autodetect xz-compressed archives, disable test
+				#define_test "$n" "$s" _${t}_tar_xz   "gear_subdir='$dir' gear_type=.tar.xz   gear_compress='tar -cT - -f -'     gear_filter='xz -c'"
+				define_test "$n" "$s" _${t}_zip      "gear_subdir='$dir' gear_type=.zip      gear_compress='zip -q -@ -'        gear_filter='cat'"
+				define_test "$n" "$s" _${t}_cpio     "gear_subdir='$dir' gear_type=.cpio     gear_compress='cpio --quiet -o -c' gear_filter='cat'"
+				define_test "$n" "$s" _${t}_cpio_gz  "gear_subdir='$dir' gear_type=.cpio.gz  gear_compress='cpio --quiet -o -c' gear_filter='gzip -c'"
+				define_test "$n" "$s" _${t}_cpio_bz2 "gear_subdir='$dir' gear_type=.cpio.bz2 gear_compress='cpio --quiet -o -c' gear_filter='bzip2 -c'"
+				define_test "$n" "$s" _${t}_cpio_xz  "gear_subdir='$dir' gear_type=.cpio.xz  gear_compress='cpio --quiet -o -c' gear_filter='xz -c'"
+			done
+		fi
+		;;
 		*)
 		define_test "$n" "$s" ''
 		;;
