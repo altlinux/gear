@@ -91,9 +91,12 @@ validate_subdir()
 
 	local quoted_subdir
 	quoted_subdir="$(quote_sed_regexp "$subdir")"
-	export gear_update_subdir="$subdir"
 	$source_handler --ls |LC_ALL=C grep -qs "^$quoted_subdir\(/\|\$\)" ||
 		fatal "$source: directory \`$subdir' not found in archive."
+
+	# We found the subdirectory automatically and we found this directory
+	# in the archive so we need to update the variable.
+	export gear_update_subdir="$subdir"
 }
 
 destdir=
