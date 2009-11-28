@@ -26,7 +26,7 @@ Requires: libshell >= 0:0.1.0
 Conflicts: hasher < 0:1.0.30
 
 BuildPreReq: asciidoc, git-core, help2man, libshell >= 0:0.0.3-alt1
-%{?!_without_check:%{?!_disable_check:BuildRequires: xz, unzip}}
+%{?!_without_check:%{?!_disable_check:BuildRequires: faketime, xz, zip, unzip}}
 
 %description
 This package contains utilities for building RPM packages from GEAR
