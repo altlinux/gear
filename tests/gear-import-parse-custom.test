@@ -1,0 +1,68 @@
+#!/bin/sh -efu
+
+gear_import_parse_custom_run_command()
+{
+	exec gear-import --dry-run --rules "$srcdir/gear-import-rules" "$@"
+}
+
+gear_import_parse_custom() # test entry point
+{
+	git config gear.import.archive-pattern '^([0-9]+-[a-z]+)-([0-9.]+)$'
+	git config gear.import.name-template '\1'
+	git config gear.import.version-template '\2'
+
+	assertEquals "should accept custom rule from git config" \
+"archive: 123-foo-1.2.3
+   name: 123-foo
+version: 1.2.3" "$(gear_import_parse_custom_run_command 123-foo-1.2.3.tar)"
+
+assertEquals "should process default rules if custom does not match" \
+"archive: 123-foo-bar-1.2.3
+   name: foo-bar
+version: 1.2.3" "$(gear_import_parse_custom_run_command 123-foo-bar-1.2.3.tar)"
+
+	git config gear.import.name-transform 's/foo/bar/'
+	git config gear.import.version-transform 's/([0-9])\.([0-9])\.([0-9])/\3.\2.\1/'
+
+	assertEquals "should apply custom transform rules from git config" \
+"archive: 123-foo-1.2.3
+   name: 123-bar
+version: 3.2.1" "$(gear_import_parse_custom_run_command 123-foo-1.2.3.tar)"
+
+	assertEquals "should not apply custom transform to default rules" \
+"archive: 123-foo-bar-1.2.3
+   name: foo-bar
+version: 1.2.3" "$(gear_import_parse_custom_run_command 123-foo-bar-1.2.3.tar)"
+
+	git config --bool 'gear.import.case-sense' true
+
+	assertEquals "should be case-sensitive (pt. I)" \
+"archive: 123-foo-1.2.3
+   name: 123-bar
+version: 3.2.1" "$(gear_import_parse_custom_run_command 123-foo-1.2.3.tar)"
+
+	assertEquals "should be case-sensitive (pt. II)" \
+"archive: 123-Foo-1.2.3
+   name: Foo
+version: 1.2.3" "$(gear_import_parse_custom_run_command 123-Foo-1.2.3.tar)"
+
+	git config --bool 'gear.import.case-sense' false
+
+	assertEquals "should be case-insensitive (pt. I)" \
+"archive: 123-foo-1.2.3
+   name: 123-bar
+version: 3.2.1" "$(gear_import_parse_custom_run_command 123-foo-1.2.3.tar)"
+
+	assertEquals "should be case-insensitive (pt. II)" \
+"archive: 123-Foo-1.2.3
+   name: 123-Foo
+version: 3.2.1" "$(gear_import_parse_custom_run_command 123-Foo-1.2.3.tar)"
+
+	git config --unset gear.import.archive-pattern
+
+	assertEquals "should ignore custom rule without pattern" \
+"archive: 123-foo-1.2.3
+   name: foo
+version: 1.2.3" "$(gear_import_parse_custom_run_command 123-foo-1.2.3.tar)"
+
+}

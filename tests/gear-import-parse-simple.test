@@ -1,0 +1,77 @@
+#!/bin/sh -efu
+
+gear_import_parse_simple_run_command()
+{
+	exec gear-import --dry-run --rules "$srcdir/gear-import-rules" "$@"
+}
+
+gear_import_parse_simple() # test entry point
+{
+	local una duo
+	local suffixes=".tar .bz2 .gz .tbz .tbz2 .tgz .zip .Z .z .lzma .cpio .xpi .jar"
+
+	assertEquals "should parse generic archive name" \
+"archive: foo-bar-1.2.3
+   name: foo-bar
+version: 1.2.3" "$(gear_import_parse_simple_run_command foo-bar-1.2.3.tar)"
+
+	assertEquals "should parse generic release archive name" \
+"archive: foo-bar-1.2.3-release
+   name: foo-bar
+version: 1.2.3" "$(gear_import_parse_simple_run_command foo-bar-1.2.3-release.tar)"
+
+	assertEquals "should parse java-style source archive" \
+"archive: foo-bar-1.2.3-src
+   name: foo-bar
+version: 1.2.3" "$(gear_import_parse_simple_run_command foo-bar-1.2.3-src.zip)"
+
+	assertEquals "should parse debian-style upstream archive" \
+"archive: foo-bar_1.2.3.orig
+   name: foo-bar
+version: 1.2.3" "$(gear_import_parse_simple_run_command foo-bar_1.2.3.orig.tar)"
+
+	assertEquals "should parse debian-style patched archive" \
+"archive: foo-bar_1.2.3-4
+   name: foo-bar
+version: 1.2.3-4" "$(gear_import_parse_simple_run_command foo-bar_1.2.3-4.tar)"
+
+	assertEquals "should parse RPM-style %name-%version-%release archive" \
+"archive: foo-bar-1.2.3-alt4
+   name: foo-bar
+version: 1.2.3-alt4" "$(gear_import_parse_simple_run_command foo-bar-1.2.3-alt4.tar)"
+
+	assertEquals "should parse crappy theme archive" \
+"archive: 12345-Foo-Bar
+   name: Foo-Bar
+version: " "$(gear_import_parse_simple_run_command 12345-Foo-Bar.tar)"
+
+	assertEquals "should parse crappy theme archive with version" \
+"archive: 12345-foo-bar-1.2.3
+   name: foo-bar
+version: 1.2.3" "$(gear_import_parse_simple_run_command 12345-foo-bar-1.2.3.tar)"
+
+	assertEquals "should parse archive with funny version" \
+"archive: foo-bar-v1.2.3-4
+   name: foo-bar
+version: v1.2.3-4" "$(gear_import_parse_simple_run_command foo-bar-v1.2.3-4.tar)"
+
+assertEquals "should parse dot-separated archive" \
+"archive: foo-bar.1.2.3
+   name: foo-bar
+version: 1.2.3" "$(gear_import_parse_simple_run_command foo-bar.1.2.3.tar)"
+
+	for una in "" .tar; do
+		for duo in $suffixes; do
+			assertEquals "should strip $una$duo suffix" \
+"archive: foo-bar-1.2.3
+   name: foo-bar
+version: 1.2.3" "$(gear_import_parse_simple_run_command "foo-bar-1.2.3$una$duo")"
+		done
+	done
+
+	assertEquals "should strip very long suffix" \
+"archive: foo-bar-1.2.3
+   name: foo-bar
+version: 1.2.3" "$(gear_import_parse_simple_run_command "foo-bar-1.2.3$(printf %s "$suffixes"| tr -d ' ')")"
+
+}
