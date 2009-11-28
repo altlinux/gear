@@ -323,7 +323,7 @@ for archive_file; do
 	fi
 
 	extra_args=
-	if [ ! -d "$archive_name" ]; then
+	if [ ! -d "${subdir:-$archive_name}" ]; then
 		[ -n "$dest_create" ] ||
 			fatal "Unable to parse archive: $archive"
 		extra_args='--create'
