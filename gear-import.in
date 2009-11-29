@@ -81,10 +81,10 @@ expand_string()
 				__mess="${__mess%%@archive@*}$archive${__mess#*@archive@}"
 				;;
 			*@name@*)
-				__mess="${__mess%%@archive_name@*}$archive_name${__mess#*@archive_name@}"
+				__mess="${__mess%%@name@*}$archive_name${__mess#*@name@}"
 				;;
 			*@version@*)
-				__mess="${__mess%%@archive_version@*}$archive_version${__mess#*@archive_version@}"
+				__mess="${__mess%%@version@*}$archive_version${__mess#*@version@}"
 				;;
 		esac
 	done
