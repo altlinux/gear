@@ -199,6 +199,8 @@ setUp()
 	cd "$workdir"
 	mkdir .empty
 	git init -q
+	git config user.email "you@example.com"
+	git config user.name "Your Name"
 }
 
 tearDown()
