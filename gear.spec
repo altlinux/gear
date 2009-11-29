@@ -51,6 +51,7 @@ install -pDm644 contrib/gear-bash_completion %buildroot/etc/bash_completion.d/ge
 %files
 %config /etc/bash_completion.d/*
 %_bindir/*
+%_datadir/%name
 %_mandir/man?/*
 %doc QUICKSTART* ABOUT*
 
