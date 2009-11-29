@@ -1,0 +1,44 @@
+#!/bin/sh -efu
+
+gear_import_update_run_command()
+{
+	gear-import --rules "$srcdir/gear-import-rules" "$@"
+}
+
+gear_import_update() # test entry point
+{
+	local v
+
+	mkdir -p .git/.work
+	pushd .git/.work>/dev/null
+	for v in 1.0 1.1 1.2 1.2.1 1.3 2.0 2.2; do
+		mkdir -p "foo-$v"
+		cat <<-EOF >"foo-$v/VERSION"
+		Foo version $v
+		EOF
+		tar czf "foo-$v.tar.gz" "foo-$v"
+	done
+	popd>/dev/null
+
+	assertFalse "should fail to update non-existant directory without --create" \
+		"gear_import_update_run_command .git/.work/foo-1.0.tar.gz .git/.work/foo-1.1.tar.gz .git/.work/foo-1.2.tar.gz"
+
+	assertTrue "should update non-existant directory with --create" \
+		"gear_import_update_run_command -C .git/.work/foo-1.0.tar.gz .git/.work/foo-1.1.tar.gz .git/.work/foo-1.2.tar.gz"
+
+	assertTrue "should update moar archives" \
+		"gear_import_update_run_command .git/.work/foo-1.2.1.tar.gz .git/.work/foo-1.3.tar.gz .git/.work/foo-2.0.tar.gz"
+
+	for v in 1.0 1.1 1.2 1.2.1 1.3 2.0; do
+		assertEquals "version equals to \`$v'" "Foo version $v" "$(git cat-file blob "v$v:foo/VERSION")"
+		assertEquals "tag message equals to \`foo $v'" "foo $v" "$(git cat-file tag "v$v" | tail -n 1)"
+		assertEquals "commit message equals to \`Import archive foo-$v'" "Import archive foo-$v" "$(git cat-file commit "v$v^{}" | tail -n 1)"
+	done
+
+	assertTrue "should support custom format" \
+		"gear_import_update_run_command -t '@name@-@version@' -T '@name@ version @version@' -c 'archive: @archive@, name: @name@, version: @version@' .git/.work/foo-2.2.tar.gz"
+
+	assertEquals "version equals to \`2.2'" "Foo version 2.2" "$(git cat-file blob "foo-2.2:foo/VERSION")"
+	assertEquals "tag message equals to \`foo version 2.2'" "foo version 2.2" "$(git cat-file tag "foo-2.2" | tail -n 1)"
+	assertEquals "commit message equals to \`archive: foo-2.2, name: foo, version: 2.2'" "archive: foo-2.2, name: foo, version: 2.2" "$(git cat-file commit "foo-2.2^{}" | tail -n 1)"
+}
