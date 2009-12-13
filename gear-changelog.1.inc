@@ -59,4 +59,4 @@ Specifies a committer email.
 [SEE ALSO]
 .BR gear (1),
 .BR gear\-changelog\-rules (5),
-.BR git-config (1).
+.BR git\-config (1).

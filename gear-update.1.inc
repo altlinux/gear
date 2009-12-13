@@ -38,4 +38,4 @@ the default for the base of the repository.
 [SEE ALSO]
 .BR gear (1),
 .BR gear\-rules (5),
-.BR git-config (1).
+.BR git\-config (1).

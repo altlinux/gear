@@ -22,7 +22,7 @@ gear\-import\-rules \- rule file for gear\-import
 .SH DESCRIPTION
 .
 The rule file specifies parser patterns for
-.BR gear-import (1)
+.BR gear\-import (1)
 required to parse archive filename.
 .
 .
@@ -55,17 +55,17 @@ Matches the DIGIT-th parenthesized subexpression that match name.
 Matches the DIGIT-th parenthesized subexpression that match version.
 .
 .TP
-.BI "case-sanse: "yes
+.BI "case\-sense: "yes
 Makes `sed' match REGEXP in a case-sensitive manner. 
 .
 .TP
-.BI "replace-name: "<sed-expression>
+.BI "replace\-name: "<sed-expression>
 .TP
-.BI "replace-version: "<sed-expression>
+.BI "replace\-version: "<sed-expression>
 Finally, if
-.B replace-name
+.B replace\-name
 or
-.B replace-version
+.B replace\-version
 directives defined, it applied to generated name of version as sed expression.
 .
 .
@@ -93,4 +93,4 @@ package are listed in the manual pages for these programs.
 .na
 .nh
 .tr -\(hy
-.BR gear-import (1).
+.BR gear\-import (1).

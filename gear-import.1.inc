@@ -28,16 +28,17 @@ tag with its version. Subdirectory name and tag name is calculated
 from the archive name.
 
 [CONFIGURATION]
-\fBgear-import\fR reads following configuration options from git\-config:
+.B gear\-import
+reads following configuration options from git\-config:
 .PP
-gear.import.commit-message
+gear.import.commit\-message
 .RS 4
 commit message template, defaults to 'Import archive @archive@'.
 .RE
 .PP
 gear.import.rules
 .RS 4
-rules file name, defaults to /usr/share/gear/gear-import-rules.
+rules file name, defaults to /usr/share/gear/gear\-import\-rules.
 .RE
 .PP
 gear.import.tag
@@ -45,34 +46,36 @@ gear.import.tag
 tag name template, defaults to 'v@archive_version@'.
 .RE
 .PP
-gear.import.tag-message
+gear.import.tag\-message
 .RS 4
 tag message template, defaults to '@archive_name@ @archive_version@'.
 .RE
 .PP
-gear.import.archive-pattern
+gear.import.archive\-pattern
 .PP
-gear.import.name-template
+gear.import.name\-template
 .PP
-gear.import.version-template
+gear.import.version\-template
 .PP
-gear.import.name-transform
+gear.import.name\-transform
 .PP
-gear.import.version-transform
+gear.import.version\-transform
 .PP
-gear.import.case-sense
+gear.import.case\-sense
 .RS 4
 single parser rule description, see
-.BR  gear-import-rules (5)
+.BR gear\-import\-rules (5)
 for more information.
 .RE
 
 [ENVIRONMENT]
 .TP
 .B IMPORT_RULES
-Specifies a custom gear-import rules filename.
+Specifies a custom
+.B gear\-import
+rules filename.
 
 [SEE ALSO]
-.BR gear-update (1),
-.BR gear-import-rules (5),
-.BR git-config (1).
+.BR gear\-update (1),
+.BR gear\-import\-rules (5),
+.BR git\-config (1).

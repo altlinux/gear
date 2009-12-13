@@ -109,9 +109,9 @@ fields.
 .BR gear\-rules (5),
 .BR gear\-commit (1),
 .BR gear\-srpmimport (1),
-.BR gear\-update-tag (1),
+.BR gear\-update\-tag (1),
 .BR gear\-update (1),
 .BR hsh (1),
 .BR git (7),
-.BR git-config (1),
+.BR git\-config (1),
 .BR rpmbuild (8).

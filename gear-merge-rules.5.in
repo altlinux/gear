@@ -22,7 +22,7 @@ gear\-merge\-rules \- rule file for gear\-merge
 .SH DESCRIPTION
 .
 The rule file specifies actions of
-.BR gear-merge (1)
+.BR gear\-merge (1)
 required to merge branches in the package repository.
 .
 .
@@ -46,7 +46,7 @@ Directive arguments are delimited by whitespace characters.
 .TP
 .BI "squash"
 It is the same as git merge --squash. See
-.BR git-merge (1).
+.BR git\-merge (1).
 .TP
 .BI strategy= <STRATEGY>
 It is the same as git merge --strategy=<STRATEGY>.
@@ -56,7 +56,7 @@ It is the same as git merge --strategy=<STRATEGY>.
 .
 .TP
 .BI "merge: <from-branch> <to-branch> "[options\ ...]
-Call git-merge to merge the retrieved 
+Call git\-merge to merge the retrieved
 .IR <from-branch>
 into the
 .IR <to-branch>
@@ -86,14 +86,14 @@ The comment is added in the beginning of a diff.
 .TP
 .BI unified= <N>
 Generate diffs with <n> lines of context instead of the usual three. See
-.BR git-diff (1).
+.BR git\-diff (1).
 .
 .
 .SH FILES
 .TP
 .BR .gear/merge
 The
-.BR gear-merge (1)
+.BR gear\-merge (1)
 expect to find rules, unless another name is specified by the
 .BI \-\-rules= filename
 option.
@@ -113,4 +113,4 @@ package are listed in the manual pages for these programs.
 .na
 .nh
 .tr -\(hy
-.BR gear-merge (1).
+.BR gear\-merge (1).

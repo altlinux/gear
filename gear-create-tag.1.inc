@@ -44,5 +44,5 @@ the default for the base of the repository.
 [SEE ALSO]
 .BR gear (1),
 .BR git\-tag (1),
-.BR git-config (1),
+.BR git\-config (1),
 .BR gpg (1).

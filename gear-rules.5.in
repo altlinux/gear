@@ -140,7 +140,7 @@ can find the spec file automatically.
 .BI "tags: " path_to_directory
 Specify another path of the directory with the list of named tags and
 stored tag objects instead of
-.BR .gear-tags " and " .gear/tags .
+.BR .gear\-tags " and " .gear/tags .
 .
 .TP
 .BI "copy: " glob_pattern\fR...
@@ -479,7 +479,7 @@ and a separate patch with local modifications, you need to create a
 tag for the commit with upstream sources (or use the upstream tag if
 upstream also uses git), specify the tag name in the rule file and
 store this tag in the repository using
-.BR gear-update-tag (1).
+.BR gear\-update\-tag (1).
 In this case the default archive name used by the
 .B tar
 directive should be correct, unless the package name or version format
@@ -521,9 +521,9 @@ copy: *.patch
 .RE
 .PP
 This layout is used by
-.BR gear-srpmimport (1).
+.BR gear\-srpmimport (1).
 The
-.BR gear-update (1)
+.BR gear\-update (1)
 utility can be used to update sources stored in the git repository to
 a new upstream release.
 .PP
@@ -542,14 +542,14 @@ copy: patches/*.patch
 .
 .SH FILES
 .TP
-.BR .gear-rules ", " .gear/rules
+.BR .gear\-rules ", " .gear/rules
 The list of file names where
 .BR gear (1),
-.BR gear-commit (1),
-.BR gear-create-tag (1),
-.BR gear-srpmimport (1)
+.BR gear\-commit (1),
+.BR gear\-create\-tag (1),
+.BR gear\-srpmimport (1)
 and
-.BR gear-update-tag (1)
+.BR gear\-update\-tag (1)
 expect to find rules (first non-empty file from this list is used),
 unless another name is specified by the
 .BI \-\-rules= filename
@@ -571,6 +571,6 @@ package are listed in the manual pages for these programs.
 .nh
 .tr -\(hy
 .BR gear (1),
-.BR gear-srpmimport (1),
-.BR gear-update (1),
-.BR gear-update-tag (1).
+.BR gear\-srpmimport (1),
+.BR gear\-update (1),
+.BR gear\-update\-tag (1).
