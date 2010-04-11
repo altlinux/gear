@@ -8,7 +8,7 @@ gear_import_parse_simple_run_command()
 gear_import_parse_simple() # test entry point
 {
 	local una duo
-	local suffixes=".tar .bz2 .gz .tbz .tbz2 .tgz .zip .Z .z .lzma .cpio .xpi .jar"
+	local suffixes=".tar .bz2 .gz .tbz .tbz2 .tgz .zip .Z .z .lzma .cpio .xpi .jar .gem"
 
 	assertEquals "should parse generic archive name" \
 "archive: foo-bar-1.2.3

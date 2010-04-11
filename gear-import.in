@@ -113,6 +113,7 @@ remove_suffix()
 			*.cpio) __fn="${__fn%.cpio}" ;;
 			*.xpi)  __fn="${__fn%.xpi}"  ;;
 			*.jar)  __fn="${__fn%.jar}"  ;;
+			*.gem)  __fn="${__fn%.gem}"  ;;
 		esac
 	done
 	# We should ignore the program if it does not have all the well-known suffix.
