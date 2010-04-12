@@ -310,12 +310,12 @@ for archive_file; do
 	archive_version=
 
 	if ! remove_suffix archive "$archive"; then
-		message "Unknown archive format: $archive"
+		message "Unknown archive format: $archive_file"
 		continue
 	fi
 
 	if ! parse_rules "$archive"; then
-		message "Unknown archive format: $archive"
+		message "Unable to parse archive: $archive"
 		continue
 	fi
 
@@ -329,7 +329,7 @@ for archive_file; do
 	extra_args=
 	if [ ! -d "${subdir:-$archive_name}" ]; then
 		[ -n "$dest_create" ] ||
-			fatal "Unable to parse archive: $archive"
+		fatal "Neither ${subdir:-$archive_name} exists nor --create specified"
 		extra_args='--create'
 	fi
 
