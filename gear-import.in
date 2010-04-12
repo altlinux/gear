@@ -80,6 +80,9 @@ expand_string()
 			*@archive@*)
 				__mess="${__mess%%@archive@*}$archive${__mess#*@archive@}"
 				;;
+			*@archive_file@*)
+				__mess="${__mess%%@archive_file@*}${archive_file##*/}${__mess#*@archive_file@}"
+				;;
 			*@name@*)
 				__mess="${__mess%%@name@*}$archive_name${__mess#*@name@}"
 				;;
