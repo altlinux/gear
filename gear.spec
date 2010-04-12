@@ -1,7 +1,7 @@
 # Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 
 Name: gear
-Version: 1.6.0
+Version: 1.7.0
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -56,6 +56,19 @@ install -pDm644 contrib/gear-bash_completion %buildroot/etc/bash_completion.d/ge
 %doc QUICKSTART* ABOUT*
 
 %changelog
+* Mon Apr 12 2010 Dmitry V. Levin <ldv@altlinux.org> 1.7.0-alt1
+- Bugfixes:
+  + manpages: Quoted dash symbols in command and option names
+    (closes: #22526).
+- Improvements:
+  + Documented git-config options (Alexey Froloff).
+  + gear-update:
+    - Implemented plugins support (Alexey Gladkov, Alexey Froloff).
+    - Added rubygems support (Alexey Froloff).
+    - Added tests (Alexey Froloff).
+  + gear-import: New utility
+    (Alexey Gladkov, Alexey Froloff; closes: #23320).
+
 * Mon Oct 05 2009 Dmitry V. Levin <ldv@altlinux.org> 1.6.0-alt1
 - Bugfixes:
   + gear-merge: Use quote_shell_args() from libshell (Alexey Gladkov).
