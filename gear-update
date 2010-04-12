@@ -1,4 +1,4 @@
-#!/bin/sh -eu
+#!/bin/sh -efu
 #
 # Copyright (C) 2006-2009  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006-2009  Dmitry V. Levin <ldv@altlinux.org>
@@ -121,7 +121,13 @@ cleanup_handler()
 	fi
 }
 
-for s_handler in "${0%/*}"/gear-update-src-*; do
+path_to_self="$(type -p "$0")" && [ -x "$path_to_self" ] ||
+	fatal "Failed to locate "$0" binary"
+[ -z "${path_to_self##/*}" ] ||
+	path_to_self="$(readlink -ev "$path_to_self")"
+plugin_dir="${path_to_self%/*}"
+set +f
+for s_handler in "$plugin_dir/gear-update-src-"*; do
 	[ -f "$s_handler" ] ||
 		break
 	if [ ! -x "$s_handler" ]; then
@@ -207,7 +213,7 @@ export gear_update_verbose="$verbose"
 if [ -z "$source_type" ]; then
 	for s_type in $handlers_list; do
 		rc=0
-		"${0%/*}/gear-update-src-$s_type" --check-type || rc=$?
+		"$plugin_dir/gear-update-src-$s_type" --check-type || rc=$?
 		case "$rc" in
 			0)
 				source_type="$s_type"
@@ -220,7 +226,7 @@ if [ -z "$source_type" ]; then
 		esac
 	done
 fi
-source_handler="${0%/*}/gear-update-src-$source_type"
+source_handler="$plugin_dir/gear-update-src-$source_type"
 [ -x "$source_handler" ] ||
 	fatal "$source: unrecognized source type: $source_type"
 
