@@ -119,19 +119,8 @@ EOF
 }
 
 tmpdir=
-tmp_commit_id=
 cleanup_handler()
 {
-	if [ -n "$tmp_commit_id" ]; then
-		if [ "$(get_object_sha1 HEAD)" = "$tmp_commit_id" ] &&
-		   git reset --soft HEAD^; then
-			verbose "Reverted temporary commit $tmp_commit_id."
-		else
-			printf 'bold\nsetaf 1\n' |tput -S 2>/dev/null ||:
-			message "Failed to revert temporary commit $tmp_commit_id."
-			printf 'op\nsgr0\n' |tput -S 2>/dev/null ||:
-		fi
-	fi
 	[ -z "$tmpdir" ] ||
 		rm -rf -- "$tmpdir"
 }
@@ -751,11 +740,40 @@ if [ -z "$outdir" ]; then
 	mkdir $verbose "$outdir"
 fi
 
+create_temporary_git_object_directory()
+{
+	local orig_object_dir
+	orig_object_dir="${GIT_OBJECT_DIRECTORY-"$git_dir/objects"}"
+	mkdir -p "$tmpdir/objects/info"
+	printf %s\\n "$orig_object_dir" >"$tmpdir/objects/info/alternates"
+	GIT_OBJECT_DIRECTORY="$tmpdir/objects"
+	export GIT_OBJECT_DIRECTORY
+}
+
 if [ -n "$do_commit" ]; then
-	if git commit -a -m "Temporary commit by $PROG."; then
+	create_temporary_git_object_directory
+
+	cp "${GIT_INDEX_FILE-"$git_dir/index"}" "$tmpdir/GIT_INDEX_FILE"
+	GIT_INDEX_FILE="$tmpdir/GIT_INDEX_FILE"
+	export GIT_INDEX_FILE
+
+	git diff-files --name-only -z |
+		git update-index --remove -z --stdin
+	git update-index -q --refresh
+
+	tmp_tree="$(git write-tree)"
+	if [ "$tmp_tree" = "$(git rev-parse "$main_commit_sha1^{tree}" 2>/dev/null)" ]; then
+		verbose 'Nothing to commit'
+	else
+		tmp_parents="-p $main_commit_sha1"
+		if [ -f "$git_dir/MERGE_HEAD" ]; then
+			tmp_parents="$tmp_parents $(sed 's/^/-p /' "$GIT_DIR/MERGE_HEAD")"
+		fi
+		main_commit_id="$(echo "Temporary commit by $PROG." |
+			git commit-tree "$tmp_tree" $tmp_parents)"
+		main_tree_id=$main_commit_id
+		main_commit_sha1=$main_commit_id
 		verbose 'Temporarily committed local changes.'
-		tmp_commit_id="$(get_object_sha1 HEAD)" ||
-			fatal 'Failed to parse HEAD after temporary commit.'
 	fi
 fi
 
@@ -766,12 +784,9 @@ if [ -n "$describe" ]; then
 	exit 0
 fi
 
-# Create a temporary object directory for extracting stored tags.
-orig_object_dir="${GIT_OBJECT_DIRECTORY-"$git_dir/objects"}"
-mkdir -p "$tmpdir/objects/info"
-printf %s\\n "$orig_object_dir" >"$tmpdir/objects/info/alternates"
-GIT_OBJECT_DIRECTORY="$tmpdir/objects"
-export GIT_OBJECT_DIRECTORY
+if [ -z "$do_commit" ]; then
+	create_temporary_git_object_directory
+fi
 
 find_tags_in_tree
 parse_rules
@@ -789,8 +804,7 @@ fi
 [ -n "$command_helper$*" ] ||
 	exit 0
 
-gear_commit_id="${tmp_commit_id:-$main_commit_id}"
-gear_commit_id="$(get_object_sha1 "$gear_commit_id")" ||
+gear_commit_id="$(get_object_sha1 "$main_commit_id")" ||
 	fatal 'Failed to parse commit.'
 export gear_commit_id
 
