@@ -21,11 +21,11 @@
 . gear-sh-functions
 . shell-getopt
 
-cmd=
+gear_cmd=
 show_help()
 {
 	cat <<-EOF
-	Usage: $PROG [options] [$cmd options] [gear options]
+	Usage: $PROG [options] [$gear_cmd options] [gear options]
 
 	Options:
 	  -v, --verbose      print a message for each action;
@@ -55,21 +55,24 @@ print_version()
 args='--command -- gear-command'
 case "$PROG" in
 	gear-hsh)
-		cmd='hasher'
-		args="$args-$cmd hsh"
+		gear_cmd=hasher
+		prog=hsh
 		;;
 	gear-rpm)
-		cmd='rpmbuild'
-		args="$args-$cmd rpmbuild"
+		gear_cmd=rpmbuild
+		prog=rpmbuild
 		;;
 	gear-buildreq)
-		cmd='rpmbuild'
-		args="$args-$cmd buildreq"
+		gear_cmd=rpmbuild
+		prog=buildreq
 		;;
 	*)
 		fatal "Unknown command: $PROG"
 		;;
 esac
+[ "$(type -t "$prog")" = file ] ||
+	fatal "$prog: command not found; maybe an appropriate package is not installed"
+args="$args-$gear_cmd $prog"
 
 GETOPT_ALLOW_UNKNOWN=1
 GETOPT_ALLOW_ABBREV=
