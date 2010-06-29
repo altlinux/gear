@@ -104,19 +104,21 @@ remove_suffix()
 	while [ "$__fn" != "$__fo" ]; do
 		__fo="$__fn"
 		case "$__fn" in
-			*.tar)	__fn="${__fn%.tar}"  ;;
 			*.bz2)	__fn="${__fn%.bz2}"  ;;
+			*.cpio) __fn="${__fn%.cpio}" ;;
+			*.gem)  __fn="${__fn%.gem}"  ;;
 			*.gz)	__fn="${__fn%.gz}"   ;;
+			*.jar)  __fn="${__fn%.jar}"  ;;
+			*.lzma) __fn="${__fn%.lzma}" ;;
+			*.tar)	__fn="${__fn%.tar}"  ;;
 			*.tbz)	__fn="${__fn%.tbz}"  ;;
 			*.tbz2)	__fn="${__fn%.tbz2}" ;;
 			*.tgz)	__fn="${__fn%.tgz}"  ;;
+			*.txz)	__fn="${__fn%.txz}"  ;;
+			*.xpi)  __fn="${__fn%.xpi}"  ;;
+			*.xz)   __fn="${__fn%.xz}"   ;;
 			*.zip)	__fn="${__fn%.zip}"  ;;
 			*.[Zz]) __fn="${__fn%.[Zz]}" ;;
-			*.lzma) __fn="${__fn%.lzma}" ;;
-			*.cpio) __fn="${__fn%.cpio}" ;;
-			*.xpi)  __fn="${__fn%.xpi}"  ;;
-			*.jar)  __fn="${__fn%.jar}"  ;;
-			*.gem)  __fn="${__fn%.gem}"  ;;
 		esac
 	done
 	# We should ignore the program if it does not have all the well-known suffix.
