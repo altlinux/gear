@@ -116,7 +116,7 @@ find_tags_in_tar_options()
 			spec=*) spec="${opt#spec=}"
 				check_pathname specfile "$spec"
 				;;
-			name=*|base=*)
+			name=*|base=*|suffix=*)
 				;;
 			*) rules_info "Unrecognized option \"$opt\" ignored"
 				;;
