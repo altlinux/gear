@@ -1,7 +1,7 @@
 # Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
 
 Name: gear
-Version: 1.7.0
+Version: 1.7.1
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -56,6 +56,14 @@ install -pDm644 contrib/gear-bash_completion %buildroot/etc/bash_completion.d/ge
 %doc QUICKSTART* ABOUT*
 
 %changelog
+* Thu Jul 08 2010 Dmitry V. Levin <ldv@altlinux.org> 1.7.1-alt1
+- gear: reimplemented --commit option, so it no longer touches
+  current branch and git index file.
+- gear-rpm: added additional diagnostics about missing command
+  (closes: #21892).
+- gear-import (remove_suffix): added *.xz and *.txz suffixes.
+- gear-update-tag: recognize and ignore "suffix=" tar's rules option.
+
 * Mon Apr 12 2010 Dmitry V. Levin <ldv@altlinux.org> 1.7.0-alt1
 - Bugfixes:
   + manpages: Quoted dash symbols in command and option names
