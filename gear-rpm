@@ -70,8 +70,6 @@ case "$PROG" in
 		fatal "Unknown command: $PROG"
 		;;
 esac
-[ "$(type -t "$prog")" = file ] ||
-	fatal "$prog: command not found; maybe an appropriate package is not installed"
 args="$args-$gear_cmd $prog"
 
 GETOPT_ALLOW_UNKNOWN=1
@@ -100,5 +98,8 @@ while [ $# -gt 0 ]; do
 	args="$args \"$(quote_shell "$1")\""
 	shift
 done
+
+[ "$(type -t "$prog")" = file ] ||
+	fatal "$prog: command not found; maybe an appropriate package is not installed"
 
 eval exec gear $gear_args $args
