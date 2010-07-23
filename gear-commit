@@ -101,8 +101,14 @@ while :; do
 	shift
 done
 
+GEAR_COMMIT=1
+GEAR_COMMIT_AMEND=
+
 args=
 while [ $# -gt 0 ]; do
+	[ "$1" != '--amend' ] ||
+		GEAR_COMMIT_AMEND=1
+
 	args="$args \"$(quote_shell "$1")\""
 	shift
 done
@@ -138,5 +144,7 @@ if [ -z "$commitlog" ]; then
 $ch" |sed s/%%/%/g)\""
 	unset ch vr specfile
 fi
+
+export GEAR_COMMIT GEAR_COMMIT_AMEND
 
 eval git commit ${commitlog:+-m "$commitlog" $do_edit} $args

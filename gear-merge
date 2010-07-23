@@ -343,6 +343,9 @@ if [ -z "$skip_untracked" ]; then
 		fatal "Untracked or modified files found."
 fi
 
+GEAR_MERGE=1
+export GEAR_MERGE
+
 set_current_branch
 restore_branch="$cur_branch"
 
