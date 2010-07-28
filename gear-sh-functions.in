@@ -512,9 +512,9 @@ is_ancestor_commit()
 	local descendant="$1" && shift
 
 	local bases
-	bases=" $(git merge-base "$descendant" "$ancestor" | tr '\n' ' ') " ||
+	bases="$(git log -n1 --pretty=format:1 ^"$descendant" "$ancestor")" ||
 		return 1
-	[ -z "${bases##* $ancestor *}" ] || return 1
+	[ -z "$bases" ] || return 1
 }
 
 check_tag_name()
