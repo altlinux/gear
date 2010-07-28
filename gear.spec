@@ -1,7 +1,7 @@
 # Copyright (C) 2006-2010  Dmitry V. Levin <ldv@altlinux.org>
 
 Name: gear
-Version: 1.7.1
+Version: 1.7.2
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -56,6 +56,12 @@ install -pDm644 contrib/gear-bash_completion %buildroot/etc/bash_completion.d/ge
 %doc QUICKSTART* ABOUT*
 
 %changelog
+* Wed Jul 28 2010 Dmitry V. Levin <ldv@altlinux.org> 1.7.2-alt1
+- gear-commit, gear-merge: export variables for use in git hooks
+  (by Alexey Gladkov; closes: #23803).
+- gear-sh-functions.in (is_ancestor_commit): rewriten in more reliable
+  and efficient way; affects gear(1) and gear-update-tag(1).
+
 * Thu Jul 08 2010 Dmitry V. Levin <ldv@altlinux.org> 1.7.1-alt1
 - gear: reimplemented --commit option, so it no longer touches
   current branch and git index file.
