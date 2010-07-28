@@ -1,5 +1,5 @@
 .\" Copyright (C) 2007  Sergey Vlasov <vsu@altlinux.org>
-.\" Copyright (C) 2007-2008  Dmitry V. Levin <ldv@altlinux.org>
+.\" Copyright (C) 2007-2009  Dmitry V. Levin <ldv@altlinux.org>
 .\" Copyright (C) 2008  Alexey Gladkov <legion@altlinux.org>
 .\"
 .\" Documentation for the .gear-rules file format.
@@ -18,7 +18,7 @@
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 .
-.TH "GEAR-RULES" "5" "March 2007" "gear @VERSION@" "File Formats"
+.TH "GEAR-RULES" "13" "December 2009" "gear @VERSION@" "File Formats"
 .SH NAME
 gear\-rules \- rule file for gear
 .

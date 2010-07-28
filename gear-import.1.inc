@@ -1,4 +1,6 @@
 .\" Copyright (C) 2009  Alexey Gladkov <legion@altlinux.org>
+.\" Copyright (C) 2009  Alexey I. Froloff <raorn@altlinux.org>
+.\" Copyright (C) 2009  Dmitry V. Levin <ldv@altlinux.org>
 .\"
 .\" Additional documentation for the gear-import command.
 .\"

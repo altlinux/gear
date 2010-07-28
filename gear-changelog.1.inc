@@ -1,5 +1,6 @@
 .\" Copyright (C) 2008  Alexey Gladkov <legion@altlinux.org>
-.\" Copyright (C) 2008  Dmitry V. Levin <ldv@altlinux.org>
+.\" Copyright (C) 2008-2009  Dmitry V. Levin <ldv@altlinux.org>
+.\" Copyright (C) 2009  Alexey I. Froloff <raorn@altlinux.org>
 .\"
 .\" Additional documentation for the gear-changelog command.
 .\"

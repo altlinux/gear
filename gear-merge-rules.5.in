@@ -1,4 +1,5 @@
 .\" Copyright (C) 2007  Alexey Gladkov <legion@altlinux.org>
+.\" Copyright (C) 2009  Dmitry V. Levin <ldv@altlinux.org>
 .\"
 .\" This file is free software; you can redistribute it and/or modify
 .\" it under the terms of the GNU General Public License as published by
@@ -14,7 +15,7 @@
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 .
-.TH "GEAR-MERGE-RULES" "5" "November 2007" "gear @VERSION@" "File Formats"
+.TH "GEAR-MERGE-RULES" "13" "December 2009" "gear @VERSION@" "File Formats"
 .SH NAME
 gear\-merge\-rules \- rule file for gear\-merge
 .
