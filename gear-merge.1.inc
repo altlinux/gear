@@ -1,4 +1,5 @@
 .\" Copyright (C) 2007  Alexey Gladkov <legion@altlinux.org>
+.\" Copyright (C) 2010  Dmitry V. Levin <ldv@altlinux.org>
 .\"
 .\" Additional documentation for the gear-merge command.
 .\"
@@ -26,6 +27,10 @@ If the
 .B GIT_DIR
 environment variable is set then it specifies a path to use instead of
 the default for the base of the repository.
+.TP
+.B GEAR_MERGE
+.B gear\-merge
+always exports \fBGEAR_MERGE\fR=\fI1\fR to the environment.
 
 [SEE ALSO]
 .BR gear (1).

@@ -1,5 +1,5 @@
 .\" Copyright (C) 2006-2008  Alexey Gladkov <legion@altlinux.org>
-.\" Copyright (C) 2006-2008  Dmitry V. Levin <ldv@altlinux.org>
+.\" Copyright (C) 2006-2008,2010  Dmitry V. Levin <ldv@altlinux.org>
 .\" Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 .\"
 .\" Additional documentation for the gear-commit command.
@@ -34,6 +34,17 @@ Specifies a gear rules filename.
 .TP
 .B TREE_ID
 Specifies a commit-ish git object where to look for spec file.
+.TP
+.B GEAR_COMMIT
+.B gear\-commit
+always exports \fBGEAR_COMMIT\fR=\fI1\fR to the environment.
+.TP
+.B GEAR_COMMIT_AMEND
+If
+.I \-\-amend
+option is given,
+.B gear\-commit
+also exports \fBGEAR_COMMIT_AMEND\fR=\fI1\fR.
 
 [SEE ALSO]
 .BR gear (1),
