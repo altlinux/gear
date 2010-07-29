@@ -1,7 +1,7 @@
 # Copyright (C) 2006-2010  Dmitry V. Levin <ldv@altlinux.org>
 
 Name: gear
-Version: 1.7.2
+Version: 1.7.2.1
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -45,8 +45,9 @@ asciidoc QUICKSTART.ru.utf8
 make check
 
 %install
-%make_install install DESTDIR=%buildroot
-install -pDm644 contrib/gear-bash_completion %buildroot/etc/bash_completion.d/gear
+%makeinstall_std
+install -pDm644 contrib/gear-bash_completion \
+	%buildroot/etc/bash_completion.d/gear
 
 %files
 %config /etc/bash_completion.d/*
@@ -56,6 +57,10 @@ install -pDm644 contrib/gear-bash_completion %buildroot/etc/bash_completion.d/ge
 %doc QUICKSTART* ABOUT*
 
 %changelog
+* Thu Jul 29 2010 Dmitry V. Levin <ldv@altlinux.org> 1.7.2.1-alt1
+- gear-update-tag --verify: Implemented check for missing and
+  unnecessary tags.
+
 * Wed Jul 28 2010 Dmitry V. Levin <ldv@altlinux.org> 1.7.2-alt1
 - gear-commit, gear-merge: export variables for use in git hooks
   (by Alexey Gladkov; closes: #23803).
