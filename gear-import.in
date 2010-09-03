@@ -360,7 +360,7 @@ for archive_file; do
 	expand_string commit_msg "${commit_msg_format:-Import archive $archive}"
 
 	$faketime "${timestamp:-$archive_file}" -- \
-		git commit $sign -a -m "$commit_msg"
+		git commit --no-verify $sign -a -m "$commit_msg"
 
 	[ -z "$no_tag" ] ||
 		continue
