@@ -22,7 +22,7 @@ gear_rules_diff_tag_tree_simple() # test entry point
 	mkdir -p $dst
 	echo two >$dst/file
 	git add .gear/rules $dst/file
-	gear-update-tag -a
+	gear-store-tags -a
 	git commit -q -a -m 2
 
 	finalize_repo

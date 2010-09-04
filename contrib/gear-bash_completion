@@ -258,7 +258,7 @@ _gear_srpmimport() {
 }
 complete -F _gear_srpmimport $filenames gear-srpmimport
 
-_gear_update_tag() {
+_gear_store_tags() {
 	COMPREPLY=()
 
 	local cur prev
@@ -279,4 +279,4 @@ _gear_update_tag() {
 	esac
 
 }
-complete -F _gear_update_tag $filenames gear-update-tag
+complete -F _gear_store_tags $filenames gear-store-tags

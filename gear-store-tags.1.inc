@@ -18,7 +18,7 @@
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 [NAME]
-gear\-update\-tag \- update list of stored tags in the package repository
+gear\-store\-tags \- manage stored tags in the package repository
 
 [SEE ALSO]
 .BR gear (1),

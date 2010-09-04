@@ -48,6 +48,8 @@ make check
 %makeinstall_std
 install -pDm644 contrib/gear-bash_completion \
 	%buildroot/etc/bash_completion.d/gear
+ln -s gear-store-tags %buildroot%_bindir/gear-update-tag
+ln -s gear-store-tags.1 %buildroot%_man1dir/gear-update-tag.1
 
 %files
 %config /etc/bash_completion.d/*

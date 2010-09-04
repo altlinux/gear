@@ -19,7 +19,7 @@ gear_rules_archive_tree_tag() # test entry point
 	mkdir .gear
 	printf '%s\n' "$gear_directive: v1:$dir" >.gear/rules
 	git add .gear/rules
-	gear-update-tag -a
+	gear-store-tags -a
 	git rm -q -f "$dir/b/c/file"
 	git commit -q -a -m 2
 

@@ -5,7 +5,7 @@
 # Copyright (C) 2006-2008  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 #
-# Update list of stored tags in the package repository.
+# Manage stored tags in the package repository.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@ EOF
 show_help()
 {
 	cat <<EOF
-$PROG - update list of stored tags in the package repository
+$PROG - manage stored tags in the package repository
 
 Usage: $PROG [options] <name> [<value>]
 or:    $PROG [options] --all [--no-clean]
@@ -58,11 +58,11 @@ or:    $PROG [options] --delete <name>
 or:    $PROG [options] --verify
 
 Options:
-  -a, --all                 update all tags used in rules;
-  -c, --clean               delete tags not used in rules;
-      --no-clean            do not delete tags not used in rules;
-  -d, --delete              delete the specified tag;
-      --verify              verify all tags used in rules;
+  -a, --all                 update all stored tags used in rules;
+  -c, --clean               delete stored tags not used in rules;
+      --no-clean            do not delete stored tags not used in rules;
+  -d, --delete              delete the specified stored tag;
+      --verify              verify all stored tags used in rules;
   -r, --rules=FILENAME      override rules file name;
   -v, --verbose             print a message for each action;
   -q, --quiet               do not print a message for each action;

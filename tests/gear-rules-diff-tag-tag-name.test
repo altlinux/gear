@@ -31,7 +31,7 @@ gear_rules_diff_tag_tag_name() # test entry point
 		"name=@name@-@old_dir@-@new_dir@-@version@-@release@.diff" \
 		>.gear/rules
 	git add .gear/rules
-	gear-update-tag -a
+	gear-store-tags -a
 	git commit -q -a -m 3
 
 	finalize_repo

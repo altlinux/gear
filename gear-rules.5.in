@@ -479,7 +479,7 @@ and a separate patch with local modifications, you need to create a
 tag for the commit with upstream sources (or use the upstream tag if
 upstream also uses git), specify the tag name in the rule file and
 store this tag in the repository using
-.BR gear\-update\-tag (1).
+.BR gear\-store\-tags (1).
 In this case the default archive name used by the
 .B tar
 directive should be correct, unless the package name or version format
@@ -549,7 +549,7 @@ The list of file names where
 .BR gear\-create\-tag (1),
 .BR gear\-srpmimport (1)
 and
-.BR gear\-update\-tag (1)
+.BR gear\-store\-tags (1)
 expect to find rules (first non-empty file from this list is used),
 unless another name is specified by the
 .BI \-\-rules= filename
@@ -573,4 +573,4 @@ package are listed in the manual pages for these programs.
 .BR gear (1),
 .BR gear\-srpmimport (1),
 .BR gear\-update (1),
-.BR gear\-update\-tag (1).
+.BR gear\-store\-tags (1).

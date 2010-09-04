@@ -26,7 +26,7 @@ gear_rules_diff_tag_tag_simple() # test entry point
 	mkdir .gear
 	echo "$gear_directive: v1:$src v2:$dst" >.gear/rules
 	git add .gear/rules
-	gear-update-tag -a
+	gear-store-tags -a
 	git commit -q -a -m 3
 
 	finalize_repo

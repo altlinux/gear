@@ -39,7 +39,7 @@ PROGRAMS = \
 	gear-srpmimport \
 	gear-import \
 	gear-update \
-	gear-update-tag \
+	gear-store-tags \
 	#
 HELPERS = \
 	gear-command-hasher \
