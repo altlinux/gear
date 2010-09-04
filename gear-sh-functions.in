@@ -80,6 +80,19 @@ rules_info()
 	message "$rules$lineno_text: $*"
 }
 
+: ${__gear_exported_vars:=__gear_exported_vars}
+export __gear_exported_vars
+gear_export_vars()
+{
+	export "$@"
+	__gear_exported_vars="$__gear_exported_vars $*"
+}
+
+gear_unset_exported_vars()
+{
+	unset $__gear_exported_vars
+}
+
 is_hex_sha1()
 {
 	[ "${#1}" -eq 40 ] || return 1
