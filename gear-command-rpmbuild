@@ -23,6 +23,7 @@
 specfile="${gear_specfile##*/}"
 verbose="${gear_verbose-}"
 
+gear_unset_exported_vars
 run_command "$@" \
 	--define "_specdir $gear_outdir" \
 	--define "_sourcedir $gear_outdir" \

@@ -26,4 +26,6 @@ verbose="${gear_verbose-}"
 
 # Once tarball is created, its sources are no longer needed.
 rm -rf -- "$gear_outdir"
+
+gear_unset_exported_vars
 run_command "$@" "$gear_outfile"
