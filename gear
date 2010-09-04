@@ -747,7 +747,7 @@ create_temporary_git_object_directory()
 	mkdir -p "$tmpdir/objects/info"
 	printf %s\\n "$orig_object_dir" >"$tmpdir/objects/info/alternates"
 	GIT_OBJECT_DIRECTORY="$tmpdir/objects"
-	export GIT_OBJECT_DIRECTORY
+	gear_export_vars GIT_OBJECT_DIRECTORY
 }
 
 if [ -n "$do_commit" ]; then
@@ -755,7 +755,7 @@ if [ -n "$do_commit" ]; then
 
 	cp "${GIT_INDEX_FILE-"$git_dir/index"}" "$tmpdir/GIT_INDEX_FILE"
 	GIT_INDEX_FILE="$tmpdir/GIT_INDEX_FILE"
-	export GIT_INDEX_FILE
+	gear_export_vars GIT_INDEX_FILE
 
 	git diff-files --name-only -z |
 		git update-index --remove -z --stdin
