@@ -42,6 +42,8 @@ check_pkgtar_list()
 	local result
 
 	result="$(tar -tf "$GEAR_OUT")" || exit 1
+	expected="$(printf %s "$expected" |sort)"
+	result="$(printf %s "$result" |sort)"
 	assertEquals "$expected" "$result"
 }
 
