@@ -49,6 +49,12 @@ detect_method()
 	EOF
 }
 
+canonicalize_workdir()
+{
+	workdir="$(ssh "$server" "cd -- \"$(quote_shell "$1")\" && pwd -P")" ||
+		fatal "$server:$1: directory not available"
+}
+
 remote_prepare()
 {
 	ssh "$server" "sh -efu"<<-EOF
@@ -171,6 +177,7 @@ case "$method" in
 	*) fatal "Unknown build method: $method" ;;
 esac
 
+canonicalize_workdir "$workdir"
 remote_srcdir="$workdir/$gear_pkg_name#$method"
 install_cleanup_handler cleanup_handler
 
