@@ -1,7 +1,7 @@
 # Copyright (C) 2006-2010  Dmitry V. Levin <ldv@altlinux.org>
 
 Name: gear
-Version: 1.7.2.1
+Version: 1.7.2.2
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -59,6 +59,14 @@ ln -s gear-store-tags.1 %buildroot%_man1dir/gear-update-tag.1
 %doc QUICKSTART* ABOUT*
 
 %changelog
+* Mon Sep 06 2010 Dmitry V. Levin <ldv@altlinux.org> 1.7.2.2-alt1
+- gear-import: pass --no-verify option to git-commit.
+- Renamed gear-update-tag to gear-store-tags (closes: #18739).
+- gear-command-{hasher,rpmbuild}: unset GIT_* environment
+  variables used by gear itself (closes: #20884).
+- tests: fixed false positive on non-tmpfs filesystems
+  (closes: #24012).
+
 * Thu Jul 29 2010 Dmitry V. Levin <ldv@altlinux.org> 1.7.2.1-alt1
 - gear-update-tag --verify: Implemented check for missing and
   unnecessary tags.
