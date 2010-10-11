@@ -232,8 +232,9 @@ parse_rules() {
 		[ -n "${line%%#*}" ] ||
 			continue
 
-		line="$(quote_shell_light "$line")"
-		eval parse_rule "$line"
+		quote_shell_args args "$line"
+		eval "set -- $args"
+		parse_rule "$@"
 
 		if [ -n "$parser_func" ]; then
 			$parser_func "$cmd"
