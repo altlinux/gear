@@ -1,7 +1,7 @@
 # Copyright (C) 2006-2010  Dmitry V. Levin <ldv@altlinux.org>
 
 Name: gear
-Version: 1.7.2.2
+Version: 1.7.2.3
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -59,6 +59,10 @@ ln -s gear-store-tags.1 %buildroot%_man1dir/gear-update-tag.1
 %doc QUICKSTART* ABOUT*
 
 %changelog
+* Sat Feb 26 2011 Dmitry V. Levin <ldv@altlinux.org> 1.7.2.3-alt1
+- gear: fixed typo in --commit during merge (closes: #25160).
+- gear-srpmimport: pass --no-verify option to git-commit.
+
 * Mon Sep 06 2010 Dmitry V. Levin <ldv@altlinux.org> 1.7.2.2-alt1
 - gear-import: pass --no-verify option to git-commit.
 - Renamed gear-update-tag to gear-store-tags (closes: #18739).
