@@ -767,7 +767,7 @@ if [ -n "$do_commit" ]; then
 	else
 		tmp_parents="-p $main_commit_sha1"
 		if [ -f "$git_dir/MERGE_HEAD" ]; then
-			tmp_parents="$tmp_parents $(sed 's/^/-p /' "$GIT_DIR/MERGE_HEAD")"
+			tmp_parents="$tmp_parents $(sed 's/^/-p /' "$git_dir/MERGE_HEAD")"
 		fi
 		main_commit_id="$(echo "Temporary commit by $PROG." |
 			git commit-tree "$tmp_tree" $tmp_parents)"
