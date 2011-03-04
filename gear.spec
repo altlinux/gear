@@ -1,14 +1,13 @@
 # Copyright (C) 2006-2010  Dmitry V. Levin <ldv@altlinux.org>
 
 Name: gear
-Version: 1.7.2.3
+Version: 1.7.2.4
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
 License: GPLv2+
 Group: Development/Other
 Url: http://www.altlinux.org/Gear
-Packager: Dmitry V. Levin <ldv@altlinux.org>
 BuildArch: noarch
 
 Source: %name-%version.tar
@@ -34,7 +33,7 @@ repositories and managing GEAR repositories.
 See %_docdir/%name-%version/QUICKSTART.ru_RU.UTF-8 for details.
 
 %prep
-%setup -q
+%setup
 
 %build
 %make_build
@@ -59,6 +58,9 @@ ln -s gear-store-tags.1 %buildroot%_man1dir/gear-update-tag.1
 %doc QUICKSTART* ABOUT*
 
 %changelog
+* Sat Mar 05 2011 Dmitry V. Levin <ldv@altlinux.org> 1.7.2.4-alt1
+- gear-*-rules.5: fixed title line sections.
+
 * Sat Feb 26 2011 Dmitry V. Levin <ldv@altlinux.org> 1.7.2.3-alt1
 - gear: fixed typo in --commit during merge (closes: #25160).
 - gear-srpmimport: pass --no-verify option to git-commit.
