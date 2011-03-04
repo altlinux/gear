@@ -15,7 +15,7 @@
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 .
-.TH "GEAR-CHANGELOG-RULES" "13" "December 2009" "gear @VERSION@" "File Formats"
+.TH "GEAR-CHANGELOG-RULES" "5" "December 2009" "gear @VERSION@" "File Formats"
 .SH NAME
 gear\-changelog\-rules \- rule file for gear\-changelog
 .

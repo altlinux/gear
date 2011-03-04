@@ -15,7 +15,7 @@
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 .
-.TH "GEAR-MERGE-RULES" "13" "December 2009" "gear @VERSION@" "File Formats"
+.TH "GEAR-MERGE-RULES" "5" "December 2009" "gear @VERSION@" "File Formats"
 .SH NAME
 gear\-merge\-rules \- rule file for gear\-merge
 .
