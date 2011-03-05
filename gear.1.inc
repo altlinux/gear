@@ -78,7 +78,8 @@ strings found in the spec file, and does not proceed to
 extract source files from the repository.
 
 [CONFIGURATION]
-\fBgear\fR reads following configuration options from git\-config:
+\fBgear\fR reads following configuration options from
+.BR git\-config (1):
 .PP
 gear.compress
 .RS 4
