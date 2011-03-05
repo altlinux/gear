@@ -102,9 +102,6 @@ the default for the base of the repository.
 \fBgear\fR does not get correct package name, version and
 release from spec files which use RPM macros to define these
 fields.
-.PP
-\fBgear \-\-commit\fR loses the merge information saved by
-\fBgit\-merge\fR.
 
 [SEE ALSO]
 .BR gear\-rules (5),
