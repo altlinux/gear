@@ -640,8 +640,8 @@ while :; do
 		--no-compress) tar_compress=
 			;;
 		--commit) do_commit=1
-			[ "$main_tree_id" = HEAD ] ||
-				show_usage 'Options --commit and --tree-ish are mutually exclusive.'
+			[ "${main_tree_id%%:*}" = HEAD ] ||
+				show_usage 'Option --commit is only allowed for HEAD commit.'
 			;;
 		--bzip2) tar_compress=--bzip2
 			;;
@@ -675,8 +675,6 @@ while :; do
 		-r|--rules) shift; rules="$1"
 			;;
 		-t|--tree-ish) shift; main_tree_id="$1"
-			[ -z "$do_commit" -o "$main_tree_id" = HEAD ] ||
-				show_usage 'Options --commit and --tree-ish are mutually exclusive.'
 			;;
 		-h|--help) show_help
 			;;
@@ -691,6 +689,9 @@ while :; do
 	esac
 	shift
 done
+
+[ -z "$do_commit" -o "${main_tree_id%%:*}" = HEAD ] ||
+	show_usage 'Option --commit is allowed for HEAD commit only.'
 
 out_file=
 if [ -n "$hasher$rpmbuild$command" ]; then
@@ -721,10 +722,11 @@ chdir_to_toplevel
 main_commit_id="${main_tree_id%%:*}"
 main_commit_sha1="$(get_commit_sha1 "$main_commit_id")" ||
 	fatal "Invalid commit \"$main_commit_id\""
-main_tree_sha1="$(get_object_sha1 "$main_tree_id")" ||
-	fatal "Invalid tree \"$main_tree_id\""
-git cat-file -e "$main_tree_sha1^{tree}" ||
-	fatal "Invalid tree \"$main_tree_id\""
+
+if [ -z "$do_commit" ]; then
+	get_tree_sha1 "$main_tree_id" > /dev/null ||
+		fatal "Invalid tree \"$main_tree_id\" specified"
+fi
 
 if [ -n "$update_spec" ]; then
 	[ -n "$rpmbuild$command" ] ||
@@ -763,6 +765,8 @@ if [ -n "$do_commit" ]; then
 
 	tmp_tree="$(git write-tree)"
 	if [ "$tmp_tree" = "$(git rev-parse "$main_commit_sha1^{tree}" 2>/dev/null)" ]; then
+		get_tree_sha1 "$main_tree_id" > /dev/null ||
+			fatal "Invalid tree \"$main_tree_id\" specified"
 		verbose 'Nothing to commit'
 	else
 		tmp_parents="-p $main_commit_sha1"
@@ -771,8 +775,15 @@ if [ -n "$do_commit" ]; then
 		fi
 		main_commit_id="$(echo "Temporary commit by $PROG." |
 			git commit-tree "$tmp_tree" $tmp_parents)"
-		main_tree_id=$main_commit_id
-		main_commit_sha1=$main_commit_id
+		main_commit_sha1="$main_commit_id"
+		if [ -z "${main_tree_id##*:*}" ]; then
+			tmp_main_tree_id="$main_commit_id:${main_tree_id#*:}"
+		else
+			tmp_main_tree_id="$main_commit_id"
+		fi
+		get_tree_sha1 "$tmp_main_tree_id" > /dev/null ||
+			fatal "Invalid tree \"$main_tree_id\" specified"
+		main_tree_id="$tmp_main_tree_id"
 		verbose 'Temporarily committed local changes.'
 	fi
 fi
