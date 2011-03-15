@@ -135,6 +135,15 @@ get_commit_sha1()
 	git rev-parse --verify "$sha1^0" || return 1
 }
 
+get_tree_sha1()
+{
+	local name="$1" && shift
+
+	local sha1
+	sha1="$(get_object_sha1 "$name")" || return 1
+	git rev-parse --verify "$sha1^{tree}" || return 1
+}
+
 tree_entry_name()
 {
 	local tree="$1" && shift
