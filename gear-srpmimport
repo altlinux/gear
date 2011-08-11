@@ -108,7 +108,7 @@ optimize_rules()
 			quoted="$(quote_sed_regexp "$suffix")"
 			method="$(sed -n 's/^\([^:]\+\): [^ ]*\.'"$quoted"'$/\1/p' "$rules" |LC_COLLATE=C sort -u)"
 			case "$method" in
-				copy|gzip|bzip2)
+				copy|gzip|bzip2|xz)
 					printf '%s: *.%s\n' "$method" "$suffix"
 					;;
 				*)
@@ -168,6 +168,7 @@ import_tree()
 			case "$method_copy" in
 				bzip2) method_pack=tar.bz2 ;;
 				gzip) method_pack=tar.gz ;;
+				xz) method_pack=tar.xz ;;
 				*) method_pack=tar ;;
 			esac
 			case "$f" in
@@ -186,6 +187,11 @@ import_tree()
 					[ "$method_pack" = tar.gz ] ||
 						rule_suffix=' suffix=.tar.gz'
 					;;
+				*.tar.xz)
+					arch_basename="${f%.tar.xz}"
+					[ "$method_pack" = tar.xz ] ||
+						rule_suffix=' suffix=.tar.xz'
+					;;
 				*.tbz)
 					arch_basename="${f%.tbz}"
 					rule_suffix=' suffix=.tbz'
@@ -197,6 +203,10 @@ import_tree()
 				*.tgz)
 					arch_basename="${f%.tgz}"
 					rule_suffix=' suffix=.tgz'
+					;;
+				*.txz)
+					arch_basename="${f%.txz}"
+					rule_suffix=' suffix=.txz'
 					;;
 				*)
 					arch_basename="$f"
@@ -370,6 +380,15 @@ import_file()
 						write_copy_rule copy "$f"
 					fi
 					;;
+				*.xz,xz)
+					# if target file exists or uncompression fails,
+					# then just copy file as is.
+					if [ ! -e "${f%.xz}" ] && unxz "$f"; then
+						write_copy_rule xz "${f%.xz}"
+					else
+						write_copy_rule copy "$f"
+					fi
+					;;
 				*)
 					# gear copy rules do not support file name
 					# transformation, so just copy it as is.
@@ -464,6 +483,9 @@ import()
 				;;
 			gzip\ compressed*)
 				import_file "$no_unpack" gzip "$f"
+				;;
+			xz\ compressed*)
+				import_file "$no_unpack" xz "$f"
 				;;
 			*)
 				import_file "$no_unpack" copy "$f"
