@@ -1,7 +1,7 @@
 # Copyright (C) 2006-2011  Dmitry V. Levin <ldv@altlinux.org>
 
 Name: gear
-Version: 1.7.2.5
+Version: 1.7.2.6
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -58,6 +58,12 @@ ln -s gear-store-tags.1 %buildroot%_man1dir/gear-update-tag.1
 %doc QUICKSTART* ABOUT*
 
 %changelog
+* Fri Aug 12 2011 Dmitry V. Levin <ldv@altlinux.org> 1.7.2.6-alt1
+- gear-srpmimport: added xz support.
+- gear(1): minor documentation enhancements.
+- gear: implemented support for specifying a HEAD subtree to --tree-ish
+  along with --commit (by Kirill Shutemov).
+
 * Sun Mar 06 2011 Dmitry V. Levin <ldv@altlinux.org> 1.7.2.5-alt1
 - gear-merge: fixed incomplete migration to libshell in 1.6.0-alt1
   (by Vladimir Kamarzin; closes: #24268).
