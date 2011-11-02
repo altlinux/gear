@@ -38,6 +38,7 @@ Options:
 
   --exclude=PATTERN   exclude files matching posix-egrep regular expression PATTERN;
   --ignore-exclude    ignore .gitignore and .git/info/exclude;
+  --remove-source     remove the <source> after updating;
   -a,--all            extract all files and directories from archive;
   -c,--create         create the <subdirectory> before unpacking the <source>,
                       the <subdirectory> should not exist;
@@ -138,12 +139,13 @@ for s_handler in "$plugin_dir/gear-update-src-"*; do
 done
 set -f
 
-TEMP=`getopt -n $PROG -o a,c,f,t:,s:,v,V,h -l all,create,exclude:,ignore-exclude,force,type:,subdir:,verbose,version,help -- "$@"` || show_usage
+TEMP=`getopt -n $PROG -o a,c,f,t:,s:,v,V,h -l all,create,exclude:,ignore-exclude,force,remove-source,type:,subdir:,verbose,version,help -- "$@"` || show_usage
 eval set -- "$TEMP"
 
 gear_config_option exclude_pattern exclude-pattern ''
 ignore_exclude=
 force=
+remove_source=
 source_type=
 all_subdirs=
 while :; do
@@ -156,6 +158,8 @@ while :; do
 		exclude_pattern="$1"
 		;;
 	    --ignore-exclude) ignore_exclude=1
+		;;
+	    --remove-source) remove_source=1
 		;;
 	    -f|--force) force=-f
 		;;
@@ -305,4 +309,11 @@ else
 	[ -n "$dest_create" -o -n "$initial_commit" ] ||
 		git rm -f -r --cached -- "$destdir" >/dev/null
 	git add $verbose -- "$destdir"
+fi
+
+if [ -n "$remove_source" ]; then
+	[ -n "${source##$topdir/*}" ] ||
+		git ls-files -z -- "$source" |
+			git update-index --remove --force-remove -z --stdin
+	rm -rf -- "$source"
 fi
