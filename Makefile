@@ -32,6 +32,7 @@ PROGRAMS = \
 	gear-hsh \
 	gear-hsh-build \
 	gear-merge \
+	gear-mock \
 	gear-remote \
 	gear-remote-hsh \
 	gear-remote-rpm \
@@ -43,6 +44,7 @@ PROGRAMS = \
 	#
 HELPERS = \
 	gear-command-hasher \
+	gear-command-mock \
 	gear-command-remote-build \
 	gear-command-rpmbuild \
 	gear-command-tar \

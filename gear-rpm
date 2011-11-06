@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 #
-# Copyright (C) 2008  Alexey Gladkov <legion@altlinux.org>
+# Copyright (C) 2008,2011  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2008,2010  Dmitry V. Levin <ldv@altlinux.org>
 #
 # This file is free software; you can redistribute it and/or modify
@@ -44,7 +44,7 @@ print_version()
 	$PROG version $PROG_VERSION
 	Written by Alexey Gladkov <legion@altlinux.org>
 
-	Copyright (C) 2008  Alexey Gladkov <legion@altlinux.org>
+	Copyright (C) 2008,2011  Alexey Gladkov <legion@altlinux.org>
 	Copyright (C) 2008,2010  Dmitry V. Levin <ldv@altlinux.org>
 	This is free software; see the source for copying conditions.  There is NO
 	warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -52,19 +52,27 @@ print_version()
 	exit
 }
 
+conflicting_option_list=
 args='--command -- gear-command'
 case "$PROG" in
 	gear-hsh)
 		gear_cmd=hasher
 		prog=hsh
 		;;
+	gear-mock)
+		gear_cmd=mock
+		prog=mock
+		conflicting_option_list='-r'
+		;;
 	gear-rpm)
 		gear_cmd=rpmbuild
 		prog=rpmbuild
+		conflicting_option_list='-r -t'
 		;;
 	gear-buildreq)
 		gear_cmd=rpmbuild
 		prog=buildreq
+		conflicting_option_list='-r -t'
 		;;
 	*)
 		fatal "Unknown command: $PROG"
@@ -80,6 +88,11 @@ eval set -- "$TEMP"
 
 gear_args=
 while :; do
+	for pattern in $conflicting_option_list; do
+		[ -n "${1##$pattern}" ] ||
+			fatal "Option \`$1' is present both in gear and $prog, please use an equivalent long option instead."
+	done
+
 	case "$1" in
 		-h|--help) show_help
 			;;
