@@ -138,8 +138,13 @@ write_compressed_file()
 		gzip|bzip2|lzma|xz)
 			type "$cmd" >/dev/null 2>&1 ||
 				rules_error "Compress command not found: $cmd"
-			[ $# -gt 0 ] ||
-				set -- -9
+			if [ $# -eq 0 ]; then
+				if [ "$cmd" = gzip ]; then
+					set -- -9n
+				else
+					set -- -9
+				fi
+			fi
 			if [ -n "$name" ]; then
 				local tmp_name
 				tmp_name="$(mktemp -- "$name".XXXXXX)"
