@@ -1,7 +1,7 @@
 # Copyright (C) 2006-2011  Dmitry V. Levin <ldv@altlinux.org>
 
 Name: gear
-Version: 1.7.2.6
+Version: 1.7.3.0
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -58,6 +58,15 @@ ln -s gear-store-tags.1 %buildroot%_man1dir/gear-update-tag.1
 %doc QUICKSTART* ABOUT*
 
 %changelog
+* Mon Feb 27 2012 Dmitry V. Levin <ldv@altlinux.org> 1.7.3.0-alt1
+- gear-command-remote-build: canonicalize workdir
+  (by Alexey Gladkov; closes: #19994).
+- gear-update: added --remove-source option (by Alexey Gladkov).
+- gear-mock: new utility, implements support for mock build system
+  (by Alexey Gladkov).
+- gear: pass -n option to gzip(1) by default.
+- test suite: updated for git >= 1.7.9.
+
 * Fri Aug 12 2011 Dmitry V. Levin <ldv@altlinux.org> 1.7.2.6-alt1
 - gear-srpmimport: added xz support.
 - gear(1): minor documentation enhancements.
