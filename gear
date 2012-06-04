@@ -263,7 +263,7 @@ get_tar_name()
 	fi
 	check_filename 'tar name' "$tar_name"
 	[ -n "${subst_vars##*tar_base*}" ] ||
-		check_filename 'tar base' "$tar_base"
+		check_pathname 'tar base' "$tar_base"
 	[ -n "${subst_vars##*tar_suffix*}" ] ||
 		check_filename 'tar suffix' "$tar_suffix"
 }
