@@ -29,7 +29,7 @@ gear_rules_diff_tree_tree_spec() # test entry point
 	check_pkgtar_spec "$GEAR_OUT" "$spec"
 	unpack_pkgtar_to .out
 	result="$($decompress_prog ".out/$patch")"
-	assertEquals ' file |    2 +-
+	assertEquals ' file | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/file b/file
