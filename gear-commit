@@ -24,10 +24,6 @@
 . gear-sh-functions
 . shell-getopt
 
-rules="${RULES-}"
-main_tree_id=${TREE_ID:-HEAD}
-commitlog=
-
 show_help()
 {
 	cat <<EOF
@@ -116,20 +112,69 @@ done
 # Change to toplevel directory
 chdir_to_toplevel
 
+guess_specfile_from_checkout()
+{
+	local rules="${RULES-}"
+	local workdir
+
+	install_cleanup_handler cleanup_handler
+	workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
+
+	find_rules_in_cwd
+	specfile="$(get_filename_from_rules spec specfile)"
+	[ -s "$specfile" ] || specfile=
+
+	rm -rf -- "$workdir"
+	uninstall_cleanup_handler
+}
+
+guess_specfile_from_tree()
+{
+	local rules="${RULES-}"
+	local main_tree_id="${TREE_ID:-HEAD}"
+	local workdir
+
+	git cat-file tree "$main_tree_id" >/dev/null 2>&1 || return 0
+
+	install_cleanup_handler cleanup_handler
+	workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
+
+	find_specfile fail_ok ||:
+
+	rm -rf -- "$workdir"
+	uninstall_cleanup_handler
+}
+
+# specfile guess logic:
+#
+# If specfile is not specified, then
+#   if TREE_ID is specified, then
+#     first try the rules-based guess from the tree,
+#     next try the rules-based guess the checkout;
+#   otherwise
+#     first try the rules-based guess from checkout,
+#     next try the rules-based guess from HEAD.
+# If nothing of the above helped to find a specfile, then
+#   try a wild guess from the checkout.
+
 if [ -z "$specfile" ]; then
-	if git cat-file -t "$main_tree_id" >/dev/null 2>&1; then
-		install_cleanup_handler cleanup_handler
-		workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
-
-		# Get specfile from archive.
-		find_specfile
-
-		rm -rf -- "$workdir"
-		uninstall_cleanup_handler
-		unset rules main_tree_id workdir
+	if [ -n "${TREE_ID-}" ]; then
+		guess_specfile_from_tree
 	else
-		specfile="$(set +f; find_specfile_in_cwd '' *)" ||:
+		guess_specfile_from_checkout
 	fi
+fi
+
+if [ -z "$specfile" ]; then
+	if [ -n "${TREE_ID-}" ]; then
+		guess_specfile_from_checkout
+	else
+		guess_specfile_from_tree
+	fi
+fi
+
+if [ -z "$specfile" ]; then
+	specfile="$(set +f; find_specfile_in_cwd '' *)" ||:
 fi
 
 [ -s "$specfile" ] ||

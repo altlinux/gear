@@ -380,6 +380,8 @@ pkg_version=
 pkg_release=
 find_specfile()
 {
+	local fail_ok="${1-}"
+
 	# first try specfile defined in $rules if any.
 	find_rules_in_tree
 	specfile="$(get_filename_from_rules spec specfile)"
@@ -388,11 +390,15 @@ find_specfile()
 	if [ -z "$specfile" ]; then
 		specfile="$(git ls-tree "$main_tree_id" |
 			sed -ne 's/^[^[:space:]]\+[[:space:]]\+blob[[:space:]]\+[^[:space:]]\+[[:space:]]\+\([^/[:space:]]\+\.spec\)$/\1/p')"
-		[ `printf %s "$specfile" |wc -l` -le 0 ] ||
-			fatal "Too many specfiles found${GIT_DIR:+ in $GIT_DIR}"
+		[ `printf %s "$specfile" |wc -l` -le 0 ] || {
+			message "Too many specfiles found${GIT_DIR:+ in $GIT_DIR}"
+			[ "$fail_ok" = fail_ok ] && return 1 || exit
+		}
 	fi
-	[ -n "$specfile" ] ||
-		fatal "No specfiles found${GIT_DIR:+ in $GIT_DIR}"
+	[ -n "$specfile" ] || {
+		[ "$fail_ok" = fail_ok ] && return 1 ||
+			fatal "No specfiles found${GIT_DIR:+ in $GIT_DIR}"
+	}
 	cat_blob "$main_tree_id" "$specfile" >"$workdir/specfile"
 
 	local spec_name spec_version spec_release
