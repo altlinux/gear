@@ -334,6 +334,11 @@ import_tree()
 	printf '%s: %s%s%s%s\n' "$method_pack" "$dir_name" "$rule_name" "$rule_base" "$rule_suffix" |
 		sed "s/${quoted:-@version@}/@version@/g" >>"$gear_rules"
 
+	find "./$dir_name" -type d -name .git \
+		-printf "$PROG: Ignoring path: %p/\\n" \
+		-execdir rm -rf -- '{}' ';' \
+		-prune >&2
+
 	git ls-files -z --others --modified -- "$dir_name" |
 		git update-index --add ${verbose:+--verbose} -z --stdin
 }
