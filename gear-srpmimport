@@ -407,7 +407,7 @@ import()
 	verbose "Processing $srpm"
 	srpm="$(readlink -ev -- "$srpm")"
 
-	local header name verrel buildtime filelist changelogname changelog author_name author_email
+	local header name verrel buildtime gts filelist changelogname changelog author_name author_email
 	header="$(od -A n -N 8 -t x1 -- "$srpm")" &&
 	[ -n "$header" -a -z "${header## ed ab ee db ?? ?? 00 01}" ] &&
 	name="$(rpmquery -p --qf '%{NAME}' -- "$srpm")" &&
@@ -504,11 +504,12 @@ import()
 			git_commit_fast='git commit'
 	fi
 
-	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
+	gts="$buildtime +0000"
+	GIT_AUTHOR_DATE="$gts" GIT_COMMITTER_DATE="$gts" \
 		$git_commit_fast --no-verify ${quiet:+-q} -a -m "$message" ||
 			fatal "Failed to commit $srpm"
 	verbose "Committed $name $verrel"
-	TZ=UTC faketime -d "1970-01-01 $buildtime seconds" -- \
+	GIT_AUTHOR_DATE="$gts" GIT_COMMITTER_DATE="$gts" \
 		git tag -a -m "$name $verrel" "$verrel" ||:
 	[ -n "${quiet-}" ] || message "Imported $srpm"
 }
