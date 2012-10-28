@@ -1,5 +1,5 @@
 .\" Copyright (C) 2006-2008  Alexey Gladkov <legion@altlinux.org>
-.\" Copyright (C) 2006-2008,2010  Dmitry V. Levin <ldv@altlinux.org>
+.\" Copyright (C) 2006-2010  Dmitry V. Levin <ldv@altlinux.org>
 .\" Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 .\"
 .\" Additional documentation for the gear-commit command.

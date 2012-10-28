@@ -1,4 +1,4 @@
-.\" Copyright (C) 2006-2009  Dmitry V. Levin <ldv@altlinux.org>
+.\" Copyright (C) 2006-2011  Dmitry V. Levin <ldv@altlinux.org>
 .\" Copyright (C) 2006-2007  Sergey Vlasov <vsu@altlinux.org>
 .\" Copyright (C) 2009  Alexey I. Froloff <raorn@altlinux.org>
 .\"

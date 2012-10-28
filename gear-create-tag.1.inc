@@ -1,5 +1,5 @@
 .\" Copyright (C) 2007  Alexey Gladkov <legion@altlinux.org>
-.\" Copyright (C) 2007-2009  Dmitry V. Levin <ldv@altlinux.org>
+.\" Copyright (C) 2007-2010  Dmitry V. Levin <ldv@altlinux.org>
 .\" Copyright (C) 2009  Alexey I. Froloff <raorn@altlinux.org>
 .\"
 .\" Additional documentation for the gear-create-tag command.
