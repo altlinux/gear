@@ -404,17 +404,36 @@ import_file()
 	esac
 }
 
+is_srpm()
+{
+	local file header tag
+
+	file="$1"; shift
+	header="$(od -A n -N 8 -t x1 -- "$file")" || return
+	case "$header" in
+		\ ed\ ab\ ee\ db\ ??\ ??\ 00\ 01)
+			return 0
+			;;
+		\ ed\ ab\ ee\ db\ ??\ ??\ 00\ 00)
+			tag="$(rpmquery --qf '%|sourcerpm?{1}|' -p "$file")" &&
+			[ -z "$tag" ] &&
+			return 0 || return 1
+			;;
+	esac
+	return 1
+}
+
 git_commit_fast=
 import()
 {
-	local srpm="$1" && shift
+	local srpm name verrel buildtime gts filelist changelogname changelog author_name author_email
+
+	srpm="$1"; shift
 	cd "$saved_cwd"
 	verbose "Processing $srpm"
 	srpm="$(readlink -ev -- "$srpm")"
 
-	local header name verrel buildtime gts filelist changelogname changelog author_name author_email
-	header="$(od -A n -N 8 -t x1 -- "$srpm")" &&
-	[ -n "$header" -a -z "${header## ed ab ee db ?? ?? 00 01}" ] &&
+	is_srpm "$srpm" &&
 	name="$(rpmquery -p --qf '%{NAME}' -- "$srpm")" &&
 	verrel="$(rpmquery -p --qf '%{VERSION}-%{RELEASE}' -- "$srpm")" &&
 	buildtime="$(rpmquery -p --qf '%{BUILDTIME}' -- "$srpm")" &&
