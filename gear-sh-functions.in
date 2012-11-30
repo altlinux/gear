@@ -383,7 +383,6 @@ find_specfile()
 	local fail_ok="${1-}"
 
 	# first try specfile defined in $rules if any.
-	find_rules_in_tree
 	specfile="$(get_filename_from_rules spec specfile)"
 
 	# second try specfile in toplevel tree.
