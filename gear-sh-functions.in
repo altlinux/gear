@@ -220,7 +220,10 @@ check_filename()
 
 rules_cleanup()
 {
-	sed -i 's/^[[:space:]]*\([^[:space:]:]\+\)[[:space:]]*:[[:space:]]*/\1: /' "$1"
+	if [ -s "$1" ]; then
+		echo >> "$1"
+		sed -i 's/^[[:space:]]*\([^[:space:]:]\+\)[[:space:]]*:[[:space:]]*/\1: /' "$1"
+	fi
 }
 
 workdir=
