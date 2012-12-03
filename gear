@@ -549,8 +549,6 @@ parse_rules()
 {
 	[ -s "$workdir/rules" ] || return 0
 
-	echo >>"$workdir/rules"
-
 	exclude_pattern_list=
 	lineno=0
 
