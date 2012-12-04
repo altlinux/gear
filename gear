@@ -643,8 +643,6 @@ while :; do
 		--no-compress) tar_compress=
 			;;
 		--commit) do_commit=1
-			[ "${main_tree_id%%:*}" = HEAD ] ||
-				show_usage 'Option --commit is only allowed for HEAD commit.'
 			;;
 		--bzip2) tar_compress=--bzip2
 			;;
@@ -653,13 +651,9 @@ while :; do
 		--command) command=1; command_helper=
 			;;
 		--hasher) hasher=1
-			[ -z "$outdir$rpmbuild$describe$command" ] ||
-				show_usage 'Options --hasher, --rpmbuild, --export-dir, --command and --describe are mutually exclusive.'
 			command_helper='gear-command-hasher'
 			;;
 		--rpmbuild) rpmbuild=1
-			[ -z "$hasher$outdir$describe$command" ] ||
-				show_usage 'Options --hasher, --rpmbuild, --export-dir, --command and --describe are mutually exclusive.'
 			command_helper='gear-command-rpmbuild'
 			;;
 		--update-spec) update_spec=1
@@ -668,12 +662,8 @@ while :; do
 			outdir="$(opt_check_dir "$1" "$2")"
 			shift
 			command_helper=
-			[ -z "$hasher$rpmbuild$describe$command" ] ||
-				show_usage 'Options --hasher, --rpmbuild, --export-dir, --command and --describe are mutually exclusive.'
 			;;
 		--describe) describe=1
-			[ -z "$hasher$outdir$rpmbuild$command" ] ||
-				show_usage 'Options --hasher, --rpmbuild, --export-dir, --command and --describe are mutually exclusive.'
 			;;
 		-r|--rules) shift; rules="$1"
 			;;
@@ -696,12 +686,18 @@ done
 [ -z "$do_commit" -o "${main_tree_id%%:*}" = HEAD ] ||
 	show_usage 'Option --commit is allowed for HEAD commit only.'
 
+case "$command$describe$hasher$outdir$rpmbuild" in
+	''|1) ;;
+	*) show_usage 'Options --hasher, --rpmbuild, --export-dir, --command and --describe are mutually exclusive.' ;;
+esac
+
 out_file=
 if [ -n "$hasher$rpmbuild$command" ]; then
 	# At least one argument, please.
 	[ $# -ge 1 ] ||
 		show_usage 'Not enough arguments.'
 elif [ -n "$outdir$describe" ]; then
+	# No arguments, please.
 	[ $# -eq 0 ] ||
 		show_usage 'Too many arguments.'
 else
