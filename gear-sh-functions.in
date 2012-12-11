@@ -320,17 +320,10 @@ expand_rpm_macros()
 		macros["nil"] = ""
 	}
 	match($0, /^%(define|global)[[:space:]]+([^[:space:]]+)[[:space:]]+(.*)$/, f) {
-		expansion = expand(f[3])
-		if ((expansion == 10) && (expansion > 2))
-			delete macros[f[2]]
-		else
-			macros[f[2]] = expansion
+		macros[f[2]] = expand(f[3])
 	}
 	END {
-		expansion = expand(value)
-		if ((expansion == 10) && (expansion > 2))
-			expansion = value
-		print expansion
+		print expand(value)
 	}
 	function expand(input,
 			output, pos, macro, f)
@@ -347,12 +340,13 @@ expand_rpm_macros()
 			if (match(input, /^([[:alpha:]_][[:alnum:]_]*)(.*)$/, f) ||
 			    match(input, /^\{([[:alpha:]_][[:alnum:]_]*)\}(.*)$/, f)) {
 				macro = f[1]
-				input = f[2]
-			} else
-				return 10
-			if (!(macro in macros))
-				return 10
-			output = output macros[macro]
+				if (macro in macros) {
+					output = output macros[macro]
+					input = f[2]
+					continue
+				}
+			}
+			output = output "%"
 		}
 		return output input
 	}
