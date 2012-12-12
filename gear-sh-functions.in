@@ -126,6 +126,17 @@ get_object_sha1()
 	printf %s "$sha1"
 }
 
+get_tag_sha1()
+{
+	local name sha1
+
+	name="$1"; shift
+	sha1="$(get_object_sha1 "$name")" || return
+	[ "$(git cat-file -t "$sha1")" = tag ] || return
+
+	printf %s "$sha1"
+}
+
 get_commit_sha1()
 {
 	local name="$1" && shift
