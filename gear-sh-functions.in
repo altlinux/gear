@@ -300,7 +300,7 @@ find_rules_in_cwd()
 	gear_find_rules_common gear_find_rules_check_cwd gear_find_rules_cat_cwd
 }
 
-get_filename_from_rules()
+get_uniq_filename_from_rules()
 {
 	local directive file
 	directive="$1"; shift
@@ -391,7 +391,7 @@ find_specfile()
 	local fail_ok="${1-}"
 
 	# first try specfile defined in $rules if any.
-	specfile="$(get_filename_from_rules spec)"
+	specfile="$(get_uniq_filename_from_rules spec)"
 
 	# second try specfile in toplevel tree.
 	if [ -z "$specfile" ]; then
@@ -456,7 +456,7 @@ gear_find_tags_common()
 	local cat_tags="$1"; shift
 
 	# first try tag directory defined in rules if any.
-	tag_dir="$(get_filename_from_rules tags)"
+	tag_dir="$(get_uniq_filename_from_rules tags)"
 
 	# second try tag directory in toplevel tree.
 	if [ -z "$tag_dir" ]; then

@@ -121,7 +121,7 @@ guess_specfile_from_checkout()
 	workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
 
 	find_rules_in_cwd
-	specfile="$(get_filename_from_rules spec)"
+	specfile="$(get_uniq_filename_from_rules spec)"
 	[ -s "$specfile" ] || specfile=
 
 	rm -rf -- "$workdir"
