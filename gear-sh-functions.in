@@ -64,6 +64,14 @@ uninstall_cleanup_handler()
 	__cleanup_handler_name=
 }
 
+# set specified variable to the value stored in another specified variable
+# 1st arg is the name of variable that should be assigned,
+# 2ns arg is the name of variable that contains the value to be assigned.
+set_var_value()
+{
+	eval "$1=\"\$$2\""
+}
+
 lineno=
 rules=
 rules_error()
