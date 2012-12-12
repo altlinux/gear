@@ -302,18 +302,18 @@ find_rules_in_cwd()
 
 get_filename_from_rules()
 {
-	local directive="$1" && shift
-	local name="$1" && shift
+	local directive file
+	directive="$1"; shift
 
 	find_rules_in_tree
 	[ -s "$workdir/rules" ] || return 0
 
-	local file="$(sed -ne "s/^$directive:[[:space:]]\\+\\([^[:space:]]\\+\\)/\\1/p" "$workdir/rules")"
+	file="$(sed -ne "s/^$directive:[[:space:]]\\+\\([^[:space:]]\\+\\)/\\1/p" "$workdir/rules")"
 	[ -n "$file" ] || return 0
 
 	[ `printf %s "$file" |wc -l` -le 0 ] ||
-		rules_error "More than one $name specified"
-	check_pathname "$name" "$file"
+		rules_error "More than one \"$directive\" directive specified"
+	check_pathname "$directive" "$file"
 	printf %s "$file"
 }
 
@@ -391,7 +391,7 @@ find_specfile()
 	local fail_ok="${1-}"
 
 	# first try specfile defined in $rules if any.
-	specfile="$(get_filename_from_rules spec specfile)"
+	specfile="$(get_filename_from_rules spec)"
 
 	# second try specfile in toplevel tree.
 	if [ -z "$specfile" ]; then
@@ -456,7 +456,7 @@ gear_find_tags_common()
 	local cat_tags="$1"; shift
 
 	# first try tag directory defined in rules if any.
-	tag_dir="$(get_filename_from_rules tags 'tag directory')"
+	tag_dir="$(get_filename_from_rules tags)"
 
 	# second try tag directory in toplevel tree.
 	if [ -z "$tag_dir" ]; then
