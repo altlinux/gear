@@ -122,6 +122,7 @@ chdir_to_toplevel
 
 main_commit_sha1="$(get_commit_sha1 "$main_tree_id")" ||
 	fatal "$main_tree_id: Invalid commit object name"
+disable_specsubst=1
 
 install_cleanup_handler cleanup_handler
 workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"

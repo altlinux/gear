@@ -77,19 +77,46 @@ does not accept any non-option arguments.  In this mode
 strings found in the spec file, and does not proceed to
 extract source files from the repository.
 
+[TEMPORARY COMMITS AND TAGS]
+In
+.B \-\-commit
+mode,
+.B gear
+creates a temporary commit object with staged and unstaged changes.
+If
+.BR specsubst :
+directive is in use,
+.B gear
+also creates a temporary tag object for just created temporary commit object.
+
 [CONFIGURATION]
-\fBgear\fR reads following configuration options from
+.B gear
+reads following configuration options from
 .BR git\-config (1):
 .PP
-gear.compress
+.B gear.compress
 .RS 4
 compression method, defaults to \-\-gzip.
 .RE
 .PP
-gear.rules
+.B gear.rules
 .RS 4
 rules file name.
 .RE
+.PP
+In
+.B \-\-commit
+mode, when
+.BR specsubst :
+directive is in use,
+.B gear
+also reads
+.BR gear.specsubst. *
+configuration options from
+.BR git\-config (1)
+for each variable listed in the
+.BR specsubst :
+directive.
 
 [ENVIRONMENT]
 .TP

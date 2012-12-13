@@ -439,9 +439,34 @@ However, if
 or
 .I new_tree_path
 specify non-default base trees, these trees still must be valid.
-.PD 0
+.TP
+.BI "specsubst: " variables...
+Specify whitespace-separated list of variables that should be substituted
+in specfile.  Variable names may contain letters, digits and underscore
+characters.  For each
+.I variable
+every occurrence of
+.I @variable@
+in specfile is substituted with its value.
+Values for these variables are obtained from the tag object passed to
+.BR gear (1),
+therefore a tag object is required when
+.BR specsubst :
+directive is used.
+.
+.
+.SH SPECSUBST TAG FORMAT
+A tag object may contain definitions for variables to be substituted during
+.BR specsubst :
+directive processing.  These definitions have the following format:
+.RS 4
 .PP
-.PD
+.BR X-girar-specsubst :
+.IR variable = value
+.RE
+.PP
+Values are treated literally, there is no support of quoting
+or line continuation.
 .
 .
 .ne 5

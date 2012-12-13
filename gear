@@ -29,6 +29,7 @@
 #
 #  Each directive has own args syntax:
 #  spec: path_to_file
+#  specsubst: variables..
 #  tags: path_to_directory
 #  (copy|gzip|bzip2|lzma|xz): glob_pattern..
 #  (copy|gzip|bzip2|lzma|xz)?: glob_pattern..
@@ -97,6 +98,7 @@ Options:
   --no-compress             do not compress output archive;
   --bzip2                   compress output archive using bzip2;
   --gzip                    compress output archive using gzip;
+  --disable-specsubst       disable specsubst directive support;
   --commit                  make temporary commit prior to extract;
   --command                 execute arbitrary command afterwards;
   --hasher                  execute hsh-like command afterwards;
@@ -589,7 +591,7 @@ parse_rules()
 		eval "set -- $opts"
 
 		case "$cmd" in
-			spec|exclude|tags)
+			spec|specsubst|exclude|tags)
 				continue
 				;;
 			tar|tar.gz|tar.bz2|tar.lzma|tar.xz)
@@ -647,6 +649,8 @@ while :; do
 		--bzip2) tar_compress=--bzip2
 			;;
 		--gzip) tar_compress=--gzip
+			;;
+		--disable-specsubst) disable_specsubst=1
 			;;
 		--command) command=1; command_helper=
 			;;
@@ -721,6 +725,8 @@ chdir_to_toplevel
 main_commit_id="${main_tree_id%%:*}"
 main_commit_sha1="$(get_commit_sha1 "$main_commit_id")" ||
 	fatal "Invalid commit \"$main_commit_id\""
+main_tag_sha1="$(get_tag_sha1 "$main_commit_id" ||:)"
+main_tag_id="$main_commit_id"
 
 if [ -z "$do_commit" ]; then
 	get_tree_sha1 "$main_tree_id" > /dev/null ||
@@ -749,6 +755,36 @@ create_temporary_git_object_directory()
 	printf %s\\n "$orig_object_dir" >"$tmpdir/objects/info/alternates"
 	GIT_OBJECT_DIRECTORY="$tmpdir/objects"
 	gear_export_vars GIT_OBJECT_DIRECTORY
+}
+
+make_temporary_tag()
+{
+	get_specsubst_from_rules
+	[ -n "$specsubst" ] || return 0
+
+	cat > "$tmpdir/mktag" <<EOF
+object $main_commit_sha1
+type commit
+tag gear--commit
+tagger $(git cat-file commit $main_commit_sha1 |sed -r '/^committer +/!d;s///;q')
+
+Temporary tag by $PROG.
+
+EOF
+	local opts var value
+	quote_shell_args opts "$specsubst"
+	eval "set -- $opts"
+
+	for var; do
+		opts="gear.specsubst.$var"
+		value="$(git config --get "$opts")" ||
+			fatal "failed to prepare temporary tag: git config option \"$opts\" not found"
+		printf 'X-girar-specsubst: %s=%s\n' "$var" "$value"
+	done >> "$tmpdir/mktag"
+
+	main_tag_sha1="$(git mktag < "$tmpdir/mktag")"
+	main_tag_id="$main_tag_sha1"
+	verbose 'Temporarily tagged local changes.'
 }
 
 if [ -n "$do_commit" ]; then
@@ -785,6 +821,8 @@ if [ -n "$do_commit" ]; then
 		main_tree_id="$tmp_main_tree_id"
 		verbose 'Temporarily committed local changes.'
 	fi
+
+	make_temporary_tag
 fi
 
 find_specfile

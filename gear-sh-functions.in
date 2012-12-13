@@ -30,7 +30,7 @@ PROG="${0##*/}"
 PROG_VERSION='@VERSION@'
 
 gear_short_options='r:,t:,h,q,v,V'
-gear_long_options='no-compress,commit,bzip2,gzip,command,hasher,rpmbuild,update-spec,export-dir:,describe,rules:,tree-ish:,help,quiet,verbose,version'
+gear_long_options='no-compress,commit,bzip2,gzip,disable-specsubst,command,hasher,rpmbuild,update-spec,export-dir:,describe,rules:,tree-ish:,help,quiet,verbose,version'
 
 __cleanup_handler_name=
 __cleanup_handler()
@@ -410,6 +410,42 @@ get_NVR_from_spec()
 	expand_rpm_macros "$spec" spec_release
 }
 
+substitute_vars_in_spec()
+{
+	[ -n "${specsubst-}" ] || return 0
+
+	local tag spec opts var qvar value qvalue
+	tag="$workdir/main_tag"
+	spec="$workdir/specfile"
+
+	git cat-file tag "$main_tag_sha1" > "$tag"
+
+	quote_shell_args opts "$specsubst"
+	eval "set -- $opts"
+
+	for var; do
+		quote_sed_regexp_variable qvar "$var"
+		grep -qs "^X-girar-specsubst:[[:space:]]\\+$qvar=" "$tag" ||
+			fatal "specsubst variable \"$var\" is not defined in tag \"$main_tag_id\""
+		value="$(sed "/^X-girar-specsubst:[[:space:]]\\+$qvar=/I!d;s///;q" "$tag")"
+		quote_sed_regexp_variable qvalue "$value"
+		sed -i "s/@$qvar@/$qvalue/g" -- "$spec"
+	done
+}
+
+specsubst=
+disable_specsubst=
+get_specsubst_from_rules()
+{
+	if [ -z "$disable_specsubst" ]; then
+		get_uniq_directive_from_rules specsubst specsubst
+		if [ -n "$specsubst" ]; then
+			[ -z "$(printf %s "$specsubst" |LANG=C tr -d '[:alnum:]_[:space:]')" ] ||
+				rules_error "Invalid specsubst value \"$specsubst\" specified"
+		fi
+	fi
+}
+
 specfile=
 pkg_name=
 pkg_version=
@@ -417,6 +453,14 @@ pkg_release=
 find_specfile()
 {
 	local fail_ok="${1-}"
+
+	get_specsubst_from_rules
+	if [ -n "$specsubst" ]; then
+		if [ -z "${main_tag_sha1-}" ]; then
+			[ "$fail_ok" = fail_ok ] && specsubst= ||
+			fatal 'specsubst directive requires a tag'
+		fi
+	fi
 
 	# first try specfile defined in $rules if any.
 	get_uniq_filename_from_rules specfile spec
@@ -435,6 +479,8 @@ find_specfile()
 			fatal "No specfiles found${GIT_DIR:+ in $GIT_DIR}"
 	}
 	cat_blob "$main_tree_id" "$specfile" >"$workdir/specfile"
+
+	substitute_vars_in_spec
 
 	local spec_name spec_version spec_release
 	get_NVR_from_spec "$workdir/specfile"
@@ -767,14 +813,14 @@ subst_NVR_from_spec_file()
 gear_config_option()
 {
 	local var_name="$1" opt_name="$2" def_val="$3"
-	local subcmd val
+	local subcmd gear_config_option_val
 
 	subcmd=".${PROG#gear-}"
 	[ "$subcmd" != '.gear' ] || subcmd=
-	val="$(git config --get "gear$subcmd.$opt_name")" ||
-		val="$def_val"
+	gear_config_option_val="$(git config --get "gear$subcmd.$opt_name")" ||
+		gear_config_option_val="$def_val"
 
-	set_var_value "$var_name" val
+	set_var_value "$var_name" gear_config_option_val
 }
 
 gear_config_option verbose verbose ''
