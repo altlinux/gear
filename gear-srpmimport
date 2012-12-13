@@ -105,7 +105,7 @@ optimize_rules()
 		LC_COLLATE=C sort -u |
 		while read suffix; do
 			local quoted
-			quoted="$(quote_sed_regexp "$suffix")"
+			quote_sed_regexp_variable quoted "$suffix"
 			method="$(sed -n 's/^\([^:]\+\): [^ ]*\.'"$quoted"'$/\1/p' "$rules" |LC_COLLATE=C sort -u)"
 			case "$method" in
 				copy|gzip|bzip2|xz)
@@ -323,7 +323,7 @@ import_tree()
 	dir_name="$short_name"
 
 	local quoted rule_base= rule_name=
-	quoted="$(quote_sed_regexp "$spec_version")"
+	quote_sed_regexp_variable quoted "$spec_version"
 
 	[ "$dir_name-$spec_version" = "$arch_basename" ] ||
 		rule_name=" name=$arch_basename"
