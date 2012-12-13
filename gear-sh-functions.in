@@ -331,14 +331,18 @@ get_uniq_directive_from_rules()
 
 get_uniq_filename_from_rules()
 {
-	local directive filename
+	local var_name directive filename
+	var_name="$1"; shift
 	directive="$1"; shift
+
+	set_var_value "$var_name" filename
 
 	get_uniq_directive_from_rules filename "$directive" || return
 	[ -n "$filename" ] || return 0
 
 	check_pathname "$directive" "$filename"
-	printf %s "$filename"
+
+	set_var_value "$var_name" filename
 }
 
 expand_rpm_macros()
@@ -415,7 +419,7 @@ find_specfile()
 	local fail_ok="${1-}"
 
 	# first try specfile defined in $rules if any.
-	specfile="$(get_uniq_filename_from_rules spec)"
+	get_uniq_filename_from_rules specfile spec
 
 	# second try specfile in toplevel tree.
 	if [ -z "$specfile" ]; then
@@ -480,7 +484,7 @@ gear_find_tags_common()
 	local cat_tags="$1"; shift
 
 	# first try tag directory defined in rules if any.
-	tag_dir="$(get_uniq_filename_from_rules tags)"
+	get_uniq_filename_from_rules tag_dir tags
 
 	# second try tag directory in toplevel tree.
 	if [ -z "$tag_dir" ]; then

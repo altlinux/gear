@@ -615,7 +615,7 @@ if [ -n "$delete" ]; then
 elif [ -n "$tag_name" ]; then
 	update_tag "$tag_name" "$tag_value"
 else
-	specfile="$(get_uniq_filename_from_rules spec)"
+	get_uniq_filename_from_rules specfile spec
 	if [ -n "$specfile" ]; then
 		[ -s "$specfile" ] ||
 			rules_error "Bad spec file \"$specfile\" specified in rules"
