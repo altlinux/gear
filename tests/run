@@ -157,7 +157,7 @@ append_test()
 				define_test "$n" "$s" _${t}_tar_gz   "gear_subdir='$dir' gear_type=.tar.gz   gear_compress='tar -cT - -f -'     gear_filter='gzip -c'"
 				define_test "$n" "$s" _${t}_tar_bz2  "gear_subdir='$dir' gear_type=.tar.bz2  gear_compress='tar -cT - -f -'     gear_filter='bzip2 -c'"
 				# tar fails do autodetect xz-compressed archives, disable test
-				#define_test "$n" "$s" _${t}_tar_xz   "gear_subdir='$dir' gear_type=.tar.xz   gear_compress='tar -cT - -f -'     gear_filter='xz -c'"
+				define_test "$n" "$s" _${t}_tar_xz   "gear_subdir='$dir' gear_type=.tar.xz   gear_compress='tar -cT - -f -'     gear_filter='xz -c'"
 				define_test "$n" "$s" _${t}_zip      "gear_subdir='$dir' gear_type=.zip      gear_compress='zip -q -@ -'        gear_filter='cat'"
 				define_test "$n" "$s" _${t}_cpio     "gear_subdir='$dir' gear_type=.cpio     gear_compress='cpio --quiet -o -c' gear_filter='cat'"
 				define_test "$n" "$s" _${t}_cpio_gz  "gear_subdir='$dir' gear_type=.cpio.gz  gear_compress='cpio --quiet -o -c' gear_filter='gzip -c'"
