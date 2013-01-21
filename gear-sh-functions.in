@@ -425,9 +425,13 @@ substitute_vars_in_spec()
 
 	for var; do
 		quote_sed_regexp_variable qvar "$var"
-		grep -qs "^X-girar-specsubst:[[:space:]]\\+$qvar=" "$tag" ||
+		if grep -qs "^X-gear-specsubst:[[:space:]]\\+$qvar=" "$tag"; then
+			value="$(sed "/^X-gear-specsubst:[[:space:]]\\+$qvar=/I!d;s///;q" "$tag")"
+		elif grep -qs "^X-girar-specsubst:[[:space:]]\\+$qvar=" "$tag"; then
+			value="$(sed "/^X-girar-specsubst:[[:space:]]\\+$qvar=/I!d;s///;q" "$tag")"
+		else
 			fatal "specsubst variable \"$var\" is not defined in tag \"$main_tag_id\""
-		value="$(sed "/^X-girar-specsubst:[[:space:]]\\+$qvar=/I!d;s///;q" "$tag")"
+		fi
 		quote_sed_regexp_variable qvalue "$value"
 		sed -i "s/@$qvar@/$qvalue/g" -- "$spec"
 	done

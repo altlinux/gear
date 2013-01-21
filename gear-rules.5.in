@@ -461,7 +461,7 @@ A tag object may contain definitions for variables to be substituted during
 directive processing.  These definitions have the following format:
 .RS 4
 .PP
-.BR X-girar-specsubst :
+.BR X-gear-specsubst :
 .IR variable = value
 .RE
 .PP

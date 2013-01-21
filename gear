@@ -779,7 +779,7 @@ EOF
 		opts="gear.specsubst.$var"
 		value="$(git config --get "$opts")" ||
 			fatal "failed to prepare temporary tag: git config option \"$opts\" not found"
-		printf 'X-girar-specsubst: %s=%s\n' "$var" "$value"
+		printf 'X-gear-specsubst: %s=%s\n' "$var" "$value"
 	done >> "$tmpdir/mktag"
 
 	main_tag_sha1="$(git mktag < "$tmpdir/mktag")"
