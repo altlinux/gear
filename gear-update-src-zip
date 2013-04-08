@@ -48,6 +48,7 @@ unpack_source()
 	workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
 
 	unzip -q "$gear_update_source" ${gear_update_subdir:+"$gear_update_subdir/*"} -d "$workdir"
+	chmod -R u+rwX,go-w -- "$workdir"
 
 	validate_destdir "$workdir/$gear_update_subdir" "$gear_update_destdir"
 	update_destdir move "$workdir/$gear_update_subdir" "$gear_update_destdir"

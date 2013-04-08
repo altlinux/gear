@@ -88,6 +88,7 @@ unpack_source()
 	cd "$workdir"
 	$compress "$gear_update_source" |
 		cpio --quiet -id ${gear_update_subdir:+"$gear_update_subdir/*"}
+	chmod -R u+rwX,go-w .
 	cd - >/dev/null
 
 	validate_destdir "$workdir/$gear_update_subdir" "$gear_update_destdir"
