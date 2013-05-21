@@ -690,7 +690,7 @@ done
 [ -z "$do_commit" -o "${main_tree_id%%:*}" = HEAD ] ||
 	show_usage 'Option --commit is allowed for HEAD commit only.'
 
-case "$command$describe$hasher$outdir$rpmbuild" in
+case "$command$describe$hasher${outdir:+1}$rpmbuild" in
 	''|1) ;;
 	*) show_usage 'Options --hasher, --rpmbuild, --export-dir, --command and --describe are mutually exclusive.' ;;
 esac
