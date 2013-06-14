@@ -56,7 +56,9 @@ update_destdir()
 	[ "$dst_dir" = '.' ] ||
 		mkdir $gear_update_verbose -p -- "$dst_dir"
 
-	find "$src_dir" -mindepth 1 -maxdepth 1 \! \( -name '.git' -o -name '.gear' -o -name '.gear-rules' -o -name '.gear-tags' \) -print0 |
+	local i=$((${gear_update_strip_components:-0} + 1))
+
+	find "$src_dir" -mindepth $i -maxdepth $i \! \( -name '.git' -o -name '.gear' -o -name '.gear-rules' -o -name '.gear-tags' \) -print0 |
 		xargs -r0 -i $cmd -- \{\} "$dst_dir/"
 }
 
