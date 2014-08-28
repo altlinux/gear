@@ -97,9 +97,9 @@ while :; do
 		;;
 	    -u|--key-id) shift; keyid="$1"; opt_s=
 		;;
-	    -q|--quiet) quiet=-q
+	    -q|--quiet) quiet=-q verbose=
 		;;
-	    -v|--verbose) verbose=-v
+	    -v|--verbose) verbose=-v quiet=
 		;;
 	    -V|--version) print_version
 		;;
