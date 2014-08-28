@@ -145,7 +145,7 @@ git tag $force $opt_s ${keyid:+-u "$keyid"} -m "$tag_msg" "$tag_name" "$main_com
 if [ -z "$quiet" ]; then
 	[ "$rc" = 0 ] &&
 		message "Created tag \"$tag_name\"" ||
-		message "Failed to create a tag \"$tag_name\""
+		message "Failed to create tag \"$tag_name\""
 fi
 
 exit $rc
