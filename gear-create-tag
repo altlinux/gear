@@ -54,6 +54,7 @@ Options:
                         (default: <VERSION>-<RELEASE>);
   -r, --rules=FILENAME  override rules file name;
   -t, --time=DATE-FMT   set the date used in tag;
+  -q, --quiet           try to be more quiet;
   -v, --verbose         print a message for each action;
   -V, --version         print program version and exit;
   -h, --help            show this text and exit.
@@ -70,7 +71,7 @@ cleanup_handler()
 	[ -z "$workdir" ] || rm -rf -- "$workdir"
 }
 
-TEMP=`getopt -n $PROG -o f,m:,n:,r:,t:,u:,v,V,h -l force,key-id:,message:,name:,rules:,time:,verbose,version,help -- "$@"` ||
+TEMP=`getopt -n $PROG -o f,m:,n:,r:,t:,u:,q,v,V,h -l force,key-id:,message:,name:,rules:,time:,quiet,verbose,version,help -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
@@ -95,6 +96,8 @@ while :; do
 			export GIT_COMMITTER_DATE="$1"
 		;;
 	    -u|--key-id) shift; keyid="$1"; opt_s=
+		;;
+	    -q|--quiet) quiet=-q
 		;;
 	    -v|--verbose) verbose=-v
 		;;
