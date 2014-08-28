@@ -135,7 +135,8 @@ uninstall_cleanup_handler
 
 subst_NVR_from_spec_file '' tag_name tag_msg
 
-verbose "Creating tag named \"$tag_name\" using tag message \"$tag_msg\" for commit $main_commit_sha1"
+[ -n "$quiet" ] ||
+	message "Creating tag named \"$tag_name\" using tag message \"$tag_msg\" for commit $main_commit_sha1"
 
 rc=0
 git tag $force $opt_s ${keyid:+-u "$keyid"} -m "$tag_msg" "$tag_name" "$main_commit_sha1" ||
