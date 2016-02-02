@@ -402,10 +402,12 @@ get_NVR_from_spec()
 	local spec="$1" && shift
 
 	spec_name="$(sed '/^name:[[:space:]]*/I!d;s///;q' "$spec" |sed 's/[[:space:]]\+$//')"
+	spec_epoch="$(sed '/^\(epoch\|serial\):[[:space:]]*/I!d;s///;q' "$spec" |sed 's/[[:space:]]\+$//')"
 	spec_version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$spec" |sed 's/[[:space:]]\+$//')"
 	spec_release="$(sed '/^release:[[:space:]]*/I!d;s///;q' "$spec" |sed 's/[[:space:]]\+$//')"
 
 	expand_rpm_macros "$spec" spec_name
+	expand_rpm_macros "$spec" spec_epoch
 	expand_rpm_macros "$spec" spec_version
 	expand_rpm_macros "$spec" spec_release
 }
@@ -452,6 +454,7 @@ get_specsubst_from_rules()
 
 specfile=
 pkg_name=
+pkg_epoch=
 pkg_version=
 pkg_release=
 find_specfile()
@@ -486,9 +489,10 @@ find_specfile()
 
 	substitute_vars_in_spec
 
-	local spec_name spec_version spec_release
+	local spec_name spec_epoch spec_version spec_release
 	get_NVR_from_spec "$workdir/specfile"
 	pkg_name="$spec_name"
+	pkg_epoch="$spec_epoch"
 	pkg_version="$spec_version"
 	pkg_release="$spec_release"
 }
