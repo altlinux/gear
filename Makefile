@@ -26,11 +26,12 @@ VERSION = $(shell sed '/^Version: */!d;s///;q' gear.spec)
 PROGRAMS = \
 	gear \
 	gear-buildreq \
+	gear-changelog \
 	gear-commit \
 	gear-create-tag \
-	gear-changelog \
 	gear-hsh \
 	gear-hsh-build \
+	gear-import \
 	gear-merge \
 	gear-mock \
 	gear-remote \
@@ -38,19 +39,18 @@ PROGRAMS = \
 	gear-remote-rpm \
 	gear-rpm \
 	gear-srpmimport \
-	gear-import \
-	gear-update \
 	gear-store-tags \
+	gear-update \
 	#
 HELPERS = \
+	gear-changelog-deb \
+	gear-changelog-gnu \
+	gear-changelog-rpm \
 	gear-command-hasher \
 	gear-command-mock \
 	gear-command-remote-build \
 	gear-command-rpmbuild \
 	gear-command-tar \
-	gear-changelog-deb \
-	gear-changelog-gnu \
-	gear-changelog-rpm \
 	gear-update-sh-functions \
 	gear-update-src-cpio \
 	gear-update-src-cpio.bz2 \
