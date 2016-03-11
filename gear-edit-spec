@@ -1,0 +1,90 @@
+#!/bin/sh -efu
+#
+# Copyright (C) 2016  Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>
+#
+# Script to open editor for spec in gear-repo.
+#
+# This file is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+. gear-sh-functions
+. shell-getopt
+
+show_help()
+{
+	cat <<-EOF
+	Usage: $PROG [editor options]
+
+	Options:
+	  --version          print program version and exit;
+	  --help             show this text and exit.
+
+	Report bugs to http://bugzilla.altlinux.org/
+
+	EOF
+	exit
+}
+
+print_version()
+{
+	cat <<-EOF
+	$PROG version $PROG_VERSION
+	Written by Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>
+
+	Copyright (C) 2016  Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>
+	This is free software; see the source for copying conditions.  There is NO
+	warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+	EOF
+	exit
+}
+
+GETOPT_ALLOW_UNKNOWN=1
+
+TEMP=`getopt -n $PROG -o + -l version,help -- "$@"` ||
+	show_usage
+eval set -- "$TEMP"
+
+while :; do
+	case "$1" in
+		--help) show_help
+			;;
+		--version) print_version
+			;;
+		--) shift; break
+			;;
+	esac
+	shift
+done
+
+workdir=
+cleanup_tmpdir()
+{
+        [ -z "$workdir" ] || rm -rf -- "$workdir"
+        exit "$@"
+}
+
+workdir=$(mktemp -dt "${PROG}.XXXXXXXX")
+trap 'cleanup_tmpdir $?' EXIT
+trap 'exit 143' HUP INT QUIT PIPE TERM
+
+disable_specsubst=1
+main_tree_id=HEAD
+
+find_specfile
+
+[ -z "$workdir" ] || {
+	rm -rf -- "$workdir"
+	workdir=
+}
+exec ${EDITOR-${VISUAL-vim}} $@ "$specfile"

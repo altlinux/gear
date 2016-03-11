@@ -29,6 +29,7 @@ PROGRAMS = \
 	gear-changelog \
 	gear-commit \
 	gear-create-tag \
+	gear-edit-spec \
 	gear-hsh \
 	gear-hsh-build \
 	gear-import \
