@@ -172,15 +172,21 @@ chdir_to_toplevel
 [ -n "${since-}" ] ||
 	since="$(git describe --abbrev=0)"
 
-install_cleanup_handler cleanup_workdir
-workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
-
 if [ -z "$no_specfile" ]; then
-	find_specfile
+	guess_specfile
 
 	[ -s "$specfile" ] ||
 		fatal 'No specfile found.'
+
+	get_NVR_from_spec "$specfile"
+	pkg_name="$spec_name"
+	pkg_epoch="$spec_epoch"
+	pkg_version="$spec_version"
+	pkg_release="$spec_release"
 fi
+
+install_cleanup_handler cleanup_workdir
+workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
 
 if [ -z "$no_rules" ]; then
 	if [ ! -s "$changelog_rules" ]; then
