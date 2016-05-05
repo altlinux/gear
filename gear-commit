@@ -106,70 +106,7 @@ done
 # Change to toplevel directory
 chdir_to_toplevel
 
-guess_specfile_from_checkout()
-{
-	local rules="${RULES-}"
-	local workdir
-
-	install_cleanup_handler cleanup_workdir
-	workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
-
-	find_rules_in_cwd
-	get_uniq_filename_from_rules specfile spec
-	[ -s "$specfile" ] || specfile=
-
-	cleanup_workdir
-	uninstall_cleanup_handler
-}
-
-guess_specfile_from_tree()
-{
-	local rules="${RULES-}"
-	local main_tree_id="${TREE_ID:-HEAD}"
-	local workdir
-
-	git cat-file tree "$main_tree_id" >/dev/null 2>&1 || return 0
-
-	install_cleanup_handler cleanup_workdir
-	workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
-
-	find_specfile fail_ok ||:
-
-	cleanup_workdir
-	uninstall_cleanup_handler
-}
-
-# specfile guess logic:
-#
-# If specfile is not specified, then
-#   if TREE_ID is specified, then
-#     first try the rules-based guess from the tree,
-#     next try the rules-based guess the checkout;
-#   otherwise
-#     first try the rules-based guess from checkout,
-#     next try the rules-based guess from HEAD.
-# If nothing of the above helped to find a specfile, then
-#   try a wild guess from the checkout.
-
-if [ -z "$specfile" ]; then
-	if [ -n "${TREE_ID-}" ]; then
-		guess_specfile_from_tree
-	else
-		guess_specfile_from_checkout
-	fi
-fi
-
-if [ -z "$specfile" ]; then
-	if [ -n "${TREE_ID-}" ]; then
-		guess_specfile_from_checkout
-	else
-		guess_specfile_from_tree
-	fi
-fi
-
-if [ -z "$specfile" ]; then
-	specfile="$(set +f; find_specfile_in_cwd '' *)" ||:
-fi
+guess_specfile
 
 [ -s "$specfile" ] ||
 	fatal "$specfile: file not available or empty"
