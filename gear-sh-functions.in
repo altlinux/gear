@@ -246,6 +246,14 @@ rules_cleanup()
 }
 
 workdir=
+cleanup_workdir()
+{
+	[ -z "${workdir-}" ] || {
+		rm -rf -- "$workdir"
+		workdir=
+	}
+}
+
 main_tree_id=
 
 gear_find_rules_check_tree()

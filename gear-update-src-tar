@@ -39,16 +39,9 @@ list_source()
 	tar -tf "$gear_update_source"
 }
 
-workdir=
-cleanup_handler()
-{
-	[ -z "$workdir" -o ! -d "$workdir" ] ||
-		rm -rf -- "$workdir"
-}
-
 unpack_source()
 {
-	install_cleanup_handler cleanup_handler
+	install_cleanup_handler cleanup_workdir
 	workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
 
 	tar -x -f "$gear_update_source" -C "$workdir" -- ${gear_update_subdir:+"$gear_update_subdir/"}

@@ -45,12 +45,6 @@ EOF
 	exit
 }
 
-workdir=
-cleanup_handler()
-{
-	[ -z "$workdir" ] || rm -rf -- "$workdir"
-}
-
 print_version()
 {
 	cat <<EOF
@@ -117,14 +111,14 @@ guess_specfile_from_checkout()
 	local rules="${RULES-}"
 	local workdir
 
-	install_cleanup_handler cleanup_handler
+	install_cleanup_handler cleanup_workdir
 	workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
 
 	find_rules_in_cwd
 	get_uniq_filename_from_rules specfile spec
 	[ -s "$specfile" ] || specfile=
 
-	rm -rf -- "$workdir"
+	cleanup_workdir
 	uninstall_cleanup_handler
 }
 
@@ -136,12 +130,12 @@ guess_specfile_from_tree()
 
 	git cat-file tree "$main_tree_id" >/dev/null 2>&1 || return 0
 
-	install_cleanup_handler cleanup_handler
+	install_cleanup_handler cleanup_workdir
 	workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
 
 	find_specfile fail_ok ||:
 
-	rm -rf -- "$workdir"
+	cleanup_workdir
 	uninstall_cleanup_handler
 }
 

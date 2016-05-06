@@ -127,12 +127,6 @@ parse_changelog_rules() {
 		write_group
 }
 
-workdir=
-cleanup_handler()
-{
-	[ -z "$workdir" ] || rm -rf -- "$workdir"
-}
-
 TEMP=`getopt -n $PROG -o 'f:,r:,h,V' -l 'format:,no-groups,no-rules,no-spec,rules:,help,version' -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
@@ -178,7 +172,7 @@ chdir_to_toplevel
 [ -n "${since-}" ] ||
 	since="$(git describe --abbrev=0)"
 
-install_cleanup_handler cleanup_handler
+install_cleanup_handler cleanup_workdir
 workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
 
 if [ -z "$no_specfile" ]; then

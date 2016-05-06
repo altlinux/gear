@@ -65,12 +65,6 @@ EOF
 	exit
 }
 
-workdir=
-cleanup_handler()
-{
-	[ -z "$workdir" ] || rm -rf -- "$workdir"
-}
-
 TEMP=`getopt -n $PROG -o f,m:,n:,r:,t:,u:,q,v,V,h -l force,key-id:,message:,name:,rules:,time:,quiet,verbose,version,help -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
@@ -127,10 +121,10 @@ main_commit_sha1="$(get_commit_sha1 "$main_tree_id")" ||
 	fatal "$main_tree_id: Invalid commit object name"
 disable_specsubst=1
 
-install_cleanup_handler cleanup_handler
+install_cleanup_handler cleanup_workdir
 workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
 find_specfile
-rm -rf -- "$workdir"
+cleanup_workdir
 uninstall_cleanup_handler
 
 subst_NVR_from_spec_file '' tag_name tag_msg

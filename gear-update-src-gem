@@ -51,16 +51,9 @@ list_source()
 	printf '%s\n' "fake_gem_subdir/"
 }
 
-workdir=
-cleanup_handler()
-{
-	[ -z "$workdir" -o ! -d "$workdir" ] ||
-		rm -rf -- "$workdir"
-}
-
 unpack_source()
 {
-	install_cleanup_handler cleanup_handler
+	install_cleanup_handler cleanup_workdir
 	workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
 
 	tar -xOf "$gear_update_source" "data.tar.gz"| tar -xzmf - -C "$workdir"

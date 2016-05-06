@@ -61,13 +61,6 @@ list_source()
 		cpio --quiet -t
 }
 
-workdir=
-cleanup_handler()
-{
-	[ -z "$workdir" -o ! -d "$workdir" ] ||
-		rm -rf -- "$workdir"
-}
-
 unpack_source()
 {
 	local compress
@@ -82,7 +75,7 @@ unpack_source()
 			;;
 	esac
 
-	install_cleanup_handler cleanup_handler
+	install_cleanup_handler cleanup_workdir
 	workdir="$(mktemp -d "$PROG.XXXXXXXXX")"
 
 	cd "$workdir"

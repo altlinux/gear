@@ -89,11 +89,9 @@ set_current_branch() {
 }
 
 restore_branch=
-workdir=
 cleanup_handler()
 {
-	[ -z "$workdir" ] ||
-		rm -rf -- "$workdir"
+	cleanup_workdir
 	if [ "$*" = 0 ]; then
 		set_current_branch
 		[ "$cur_branch" = "$restore_branch" ] ||
