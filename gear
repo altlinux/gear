@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 #
-# Copyright (C) 2006-2012  Dmitry V. Levin <ldv@altlinux.org>
+# Copyright (C) 2006-2017  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006-2008  Alexey I. Froloff <raorn@altlinux.org>
 # Copyright (C) 2006-2009  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006-2007  Sergey Vlasov <vsu@altlinux.org>
@@ -31,15 +31,15 @@
 #  spec: path_to_file
 #  specsubst: variables..
 #  tags: path_to_directory
-#  (copy|gzip|bzip2|lzma|xz): glob_pattern..
-#  (copy|gzip|bzip2|lzma|xz)?: glob_pattern..
+#  (copy|gzip|bzip2|lzma|xz|zstd): glob_pattern..
+#  (copy|gzip|bzip2|lzma|xz|zstd)?: glob_pattern..
 #  exclude: glob_pattern..
-#  tar(|.gz|.bz2|lzma|xz): tree_path [options]
-#  tar(|.gz|.bz2|lzma|xz)?: tree_path [options]
+#  tar(|.gz|.bz2|.lzma|.xz|.zst): tree_path [options]
+#  tar(|.gz|.bz2|.lzma|.xz|.zst)?: tree_path [options]
 #  zip: tree_path [options]
 #  zip?: tree_path [options]
-#  diff(|.gz|.bz2|lzma|xz): old_tree_path new_tree_path options
-#  diff(|.gz|.bz2|lzma|xz)?: old_tree_path new_tree_path options
+#  diff(|.gz|.bz2|.lzma|.xz|.zst): old_tree_path new_tree_path options
+#  diff(|.gz|.bz2|.lzma|.xz|.zst)?: old_tree_path new_tree_path options
 #
 #  tree_path may be a plain path or commit:path, where commit is specified
 #  by tag name (keywords may be used) or full SHA-1.
@@ -72,7 +72,7 @@ print_version()
 $PROG version $PROG_VERSION
 Written by Dmitry V. Levin <ldv@altlinux.org>
 
-Copyright (C) 2006-2012  Dmitry V. Levin <ldv@altlinux.org>
+Copyright (C) 2006-2017  Dmitry V. Levin <ldv@altlinux.org>
 Copyright (C) 2006-2008  Alexey I. Froloff <raorn@altlinux.org>
 Copyright (C) 2006-2009  Alexey Gladkov <legion@altlinux.org>
 Copyright (C) 2006-2007  Sergey Vlasov <vsu@altlinux.org>
@@ -137,15 +137,15 @@ write_compressed_file()
 		name="$outdir/$name"
 
 	case "$cmd" in
-		gzip|bzip2|lzma|xz)
+		gzip|bzip2|lzma|xz|zstd)
 			type "$cmd" >/dev/null 2>&1 ||
 				rules_error "Compress command not found: $cmd"
 			if [ $# -eq 0 ]; then
-				if [ "$cmd" = gzip ]; then
-					set -- -9n
-				else
-					set -- -9
-				fi
+				case "$cmd" in
+					gzip) set -- -9n ;;
+					zstd) set -- -11 ;;
+					*) set -- -9 ;;
+				esac
 			fi
 			if [ -n "$name" ]; then
 				local tmp_name
@@ -155,6 +155,9 @@ write_compressed_file()
 				mv -f -- "$tmp_name" "$name"
 				verbose "Compressed file \`${file##*/}' into \`${name##*/}' using \`$cmd $*'"
 			else
+				case "$cmd" in
+					zstd) cmd="$cmd -q --rm" ;;
+				esac
 				$cmd "$@" "$file" </dev/null >/dev/null
 				verbose "Compressed file \`${file##*/}' using \`$cmd $*'"
 			fi
@@ -194,6 +197,9 @@ compress_file()
 			;;
 		xz|*.xz)
 			write_compressed_file "$file" "$dest" xz
+			;;
+		zstd|*.zst)
+			write_compressed_file "$file" "$dest" zstd
 			;;
 	esac
 }
@@ -594,7 +600,7 @@ parse_rules()
 			spec|specsubst|exclude|tags)
 				continue
 				;;
-			tar|tar.gz|tar.bz2|tar.lzma|tar.xz)
+			tar|tar.gz|tar.bz2|tar.lzma|tar.xz|tar.zst)
 				make_archive 'tar' "$optional" "$cmd" "$@" ||
 					rules_error 'Failed to make archive'
 				;;
@@ -602,11 +608,11 @@ parse_rules()
 				make_archive 'zip' "$optional" "$cmd" "$@" ||
 					rules_error 'Failed to make archive'
 				;;
-			diff|diff.gz|diff.bz2|diff.lzma|diff.xz)
+			diff|diff.gz|diff.bz2|diff.lzma|diff.xz|diff.zst)
 				make_difference "$optional" "$cmd" "$@" ||
 					rules_error 'Failed to make diff'
 				;;
-			copy|gzip|bzip2|lzma|xz)
+			copy|gzip|bzip2|lzma|xz|zstd)
 				make_compress "$optional" "type=$cmd" -- "$@" ||
 					rules_error 'Failed to extract by pattern'
 				;;
