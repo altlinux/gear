@@ -122,9 +122,9 @@ chdir_to_toplevel()
 
 get_object_sha1()
 {
-	local name="$1" && shift
-
+	local name="$1"; shift
 	local sha1
+
 	sha1="$(git rev-parse --verify "$name")" || return 1
 
 	# Verify that we really got a SHA-1 (git rev-parse --verify accepts
@@ -136,9 +136,9 @@ get_object_sha1()
 
 get_tag_sha1()
 {
-	local name sha1
+	local name="$1"; shift
+	local sha1
 
-	name="$1"; shift
 	sha1="$(get_object_sha1 "$name")" || return
 	[ "$(git cat-file -t "$sha1")" = tag ] || return
 
@@ -147,26 +147,26 @@ get_tag_sha1()
 
 get_commit_sha1()
 {
-	local name="$1" && shift
-
+	local name="$1"; shift
 	local sha1
+
 	sha1="$(get_object_sha1 "$name")" || return 1
 	git rev-parse --verify "$sha1^0" || return 1
 }
 
 get_tree_sha1()
 {
-	local name="$1" && shift
-
+	local name="$1"; shift
 	local sha1
+
 	sha1="$(get_object_sha1 "$name")" || return 1
 	git rev-parse --verify "$sha1^{tree}" || return 1
 }
 
 tree_entry_name()
 {
-	local tree="$1" && shift
-	local path="$1" && shift
+	local tree="$1"; shift
+	local path="$1"; shift
 
 	if [ -z "${path#.}" ]; then
 		printf %s "$tree"
@@ -179,11 +179,12 @@ tree_entry_name()
 
 traverse_tree()
 {
-	local tree="$1" && shift
-	local path="$1" && shift
-	local optional="$1" && shift
+	local tree="$1"; shift
+	local path="$1"; shift
+	local optional="$1"; shift
+	local id
 
-	local id="$(tree_entry_name "$tree" "$path")"
+	id="$(tree_entry_name "$tree" "$path")"
 	if git cat-file tree "$id" >/dev/null 2>&1; then
 		printf %s "$id"
 	elif [ "$optional" = 1 ]; then
@@ -196,10 +197,11 @@ traverse_tree()
 # fetch blob by id+name.
 cat_blob()
 {
-	local tree="$1" && shift
-	local name="$1" && shift
+	local tree="$1"; shift
+	local name="$1"; shift
+	local id
 
-	local id="$(tree_entry_name "$tree" "$name")"
+	id="$(tree_entry_name "$tree" "$name")"
 	git cat-file blob "$id" ||
 		rules_error "blob \"$name\" not found in \"$tree\""
 }
@@ -208,8 +210,8 @@ cat_blob()
 # traversal.
 check_pathname()
 {
-	local name="$1" && shift
-	local value="$1" && shift
+	local name="$1"; shift
+	local value="$1"; shift
 
 	[ -n "$value" ] ||
 		rules_error "Empty $name \"$value\" specified"
@@ -226,8 +228,8 @@ check_pathname()
 # separators or directory traversal.
 check_filename()
 {
-	local name="$1" && shift
-	local value="$1" && shift
+	local name="$1"; shift
+	local value="$1"; shift
 
 	[ -n "$value" ] ||
 		rules_error "Empty $name \"$value\" specified"
@@ -318,9 +320,9 @@ find_rules_in_cwd()
 
 get_uniq_directive_from_rules()
 {
-	local var_name directive value
-	var_name="$1"; shift
-	directive="$1"; shift
+	local var_name="$1"; shift
+	local directive="$1"; shift
+	local value=
 
 	set_var_value "$var_name" value
 
@@ -339,9 +341,9 @@ get_uniq_directive_from_rules()
 
 get_uniq_filename_from_rules()
 {
-	local var_name directive filename
-	var_name="$1"; shift
-	directive="$1"; shift
+	local var_name="$1"; shift
+	local directive="$1"; shift
+	local filename=
 
 	set_var_value "$var_name" filename
 
@@ -355,10 +357,10 @@ get_uniq_filename_from_rules()
 
 expand_rpm_macros()
 {
-	local spec="$1" && shift
-	local var_name="$1" && shift
-
+	local spec="$1"; shift
+	local var_name="$1"; shift
 	local var_value
+
 	set_var_value var_value "$var_name"
 	[ -n "$var_value" -a -z "${var_value##*%*}" ] || return 0
 
@@ -403,11 +405,12 @@ expand_rpm_macros()
 }
 
 spec_name=
+spec_epoch=
 spec_version=
 spec_release=
 get_NVR_from_spec()
 {
-	local spec="$1" && shift
+	local spec="$1"; shift
 
 	spec_name="$(sed '/^name:[[:space:]]*/I!d;s///;q' "$spec" |sed 's/[[:space:]]\+$//')"
 	spec_epoch="$(sed '/^\(epoch\|serial\):[[:space:]]*/I!d;s///;q' "$spec" |sed 's/[[:space:]]\+$//')"
@@ -510,6 +513,7 @@ gear_find_tags_check_tree()
 {
 	local t="$1"; shift
 	local id type
+
 	id="$(tree_entry_name "$main_tree_id" "$t/list")"
 	type="$(git cat-file -t "$id" 2>/dev/null)" || type=
 	if [ "$type" = 'blob' ]; then
@@ -590,11 +594,11 @@ tag_list_error()
 
 lookup_tag()
 {
-	local tag_list_file="$1" && shift
-	local requested_tag_name="$1" && shift
-	local variable="$1" && shift
-
+	local tag_list_file="$1"; shift
+	local requested_tag_name="$1"; shift
+	local variable="$1"; shift
 	local sha1 name
+
 	tag_list_lineno=0
 	while read -r sha1 name; do
 		tag_list_lineno="$((tag_list_lineno+1))"
@@ -609,9 +613,9 @@ lookup_tag()
 
 extract_stored_tag_chain()
 {
-	local sha1="$1" && shift
-
+	local sha1="$1"; shift
 	local id type real_sha1 next
+
 	id="$(tree_entry_name "$main_tree_id" "$tag_dir/$sha1")"
 	type="$(git cat-file -t "$id" 2>/dev/null)" || type=
 	if [ "$type" = "blob" ]; then
@@ -633,10 +637,10 @@ extract_stored_tag_chain()
 
 is_ancestor_commit()
 {
-	local ancestor="$1" && shift
-	local descendant="$1" && shift
-
+	local ancestor="$1"; shift
+	local descendant="$1"; shift
 	local bases
+
 	bases="$(git log -n1 --pretty=format:1 ^"$descendant" "$ancestor")" ||
 		return 1
 	[ -z "$bases" ] || return 1
@@ -644,7 +648,7 @@ is_ancestor_commit()
 
 check_tag_name()
 {
-	local name="$1" && shift
+	local name="$1"; shift
 
 	[ -n "$name" ] ||
 		rules_error 'Empty tag name is not allowed'
@@ -661,9 +665,9 @@ check_tag_name()
 main_commit_sha1=
 resolve_commit_name()
 {
-	local name="$1" && shift
-
+	local name="$1"; shift
 	local result found_commit type final_sha1
+
 	if is_hex_sha1 "$name"; then
 		result="$name"
 		found_commit="$name"
@@ -698,7 +702,7 @@ resolve_commit_name()
 
 resolve_tree_base_name()
 {
-	local name="$1" && shift
+	local name="$1"; shift
 
 	if [ "$name" = '.' ]; then
 		printf %s "$main_tree_id"
@@ -709,13 +713,13 @@ resolve_tree_base_name()
 
 parse_tree_path()
 {
-	local name="$1" && shift
-	local value="$1" && shift
+	local name="$1"; shift
+	local value="$1"; shift
+	local path
 
 	[ -n "$value" ] ||
 		rules_error "Empty $name specified"
 
-	local path
 	if [ -z "${value##*:*}" ]; then
 		[ -n "${value%%:*}" ] ||
 			rules_error "Empty commit name in $name specified"
@@ -734,9 +738,9 @@ def_spec_pattern='*.spec'
 spec_pattern="$def_spec_pattern"
 find_specfile_in_cwd()
 {
-	local prefix="$1" && shift
+	local prefix="$1"; shift
+	local pattern f spec= many_specs=
 
-	local f pattern spec= many_specs=
 	for pattern in ${spec_pattern}; do
 		for f; do
 			[ -z "${f##$pattern}" -o -z "${f%%$pattern}" ] ||
@@ -841,11 +845,11 @@ run_command()
 
 subst_key()
 {
-	local var_name="$1" && shift
-	local key_name="$1" && shift
-	local key_value="$1" && shift
+	local var_name="$1"; shift
+	local key_name="$1"; shift
+	local key_value="$1"; shift
+	local var_value quoted
 
-	local quoted var_value
 	set_var_value var_value "$var_name"
 
 	if [ "$var_value" != "${var_value#*$key_name*}" ]; then
@@ -858,10 +862,10 @@ subst_key()
 
 subst_key_in_vars()
 {
-	local key_name="$1" && shift
-	local key_value="$1" && shift
-
+	local key_name="$1"; shift
+	local key_value="$1"; shift
 	local variable
+
 	for variable; do
 		subst_key "$variable" "$key_name" "$key_value"
 	done
@@ -869,9 +873,9 @@ subst_key_in_vars()
 
 subst_spec_keywords()
 {
-	local name="$1" && shift
-	local version="$1" && shift
-	local release="$1" && shift
+	local name="$1"; shift
+	local version="$1"; shift
+	local release="$1"; shift
 
 	subst_key_in_vars '@name@' "$name" "$@"
 	subst_key_in_vars '@version@' "$version" "$@"
@@ -880,8 +884,7 @@ subst_spec_keywords()
 
 subst_NVR_from_spec_file()
 {
-	local spec="$1" && shift
-
+	local spec="$1"; shift
 	local spec_name= spec_version= spec_release=
 
 	if [ -n "$spec" ]; then
@@ -896,7 +899,9 @@ subst_NVR_from_spec_file()
 
 gear_config_option()
 {
-	local var_name="$1" opt_name="$2" def_val="$3"
+	local var_name="$1"; shift
+	local opt_name="$1"; shift
+	local def_val="$1"; shift
 	local subcmd gear_config_option_val
 
 	subcmd=".${PROG#gear-}"
