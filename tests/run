@@ -118,26 +118,29 @@ append_test()
 
 	case $n in
 		gear_rules_archive_*)
-		define_test "$n" "$s" _tar "gear_directive=tar"
-		define_test "$n" "$s" _tar_gz "gear_directive=tar.gz tar_compress=--gzip"
-		define_test "$n" "$s" _tar_bz2 "gear_directive=tar.bz2 tar_compress=--bzip2"
-		define_test "$n" "$s" _tar_xz "gear_directive=tar.xz tar_compress=--xz"
-		define_test "$n" "$s" _tar_lzma "gear_directive=tar.lzma tar_compress=--lzma"
-		define_test "$n" "$s" _zip "gear_directive=zip"
+		define_test "$n" "$s" _tar	"gear_directive=tar"
+		define_test "$n" "$s" _tar_bz2	"gear_directive=tar.bz2 tar_compress=--bzip2"
+		define_test "$n" "$s" _tar_gz	"gear_directive=tar.gz tar_compress=--gzip"
+		define_test "$n" "$s" _tar_lzma	"gear_directive=tar.lzma tar_compress=--lzma"
+		define_test "$n" "$s" _tar_xz	"gear_directive=tar.xz tar_compress=--xz"
+		define_test "$n" "$s" _tar_zst	"gear_directive=tar.zst tar_compress=--zstd"
+		define_test "$n" "$s" _zip	"gear_directive=zip"
 		;;
 		gear_rules_copy_*)
-		define_test "$n" "$s" _copy "gear_directive=copy decompress_prog=cat"
-		define_test "$n" "$s" _gzip "gear_directive=gzip compress_suffix=.gz decompress_prog='gzip -d -c'"
-		define_test "$n" "$s" _bzip2 "gear_directive=bzip2 compress_suffix=.bz2 decompress_prog='bzip2 -d -c'"
-		define_test "$n" "$s" _xz "gear_directive=xz compress_suffix=.xz decompress_prog='xz -d -c'"
-		define_test "$n" "$s" _lzma "gear_directive=lzma compress_suffix=.lzma decompress_prog='lzma -d -c'"
+		define_test "$n" "$s" _copy	"gear_directive=copy decompress_prog=cat"
+		define_test "$n" "$s" _bzip2	"gear_directive=bzip2 compress_suffix=.bz2 decompress_prog='bzip2 -d -c'"
+		define_test "$n" "$s" _gzip	"gear_directive=gzip compress_suffix=.gz decompress_prog='gzip -d -c'"
+		define_test "$n" "$s" _lzma	"gear_directive=lzma compress_suffix=.lzma decompress_prog='lzma -d -c'"
+		define_test "$n" "$s" _xz	"gear_directive=xz compress_suffix=.xz decompress_prog='xz -d -c'"
+		define_test "$n" "$s" _zstd	"gear_directive=zstd compress_suffix=.zst decompress_prog='zstd -q -d -c'"
 		;;
 		gear_rules_diff_*)
-		define_test "$n" "$s" _diff "gear_directive=diff decompress_prog=cat"
-		define_test "$n" "$s" _diff_gz "gear_directive=diff.gz decompress_prog='gzip -d -c'"
-		define_test "$n" "$s" _diff_bz2 "gear_directive=diff.bz2 decompress_prog='bzip2 -d -c'"
-		define_test "$n" "$s" _diff_xz "gear_directive=diff.xz decompress_prog='xz -d -c'"
+		define_test "$n" "$s" _diff	"gear_directive=diff decompress_prog=cat"
+		define_test "$n" "$s" _diff_bz2	"gear_directive=diff.bz2 decompress_prog='bzip2 -d -c'"
+		define_test "$n" "$s" _diff_gz	"gear_directive=diff.gz decompress_prog='gzip -d -c'"
 		define_test "$n" "$s" _diff_lzma "gear_directive=diff.lzma decompress_prog='lzma -d -c'"
+		define_test "$n" "$s" _diff_xz	"gear_directive=diff.xz decompress_prog='xz -d -c'"
+		define_test "$n" "$s" _diff_zst	"gear_directive=diff.zst decompress_prog='zstd -q -d -c'"
 		;;
 		gear_import_*)
 		[ "$s" = "bare" ] ||
@@ -154,15 +157,17 @@ append_test()
 				define_test "$n" "$s" _${t}_dir      "gear_subdir='$dir' gear_type=          gear_compress=                     gear_filter="
 				define_test "$n" "$s" _${t}_gem      "gear_subdir='$dir' gear_type=.gem      gear_compress=                     gear_filter="
 				define_test "$n" "$s" _${t}_tar      "gear_subdir='$dir' gear_type=.tar      gear_compress='tar -cT - -f -'     gear_filter='cat'"
-				define_test "$n" "$s" _${t}_tar_gz   "gear_subdir='$dir' gear_type=.tar.gz   gear_compress='tar -cT - -f -'     gear_filter='gzip -c'"
 				define_test "$n" "$s" _${t}_tar_bz2  "gear_subdir='$dir' gear_type=.tar.bz2  gear_compress='tar -cT - -f -'     gear_filter='bzip2 -c'"
-				# tar fails do autodetect xz-compressed archives, disable test
+				define_test "$n" "$s" _${t}_tar_gz   "gear_subdir='$dir' gear_type=.tar.gz   gear_compress='tar -cT - -f -'     gear_filter='gzip -c'"
+				# tar fails do autodetect lzma-compressed archives, disable test
 				define_test "$n" "$s" _${t}_tar_xz   "gear_subdir='$dir' gear_type=.tar.xz   gear_compress='tar -cT - -f -'     gear_filter='xz -c'"
+				define_test "$n" "$s" _${t}_tar_zst  "gear_subdir='$dir' gear_type=.tar.zst  gear_compress='tar -cT - -f -'     gear_filter='zstd -c'"
 				define_test "$n" "$s" _${t}_zip      "gear_subdir='$dir' gear_type=.zip      gear_compress='zip -q -@ -'        gear_filter='cat'"
 				define_test "$n" "$s" _${t}_cpio     "gear_subdir='$dir' gear_type=.cpio     gear_compress='cpio --quiet -o -c' gear_filter='cat'"
-				define_test "$n" "$s" _${t}_cpio_gz  "gear_subdir='$dir' gear_type=.cpio.gz  gear_compress='cpio --quiet -o -c' gear_filter='gzip -c'"
 				define_test "$n" "$s" _${t}_cpio_bz2 "gear_subdir='$dir' gear_type=.cpio.bz2 gear_compress='cpio --quiet -o -c' gear_filter='bzip2 -c'"
+				define_test "$n" "$s" _${t}_cpio_gz  "gear_subdir='$dir' gear_type=.cpio.gz  gear_compress='cpio --quiet -o -c' gear_filter='gzip -c'"
 				define_test "$n" "$s" _${t}_cpio_xz  "gear_subdir='$dir' gear_type=.cpio.xz  gear_compress='cpio --quiet -o -c' gear_filter='xz -c'"
+				define_test "$n" "$s" _${t}_cpio_zst "gear_subdir='$dir' gear_type=.cpio.zst gear_compress='cpio --quiet -o -c' gear_filter='zstd -c'"
 			done
 		fi
 		;;
