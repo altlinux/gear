@@ -122,6 +122,7 @@ remove_suffix()
 			*.xpi)  __fn="${__fn%.xpi}"  ;;
 			*.xz)   __fn="${__fn%.xz}"   ;;
 			*.zip)	__fn="${__fn%.zip}"  ;;
+			*.zst)	__fn="${__fn%.zst}"   ;;
 			*.[Zz]) __fn="${__fn%.[Zz]}" ;;
 		esac
 	done
