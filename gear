@@ -98,6 +98,10 @@ Options:
   --no-compress             do not compress output archive;
   --bzip2                   compress output archive using bzip2;
   --gzip                    compress output archive using gzip;
+  --lz4                     compress output archive using lz4;
+  --lzop                    compress output archive using lzop;
+  --xz                      compress output archive using xz;
+  --zstd                    compress output archive using zstd;
   --disable-specsubst       disable specsubst directive support;
   --commit                  make temporary commit prior to extract;
   --command                 execute arbitrary command afterwards;
@@ -655,6 +659,14 @@ while :; do
 		--bzip2) tar_compress=--bzip2
 			;;
 		--gzip) tar_compress=--gzip
+			;;
+		--lz4) tar_compress=--lz4
+			;;
+		--lzop) tar_compress=--lzop
+			;;
+		--xz) tar_compress=--xz
+			;;
+		--zstd) tar_compress=--zstd
 			;;
 		--disable-specsubst) disable_specsubst=1
 			;;

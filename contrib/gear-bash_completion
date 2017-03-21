@@ -20,8 +20,8 @@
 
 _gear_shrt_options='-r -t -q -v -V -h'
 _gear_long_options='--bzip2 --command --commit --describe --disable-specsubst \
---export-dir --gzip --hasher --help --no-compress --quiet --rpmbuild --rules \
---tree-ish --update-spec --verbose --version'
+--export-dir --gzip --hasher --help --lz4 --lzop --no-compress --quiet \
+--rpmbuild --rules --tree-ish --update-spec --verbose --version --xz --zstd'
 
 _gear() {
 	COMPREPLY=()

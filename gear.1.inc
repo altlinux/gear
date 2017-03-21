@@ -30,8 +30,16 @@ specified, \fBgear\fR requires a single non-option argument
 \fIoutput-tarball-name\fR.  In this mode \fBgear\fR extracts
 source files from the repository and packs them into a tar
 archive with the specified name.  By default the archive is
-compressed with \fBgzip\fR; this may be changed with the
-\fB\-\-no\-compress\fR or \fB\-\-bzip2\fR options.
+compressed with \fBzstd\fR; this may be changed using
+the following compression options:
+.BR \-\-bzip2 ,
+.BR \-\-gzip ,
+.BR \-\-lz4 ,
+.BR \-\-lzop ,
+.BR \-\-xz ,
+.BR \-\-zstd ,
+and
+.BR \-\-no\-compress .
 .SS "Extract source files to a directory"
 When the \fB\-\-export\-dir\fR=\fIdirname\fR option is
 specified, \fBgear\fR does not accept any non-option

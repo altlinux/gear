@@ -30,7 +30,7 @@ PROG="${0##*/}"
 PROG_VERSION='@VERSION@'
 
 gear_short_options='r:,t:,h,q,v,V'
-gear_long_options='no-compress,commit,bzip2,gzip,disable-specsubst,command,hasher,rpmbuild,update-spec,export-dir:,describe,rules:,tree-ish:,help,quiet,verbose,version'
+gear_long_options='no-compress,commit,bzip2,gzip,lz4,lzop,xz,zstd,disable-specsubst,command,hasher,rpmbuild,update-spec,export-dir:,describe,rules:,tree-ish:,help,quiet,verbose,version'
 
 __cleanup_handler_name=
 __cleanup_handler()
