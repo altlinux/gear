@@ -2,6 +2,7 @@
 #
 # Copyright (C) 2009  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2009  Alexey I. Froloff <raorn@altlinux.org>
+# Copyright (C) 2017  Dmitry V. Levin <ldv@altlinux.org>
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,19 +28,48 @@ check_source_type()
 	local file_type
 	file_type="$(file -b "$gear_update_source")"
 
-	[ "$source_type" != "cpio" -o -n "${file_type##*cpio archive*}" ] ||
-		return 0
+	if [ "$source_type" = 'cpio' ]; then
+		case "$file_type" in
+			*cpio\ archive*) return 0 ;;
+		esac
+	fi
 
 	file_type="$(file -bz "$gear_update_source")"
 
-	[ "$source_type" != "cpio.bz2" -o -n "${file_type##*cpio archive *bzip2 compressed data*}" ] ||
-		return 0
+	case "$file_type" in
+		*cpio\ archive\ *)
+			file_type="${file_type##*cpio archive }" ;;
+		*) return 2 ;;
+	esac
 
-	[ "$source_type" != "cpio.gz" -o -n "${file_type##*cpio archive *gzip compressed data*}" ] ||
-		return 0
+	case "$file_type" in
+		*\ compressed\ data*)
+			file_type="${file_type% compressed data*}" ;;
+		*) return 2 ;;
+	esac
 
-	[ "$source_type" != "cpio.xz" -o -n "${file_type##*cpio archive *xz compressed data*}" ] ||
-		return 0
+	case "$source_type" in
+		cpio.bz2)
+			case "$file_type" in
+				*bzip2) return 0 ;;
+			esac
+			;;
+		cpio.gz)
+			case "$file_type" in
+				*gzip) return 0 ;;
+			esac
+			;;
+		cpio.xz)
+			case "$file_type" in
+				*xz|*XZ) return 0 ;;
+			esac
+			;;
+		cpio.zst)
+			case "$file_type" in
+				*zstd|*Zstandard) return 0 ;;
+			esac
+			;;
+	esac
 
 	return 2
 }
@@ -53,6 +83,7 @@ list_source()
 		cpio.xz)  compress='unxz -c' ;;
 		cpio.gz)  compress='gunzip -c' ;;
 		cpio.bz2) compress='bunzip2 -c' ;;
+		cpio.zst) compress='unzstd -qc' ;;
 		*)
 			fatal "$gear_update_source: unrecognized source type: $source_type"
 			;;
@@ -70,6 +101,7 @@ unpack_source()
 		cpio.xz)  compress='unxz -c' ;;
 		cpio.gz)  compress='gunzip -c' ;;
 		cpio.bz2) compress='bunzip2 -c' ;;
+		cpio.zst) compress='unzstd -qc' ;;
 		*)
 			fatal "$gear_update_source: unrecognized source type: $source_type"
 			;;

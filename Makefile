@@ -57,6 +57,7 @@ HELPERS = \
 	gear-update-src-cpio.bz2 \
 	gear-update-src-cpio.gz \
 	gear-update-src-cpio.xz \
+	gear-update-src-cpio.zst \
 	gear-update-src-dir \
 	gear-update-src-gem \
 	gear-update-src-tar \
