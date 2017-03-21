@@ -2,7 +2,7 @@
 
 gear_update_subdir() # test entry point
 {
-	local suffix result msg diff_output diff_subdir
+	local suffix result msg diff_output diff_subdir long_move short_move
 
 	[ "$gear_subdir" = "." ] &&
 		diff_subdir= ||
@@ -182,16 +182,21 @@ FAIL" "$result"
 
 	git reset -q --hard HEAD
 
+	if [ -n "$diff_subdir" ]; then
+		long_move="${diff_subdir}{ => subdir-1.2.3}/mode-changed-file"
+		short_move="${diff_subdir}{ => subdir-1.2.3}/file"
+	else
+		long_move="mode-changed-file => subdir-1.2.3/mode-changed-file"
+		short_move="file => subdir-1.2.3/file"
+	fi
 	diff_output="\
- ${diff_subdir}contents-changed-file              | 1 -
- ${diff_subdir}file                               | 1 -
- ${diff_subdir}mode-changed-file                  | 1 -
- ${diff_subdir}old-file                           | 1 -
- ${diff_subdir}subdir-1.2.3/contents-changed-file | 1 +
- ${diff_subdir}subdir-1.2.3/file                  | 1 +
- ${diff_subdir}subdir-1.2.3/mode-changed-file     | 1 +
- ${diff_subdir}subdir-1.2.3/new-file              | 1 +
- 8 files changed, 4 insertions(+), 4 deletions(-)
+ $(printf %-${#long_move}s "${diff_subdir}contents-changed-file") | 1 -
+ $(printf %-${#long_move}s "${diff_subdir}old-file") | 1 -
+ $(printf %-${#long_move}s "${diff_subdir}subdir-1.2.3/contents-changed-file") | 1 +
+ $(printf %-${#long_move}s "$short_move") | 0
+ $long_move | 0
+ $(printf %-${#long_move}s "${diff_subdir}subdir-1.2.3/new-file") | 1 +
+ 6 files changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/${diff_subdir}contents-changed-file b/${diff_subdir}contents-changed-file
 deleted file mode 100644
@@ -200,20 +205,6 @@ index fdcdef8..0000000
 +++ /dev/null
 @@ -1 +0,0 @@
 -This is changed file.
-diff --git a/${diff_subdir}file b/${diff_subdir}file
-deleted file mode 100644
-index 2400c84..0000000
---- a/${diff_subdir}file
-+++ /dev/null
-@@ -1 +0,0 @@
--This is file.
-diff --git a/${diff_subdir}mode-changed-file b/${diff_subdir}mode-changed-file
-deleted file mode 100644
-index 6257251..0000000
---- a/${diff_subdir}mode-changed-file
-+++ /dev/null
-@@ -1 +0,0 @@
--This file will change mode.
 diff --git a/${diff_subdir}old-file b/${diff_subdir}old-file
 deleted file mode 100644
 index d265e35..0000000
@@ -228,20 +219,16 @@ index 0000000..9ee6f88
 +++ b/${diff_subdir}subdir-1.2.3/contents-changed-file
 @@ -0,0 +1 @@
 +This is changed file and it is changed.
-diff --git a/${diff_subdir}subdir-1.2.3/file b/${diff_subdir}subdir-1.2.3/file
-new file mode 100644
-index 0000000..2400c84
---- /dev/null
-+++ b/${diff_subdir}subdir-1.2.3/file
-@@ -0,0 +1 @@
-+This is file.
-diff --git a/${diff_subdir}subdir-1.2.3/mode-changed-file b/${diff_subdir}subdir-1.2.3/mode-changed-file
-new file mode 100755
-index 0000000..6257251
---- /dev/null
-+++ b/${diff_subdir}subdir-1.2.3/mode-changed-file
-@@ -0,0 +1 @@
-+This file will change mode.
+diff --git a/${diff_subdir}file b/${diff_subdir}subdir-1.2.3/file
+similarity index 100%
+rename from ${diff_subdir}file
+rename to ${diff_subdir}subdir-1.2.3/file
+diff --git a/${diff_subdir}mode-changed-file b/${diff_subdir}subdir-1.2.3/mode-changed-file
+old mode 100644
+new mode 100755
+similarity index 100%
+rename from ${diff_subdir}mode-changed-file
+rename to ${diff_subdir}subdir-1.2.3/mode-changed-file
 diff --git a/${diff_subdir}subdir-1.2.3/new-file b/${diff_subdir}subdir-1.2.3/new-file
 new file mode 100644
 index 0000000..0cb9c72
