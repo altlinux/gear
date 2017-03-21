@@ -104,7 +104,7 @@ reads following configuration options from
 .PP
 .B gear.compress
 .RS 4
-compression method, defaults to \-\-gzip.
+compression method, defaults to \-\-zstd.
 .RE
 .PP
 .B gear.rules

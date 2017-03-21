@@ -19,6 +19,9 @@ Requires: git-core >= 0:1.5.3
 # due to quote_shell_args()
 Requires: libshell >= 0:0.1.0
 
+# due to default output tarball compressor
+Requires: tar >= 1.29.0.19.d061, zstd
+
 # hasher>=1.0.30 supports tar packages made by gear utility.
 Conflicts: hasher < 0:1.0.30
 

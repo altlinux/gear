@@ -646,7 +646,7 @@ outdir=
 describe=
 do_commit=
 main_tree_id=HEAD
-gear_config_option tar_compress compress --gzip
+gear_config_option tar_compress compress --zstd
 gear_config_option rules rules "$rules"
 while :; do
 	case "$1" in
