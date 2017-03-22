@@ -1,5 +1,5 @@
 Name: gear
-Version: 2.0.7
+Version: 2.1.0
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -59,6 +59,12 @@ ln -s gear-store-tags.1 %buildroot%_man1dir/gear-update-tag.1
 %doc QUICKSTART* ABOUT*
 
 %changelog
+* Wed Mar 22 2017 Dmitry V. Levin <ldv@altlinux.org> 2.1.0-alt1
+- Added zstd(1) support in .gear-rules and import tools.
+- gear: added support for lz4(1), lzop(1), xz(1), and zstd(1)
+  in output tarball compression, changed default from gzip to zstd.
+- tests: fixed for git >= 2.10.
+
 * Fri May 06 2016 Dmitry V. Levin <ldv@altlinux.org> 2.0.7-alt1
 - gear-changelog, gear-edit-spec: look for specfile using the same
   algorithm as gear-commit (by Alexey Gladkov and me; closes: #18140).
