@@ -25,6 +25,8 @@ verbose="${gear_verbose-}"
 
 tar --create --file="$gear_outfile" --directory="$gear_outdir" \
 	--label="$specfile" --owner=root --group=root \
-	--mode=u+w,go-w,go+rX ${gear_tar_compress-} .
+	--mode=u+w,go-w,go+rX \
+	${SOURCE_DATE_EPOCH:+--mtime=@"$SOURCE_DATE_EPOCH"} \
+	${gear_tar_compress-} .
 
 verbose "Created output tarball: $gear_outfile"

@@ -870,6 +870,24 @@ fi
 [ -n "$command_helper$*" ] ||
 	exit 0
 
+SOURCE_DATE_EPOCH=
+if [ -n "${main_tag_sha1-}" ]; then
+	SOURCE_DATE_EPOCH="$(git cat-file tag "$main_tag_sha1" |
+		sed -r '/^tagger[[:space:]]+/!d;s///;q' |
+		sed -rn 's/^[^>]+>[[:space:]]+([0-9]+).*/\1/p')"
+	date -u -d "@$SOURCE_DATE_EPOCH" > /dev/null ||
+		fatal "Failed to infer a tagger timestamp from tag \"$main_tag_id\"."
+elif [ -n "${main_commit_sha1-}" ]; then
+	SOURCE_DATE_EPOCH="$(git cat-file commit "$main_commit_sha1" |
+		sed -r '/^committer[[:space:]]+/!d;s///;q' |
+		sed -rn 's/^[^>]+>[[:space:]]+([0-9]+).*/\1/p')"
+	date -u -d "@$SOURCE_DATE_EPOCH" > /dev/null ||
+		fatal "Failed to infer a committer timestamp from commit \"$main_commit_id\"."
+fi
+[ -n "$SOURCE_DATE_EPOCH" ] &&
+	export SOURCE_DATE_EPOCH ||
+	unset SOURCE_DATE_EPOCH
+
 gear_commit_id="$(get_object_sha1 "$main_commit_id")" ||
 	fatal 'Failed to parse commit.'
 export gear_commit_id
