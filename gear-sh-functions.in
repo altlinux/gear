@@ -69,7 +69,7 @@ uninstall_cleanup_handler()
 # 2ns arg is the name of variable that contains the value to be assigned.
 set_var_value()
 {
-	eval "$1=\"\$$2\""
+	eval "$1=\"\${$2-}\""
 }
 
 lineno=
