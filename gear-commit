@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 #
-# Copyright (C) 2006-2010  Alexey Gladkov <legion@altlinux.org>
+# Copyright (C) 2006-2017  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006-2012  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 #
@@ -23,6 +23,7 @@
 
 . gear-sh-functions
 . shell-getopt
+. shell-var
 
 show_help()
 {
@@ -35,6 +36,7 @@ Options:
                       use given FILE instead;
   --no-edit           do not edit the message taken from changelog
                       entry or with -m option;
+  -e, --edit          edit the message before commit;
   -m, --message=TEXT  use given TEXT for commit message;
   -V, --version       print program version and exit;
   -h, --help          show this text and exit.
@@ -51,7 +53,7 @@ print_version()
 $PROG version $PROG_VERSION
 Written by Alexey Gladkov <legion@altlinux.org>
 
-Copyright (C) 2006-2010  Alexey Gladkov <legion@altlinux.org>
+Copyright (C) 2006-2017  Alexey Gladkov <legion@altlinux.org>
 Copyright (C) 2006-2012  Dmitry V. Levin <ldv@altlinux.org>
 Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 This is free software; see the source for copying conditions.  There is NO
@@ -61,10 +63,12 @@ EOF
 }
 
 GETOPT_ALLOW_UNKNOWN=1
-TEMP=`getopt -n $PROG -o 'm:,h,V' -l 'message:,no-edit,spec:,help,version' -- "$@"` || show_usage
+TEMP=`getopt -n $PROG -o 'e,m:,h,V' -l 'edit,message:,no-edit,spec:,help,version' -- "$@"` || show_usage
 eval set -- "$TEMP"
 
-do_edit='--edit'
+gear_config_option gear_edit_message edit-message yes
+gear_config_option gear_require_message_save require-message-save no
+
 commitlog=
 specfile=
 while :; do
@@ -74,7 +78,10 @@ while :; do
 			[ -z "$commitlog" ] ||
 				show_usage "Options --spec and --message are mutually exclusive."
 			;;
-		--no-edit) do_edit=
+		--no-edit) gear_edit_message=no
+			;;
+		-e|--edit)
+			gear_edit_message=yes
 			;;
 		-m|--message) shift
 			commitlog="$1"
@@ -111,16 +118,29 @@ guess_specfile
 [ -s "$specfile" ] ||
 	fatal "$specfile: file not available or empty"
 
+install_cleanup_handler cleanup_workdir
+workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
+
 if [ -z "$commitlog" ]; then
 	vr="$(sed -ne '/^[[:space:]]*%changelog[[:space:]]*$/{n; s/\* .* \([^[:space:]]\+\)$/\1/p}' "$specfile")"
 	ch="$(sed -ne '0,/^[[:space:]]*%changelog[[:space:]]*$/d;2,/^* /{/^* /!p}' "$specfile")"
 	[ -z "$vr$ch" ] ||
-		commitlog="\"$(quote_shell "$vr
-
-$ch" |sed s/%%/%/g)\""
+		commitlog="$(printf '%s\n\n%s\n' "$vr" "$ch" |sed s/%%/%/g)"
 	unset ch vr specfile
 fi
 
+{
+	! shell_var_is_yes "$gear_require_message_save" ||
+		printf '%s\n\n' '<gear-commit message template, please remove this line and save to commit>'
+	printf '%s\n' "$commitlog"
+} > "$workdir/commit-msg"
+
 export GEAR_COMMIT GEAR_COMMIT_AMEND
 
-eval git commit ${commitlog:+-m "$commitlog" $do_edit} $args
+git_edit=
+git_msgtype='-F'
+
+! shell_var_is_yes "$gear_edit_message" || git_edit='--edit'
+! shell_var_is_yes "$gear_require_message_save" || git_msgtype='-t'
+
+eval git commit $git_msgtype "$workdir/commit-msg" $git_edit $args

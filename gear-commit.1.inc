@@ -1,4 +1,4 @@
-.\" Copyright (C) 2006-2008  Alexey Gladkov <legion@altlinux.org>
+.\" Copyright (C) 2006-2017  Alexey Gladkov <legion@altlinux.org>
 .\" Copyright (C) 2006-2010  Dmitry V. Levin <ldv@altlinux.org>
 .\" Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 .\"
@@ -20,6 +20,15 @@
 
 [NAME]
 gear\-commit \- invoke git\-commit using last changelog entry from spec file for commit message
+
+[CONFIGURATION]
+.TP
+.B gear.commit.edit-message
+If true, requires further editing of the message, otherwise the selected message
+is used without invoking an editor.
+.TP
+.B gear.commit.require-message-save
+If true, requires an edited commit message to be saved, otherwise the commit is aborted.
 
 [ENVIRONMENT]
 .TP
@@ -48,4 +57,5 @@ also exports \fBGEAR_COMMIT_AMEND\fR=\fI1\fR.
 
 [SEE ALSO]
 .BR gear (1),
+.BR git\-config (1).
 .BR git\-commit (1).
