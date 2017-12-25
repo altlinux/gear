@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008  Alexey Gladkov <legion@altlinux.org>
+# Copyright (C) 2008-2018  Alexey Gladkov <legion@altlinux.org>
 #
 # Completion functions for gear utilities.
 #
@@ -18,164 +18,195 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 
-_gear_shrt_options='-r -t -q -v -V -h'
-_gear_long_options='--bzip2 --command --commit --describe --disable-specsubst \
---export-dir --gzip --hasher --help --lz4 --lzop --no-compress --quiet \
---rpmbuild --rules --tree-ish --update-spec --verbose --version --xz --zstd'
+_rpmbuild_shrt_options="-ba -bb -bp -bc -bi -bl -bs -bt"
+_rpmbuild_long_options="--buildroot --clean --dbpath --define --disable --enable --macros
+--nobuild --nodeps --nopatch --nosource --rcfile --rmsource --rmspec --root --short-circuit
+--sign --target --with --without"
 
-_gear() {
+_hasher_shrt_options="-q -v -V -h"
+_hasher_long_options="--apt-config --apt-prefix --build-args --cache-dir --cleanup-only
+--eager-cleanup --excludedocs --hasher-priv-dir --help --initroot-only --install-langs
+--lazy-cleanup --mountpoints --no-cache --no-contents-indices --no-repackage-source
+--no-sisyphus-check-in --no-sisyphus-check-out --no-sisyphus-check --no-wait-lock
+--nprocs --number --packager --pkg-build-list --pkg-init-list --query-repackage
+--query-req-prog --quiet --rebuild-prog --repackage-source --repo --repo-bin --repo-src
+--save-fakeroot --target --verbose --version --wait-lock --without-stuff
+--with-qemu --with-stuff"
+
+_gear_shrt_options="-h -r -t -q -v -V"
+_gear_long_options="--bzip2 --command --commit --describe --disable-specsubst --export-dir --gzip --hasher --help
+--lz4 --lzop --no-compress --quiet --rpmbuild --rules --tree-ish --update-spec --verbose --version --xz --zstd"
+
+_gear_update_shrt_options="-a -c -f -h -s -t -v -V"
+_gear_update_long_options="--all --create --exclude --force --help --ignore-exclude --subdir --type --verbose --version"
+
+_gear_changelog_shrt_options="-f -h -r -V"
+_gear_changelog_long_options="--no-groups --no-rules --no-specfile --format --rules --version --help"
+
+_gear_create_tag_shrt_options="-f -h -m -n -q -r -u -v -V"
+_gear_create_tag_long_options="--force --help --key-id --message --name --quiet --rules --verbose --version"
+
+_gear_store_tags_shrt_options="-a -c -d -h -q -r -v -V"
+_gear_store_tags_long_options="--all --clean --delete --no-clean --rules --quiet --verbose --version --help"
+
+_gear_merge_shrt_options="-a -h -r -v -V"
+_gear_merge_long_options="--add --rules --version --version --help"
+
+_gear_srpmimport_shrt_options="-a -h -r -v -V"
+_gear_srpmimport_long_options="--add --rules --version --version --help"
+
+_gear_commit_shrt_options="-e -m -h -V"
+_gear_commit_long_options="--edit --help --message --no-edit --spec --version"
+
+_gear_edit_spec_shrt_options="-h -V"
+_gear_edit_spec_long_options="--help --version"
+
+_gear_import_shrt_options="-a -c -C -f -h -r -s -S -t -T -v -V"
+_gear_import_long_options="--all --commit --create --dry-run --force --no-commit --no-tag --ignore-exclude
+--rules --sign --subdir --tag --tag-message --time --verbose --version --help"
+
+_gear_rpm_shrt_options="$_rpmbuild_shrt_options $_gear_shrt_options"
+_gear_rpm_long_options="$_rpmbuild_long_options $_gear_long_options"
+
+_gear_hsh_shrt_options="$_hasher_shrt_options $_gear_shrt_options"
+_gear_hsh_long_options="$_hasher_long_options $_gear_long_options"
+
+__gear_file()
+{
 	COMPREPLY=()
+	_filedir
+}
 
-	local cur prev
+__gear_dir()
+{
+	COMPREPLY=()
+	_filedir -d
+}
+
+__gear_prepare()
+{
+	COMPREPLY=()
 	cur=${COMP_WORDS[COMP_CWORD]}
 	prev=${COMP_WORDS[COMP_CWORD-1]}
+}
+
+__gear_option()
+{
+	local type= list=
+
+	case "${2-$cur}" in
+		--*) type=long ;;
+		-*)  type=shrt ;;
+	esac
+
+	eval "list=\"\${${1}_${type}_options-}\""
+	[ -n "$list" ] || return 1
+
+	COMPREPLY=($(compgen -W "$list" -- "${2-$cur}")) ||:
+}
+
+_gear()
+{
+	local cur prev cmd
+	__gear_prepare
 
 	case "$cur" in
-		--*)	COMPREPLY=($(compgen -W "$_gear_long_options" -- $cur))
-			;;
-		-*)	COMPREPLY=($(compgen -W "$_gear_shrt_options" -- $cur))
-			;;
-		*)	_filedir
+		-*)
+			__gear_option "$FUNCNAME" "$cur"
 			;;
 	esac
 
 	case "$prev" in
-		--export-dir)	_filedir -d
+		--export-dir)
+			__gear_dir
 			;;
-		-r|--rules)	_filedir
+		-r|--rules)
+			__gear_file
 			;;
 	esac
 }
-complete -F _gear $filenames gear
+complete -F _gear gear
 
-_gear_update() {
-	COMPREPLY=()
-
+_gear_update()
+{
 	local cur prev
-	cur=${COMP_WORDS[COMP_CWORD]}
-	prev=${COMP_WORDS[COMP_CWORD-1]}
+	__gear_prepare
 
 	case "$cur" in
-		--*)
-			COMPREPLY=($(compgen -W '\
-						--all --create --exclude --force \
-						--help --ignore-exclude --subdir \
-						--type --verbose --version \
-						' -- $cur))
-			;;
 		-*)
-			COMPREPLY=($(compgen -W '-a -c -f -h -s -t -v -V' -- $cur))
+			__gear_option "$FUNCNAME" "$cur"
 			;;
 		*)
-			_filedir
+			__gear_file
 			;;
 	esac
 
 	case "$prev" in
 		-s|--subdir)
-			_filedir -d
+			__gear_dir
 			;;
 		-t|--type)
-			COMPREPLY=($(compgen -W 'dir tar cpio cpio.gz cpio.bz2 zip' -- $cur))
+			COMPREPLY=($(compgen -W 'dir tar cpio cpio.gz cpio.bz2 cpio.zst zip' -- $cur))
 			;;
 	esac
 }
-complete -F _gear_update $filenames gear-update
+complete -F _gear_update gear-update
 
-_gear_rpm() {
-	COMPREPLY=()
-
+_gear_rpm()
+{
 	local cur prev
-	cur=${COMP_WORDS[COMP_CWORD]}
-	prev=${COMP_WORDS[COMP_CWORD-1]}
+	__gear_prepare
 
 	case "$cur" in
-		--*)
-			_rpm
-			COMPREPLY=( $COMPREPLY $( compgen -W "$_gear_long_options" -- $cur ))
-			;;
-		-*)	COMPREPLY=($(compgen -W "$_gear_shrt_options" -- $cur)) ||
-				_rpm
+		-*)
+			__gear_option "$FUNCNAME" "$cur"
 			;;
 	esac
 
 	case "$prev" in
-		-r|--rules) _filedir ;;
+		--buildroot|--dbpath|--root)
+			__gear_dir
+			;;
+		-r|--rules)
+			__gear_file
+			;;
 	esac
 }
-complete -F _gear_rpm $filenames gear-rpm gear-buildreq
+complete -F _gear_rpm gear-rpm gear-buildreq
 
-_hasher_long_options='--apt-config --apt-prefix --build-args --cache-dir --cleanup-only \
---eager-cleanup --excludedocs --hasher-priv-dir --help --initroot-only --install-langs \
---lazy-cleanup --mountpoints --no-cache --no-contents-indices --no-repackage-source \
---no-sisyphus-check-in --no-sisyphus-check-out --no-sisyphus-check --no-wait-lock \
---nprocs --number --packager --pkg-build-list --pkg-init-list --query-repackage \
---query-req-prog --quiet --rebuild-prog --repackage-source --repo --repo-bin --repo-src \
---save-fakeroot --target --verbose --version --wait-lock --without-stuff \
---with-qemu --with-stuff'
-
-_hasher_shrt_options='-q -v -V -h'
-
-_hsh() {
-	COMPREPLY=()
-
+_gear_hsh()
+{
 	local cur prev
-	cur=${COMP_WORDS[COMP_CWORD]}
-	prev=${COMP_WORDS[COMP_CWORD-1]}
+	__gear_prepare
 
 	case "$cur" in
-		--*)
-			COMPREPLY=($(compgen -W "$_hasher_long_options" -- $cur))
-			;;
 		-*)
-			COMPREPLY=($(compgen -W "$_hasher_shrt_options" -- $cur))
+			__gear_option "$FUNCNAME" "$cur"
 			;;
 	esac
 
 	case "$prev" in
 		--apt-config|--query-req-prog|--rebuild-prog)
-			_filedir
+			__gear_file
 			;;
 		--apt-prefix|--hasher-priv-dir|--cache-dir--repo|--repo-bin|--repo-src)
-			_filedir -d
+			__gear_dir
+			;;
+		-r|--rules)
+			__gear_file
 			;;
 	esac
 }
+complete -F _gear_hsh gear-hsh
 
-_gear_hsh() {
-	COMPREPLY=()
-
+_gear_changelog()
+{
 	local cur prev
-	cur=${COMP_WORDS[COMP_CWORD]}
-	prev=${COMP_WORDS[COMP_CWORD-1]}
+	__gear_prepare
 
 	case "$cur" in
-		--*)
-			_hsh
-			COMPREPLY=( $COMPREPLY $(compgen -W "$_gear_long_options" -- $cur))
-			;;
-		-*)	COMPREPLY=($(compgen -W "$_gear_shrt_options" -- $cur)) ||
-				_hsh
-			;;
-	esac
-
-	case "$prev" in
-		-r|--rules) _filedir ;;
-	esac
-}
-complete -F _gear_hsh $filenames gear-hsh
-
-_gear_changelog() {
-	COMPREPLY=()
-
-	case "$cur" in
-		--*)
-			COMPREPLY=($(compgen -W '\
-					--no-groups --no-rules --no-specfile \
-					--format --rules --version --help' -- $cur))
-			;;
 		-*)
-			COMPREPLY=($(compgen -W '-f -r -V -h' -- $cur))
+			__gear_option "$FUNCNAME" "$cur"
 			;;
 	esac
 
@@ -184,100 +215,145 @@ _gear_changelog() {
 			COMPREPLY=($(compgen -W 'deb gnu rpm' -- $cur))
 			;;
 		-r|--rules)
-			_filedir
+			__gear_file
 			;;
 	esac
 }
-complete -F _gear_changelog $filenames gear-changelog
+complete -F _gear_changelog gear-changelog
 
-_gear_create_tag() {
-	COMPREPLY=()
-
+_gear_create_tag()
+{
 	local cur prev
-	cur=${COMP_WORDS[COMP_CWORD]}
-	prev=${COMP_WORDS[COMP_CWORD-1]}
+	__gear_prepare
 
 	case "$cur" in
-		--*)
-			COMPREPLY=($(compgen -W '\
-					--force --help --key-id --message --name \
-					--quiet --rules --verbose --version \
-					' -- $cur))
-			;;
 		-*)
-			COMPREPLY=($(compgen -W '-f -h -m -n -q -r -u -v -V' -- $cur))
+			__gear_option "$FUNCNAME" "$cur"
 			;;
 	esac
 
 	case "$prev" in
-		-r|--rules) _filedir ;;
+		-r|--rules)
+			__gear_file
+			;;
 	esac
 }
-complete -F _gear_create_tag $filenames gear-create-tag
+complete -F _gear_create_tag gear-create-tag
 
-_gear_merge() {
-	COMPREPLY=()
-
+_gear_merge()
+{
 	local cur prev
-	cur=${COMP_WORDS[COMP_CWORD]}
-	prev=${COMP_WORDS[COMP_CWORD-1]}
+	__gear_prepare
 
 	case "$cur" in
-		--*)	COMPREPLY=($(compgen -W '--add --rules --version --version --help' -- $cur))
-			;;
-		-*)	COMPREPLY=($(compgen -W '-a -h -r -v -V' -- $cur))
+		-*)
+			__gear_option "$FUNCNAME" "$cur"
 			;;
 	esac
 
 	case "$prev" in
-		-r|--rules) _filedir ;;
+		-r|--rules)
+			__gear_file
+			;;
 	esac
 
 }
-complete -F _gear_merge $filenames gear-merge
+complete -F _gear_merge gear-merge
 
-_gear_srpmimport() {
-	COMPREPLY=()
-
+_gear_srpmimport()
+{
 	local cur prev
-	cur=${COMP_WORDS[COMP_CWORD]}
-	prev=${COMP_WORDS[COMP_CWORD-1]}
+	__gear_prepare
 
 	case "$cur" in
-		--*)	COMPREPLY=($(compgen -W '--add --rules --version --version --help' -- $cur))
+		-*)
+			__gear_option "$FUNCNAME" "$cur"
 			;;
-		-*)	COMPREPLY=($(compgen -W '-a -h -r -v -V' -- $cur))
-			;;
-		*)	_filedir
+		*)
+			__gear_file
 			;;
 	esac
 
 	case "$prev" in
-		-r|--rules) _filedir ;;
+		-r|--rules)
+			__gear_file
+			;;
 	esac
 
 }
-complete -F _gear_srpmimport $filenames gear-srpmimport
+complete -F _gear_srpmimport gear-srpmimport
 
-_gear_store_tags() {
-	COMPREPLY=()
-
+_gear_store_tags()
+{
 	local cur prev
-	cur=${COMP_WORDS[COMP_CWORD]}
-	prev=${COMP_WORDS[COMP_CWORD-1]}
+	__gear_prepare
 
 	case "$cur" in
-		--*)	COMPREPLY=($(compgen -W '--all --clean --delete \
-					--no-clean --rules --quiet \
-					--verbose --version --help' -- $cur))
-			;;
-		-*)	COMPREPLY=($(compgen -W '-a -c -d -h -q -r -v -V' -- $cur))
+		-*)
+			__gear_option "$FUNCNAME" "$cur"
 			;;
 	esac
 
 	case "$prev" in
-		-r|--rules) _filedir ;;
+		-r|--rules)
+			__gear_file
+			;;
+	esac
+}
+complete -F _gear_store_tags gear-store-tags
+
+_gear_commit()
+{
+	local cur prev
+	__gear_prepare
+
+	case "$cur" in
+		-*)	__gear_option "$FUNCNAME" "$cur"
+			;;
 	esac
 
+	case "$prev" in
+		--spec)
+			__gear_file
+			;;
+	esac
 }
-complete -F _gear_store_tags $filenames gear-store-tags
+complete -F _gear_commit gear-commit
+
+_gear_edit_spec()
+{
+	local cur prev
+	__gear_prepare
+
+	case "$cur" in
+		-*)
+			__gear_option "$FUNCNAME" "$cur"
+			;;
+	esac
+}
+complete -F _gear_edit_spec gear-edit-spec
+
+_gear_import()
+{
+	local cur prev
+	__gear_prepare
+
+	case "$cur" in
+		-*)
+			__gear_option "$FUNCNAME" "$cur"
+			;;
+		*)
+			__gear_file
+			;;
+	esac
+
+	case "$prev" in
+		-r|--rules|--time)
+			__gear_file
+			;;
+		-S|--subdir)
+			__gear_dir
+			;;
+	esac
+}
+complete -F _gear_import gear-import
