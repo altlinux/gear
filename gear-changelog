@@ -40,7 +40,7 @@ Options:
   --no-rules          do not use rules at all, changelog entries will be
                       written without aggregation (grouping, filtering, etc);
   --no-groups         do not group entries as described in a rules file;
-  --no-specfile       do not use information from specfile;
+  --no-spec           do not use information from specfile;
   -f, --format=TYPE   specify source type: 'deb', 'rpm' or 'gnu',
                       default is 'rpm';
   -r, --rules=RULES   name of a rules file, default is .gear/changelog;
