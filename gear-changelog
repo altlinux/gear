@@ -40,6 +40,7 @@ Options:
   --no-rules          do not use rules at all, changelog entries will be
                       written without aggregation (grouping, filtering, etc);
   --no-groups         do not group entries as described in a rules file;
+  --no-header         do not print changelog header;
   --no-spec           do not use information from specfile;
   -f, --format=TYPE   specify source type: 'deb', 'rpm' or 'gnu',
                       default is 'rpm';
@@ -127,16 +128,19 @@ parse_changelog_rules() {
 		write_group
 }
 
-TEMP=`getopt -n $PROG -o 'f:,r:,h,V' -l 'format:,no-groups,no-rules,no-spec,rules:,help,version' -- "$@"` ||
+TEMP=`getopt -n $PROG -o 'f:,r:,h,V' -l 'format:,no-groups,no-header,no-rules,no-spec,rules:,help,version' -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
 no_rules=
 no_groups=
+no_header=
 no_specfile=
 while :; do
 	case "$1" in
 		--no-groups) no_groups=1
+			;;
+		--no-header) no_header=1
 			;;
 		--no-rules) no_rules=1
 			;;
@@ -236,7 +240,8 @@ while IFS="$tab" read -r hash atime aname aemail subj; do
 	done
 done
 
-format_header
+[ -n "$no_header" ] ||
+	format_header
 if [ -z "$no_rules" -a -z "$no_groups" ]; then
 	i=0
 	while [ "$num_groups" -gt "$i" ]; do
