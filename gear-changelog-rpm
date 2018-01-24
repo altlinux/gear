@@ -37,10 +37,10 @@ format_commit() {
 		fmt -w$cwidth |
 		sed -e "s/^$s[^$m]/  &/")"
 
-	[ "$releaser" = "$aname <$aemail>" ] ||
+	[ -n "$no_credits" ] || [ "$releaser" = "$aname <$aemail>" ] ||
 		str="$str (thx $aname)"
 
-	printf '%s\n' "$str."
+	printf '%s\n' "$str"
 }
 
 format_footer() {

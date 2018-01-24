@@ -39,6 +39,7 @@ Options:
 
   --no-rules          do not use rules at all, changelog entries will be
                       written without aggregation (grouping, filtering, etc);
+  --no-credits        do not print an author of changes;
   --no-groups         do not group entries as described in a rules file;
   --no-header         do not print changelog header;
   --no-spec           do not use information from specfile;
@@ -128,16 +129,19 @@ parse_changelog_rules() {
 		write_group
 }
 
-TEMP=`getopt -n $PROG -o 'f:,r:,h,V' -l 'format:,no-groups,no-header,no-rules,no-spec,rules:,help,version' -- "$@"` ||
+TEMP=`getopt -n $PROG -o 'f:,r:,h,V' -l 'format:,no-credits,no-groups,no-header,no-rules,no-spec,rules:,help,version' -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
 no_rules=
+no_credits=
 no_groups=
 no_header=
 no_specfile=
 while :; do
 	case "$1" in
+		--no-credits) no_credits=1
+			;;
 		--no-groups) no_groups=1
 			;;
 		--no-header) no_header=1

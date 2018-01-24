@@ -38,7 +38,7 @@ format_commit() {
 			sed -e '/^$/d' -e 's/^.*/&, /' -e '$s/, $/: /' |
 			tr -d '\n'
 		printf '%s' "$subj"
-		[ "$aname <$aemail>" = "$releaser" ] ||
+		[ -n "$no_credits" ] || [ "$aname <$aemail>" = "$releaser" ] ||
 			printf '%s' " (thx $aname)"
 		printf '.\n'
 	} |
