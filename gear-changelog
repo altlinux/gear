@@ -233,6 +233,9 @@ while IFS="$tab" read -r hash atime aname aemail subj; do
 				subj="$(printf '%s\n' "$subj" |
 					sed -r -f "$workdir/$i/filter")"
 
+			[ -n "$subj" ] ||
+				continue
+
 			out="$workdir/group$i"
 			[ -z "$no_groups" ] ||
 				out="$workdir/group"
