@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 #
-# Copyright (C) 2006-2012  Dmitry V. Levin <ldv@altlinux.org>
+# Copyright (C) 2006-2018  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 #
 # Incrementally import source packages to git repository.
@@ -28,7 +28,7 @@ print_version()
 $PROG version $PROG_VERSION
 Written by Dmitry V. Levin <ldv@altlinux.org>
 
-Copyright (C) 2006-2012  Dmitry V. Levin <ldv@altlinux.org>
+Copyright (C) 2006-2018  Dmitry V. Levin <ldv@altlinux.org>
 Copyright (C) 2006  Alexey Gladkov <legion@altlinux.org>
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -441,22 +441,43 @@ is_srpm()
 git_commit_fast=
 import()
 {
-	local srpm name verrel buildtime gts filelist changelogname changelog author_name author_email
-
+	local srpm
 	srpm="$1"; shift
+
 	cd "$saved_cwd"
 	verbose "Processing $srpm"
 	srpm="$(readlink -ev -- "$srpm")"
 
+	local query='
+buildtime=%{buildtime:shescape};
+changelogname=%|CHANGELOGNAME?{%{CHANGELOGNAME:shescape}}|;
+changelogtext=%|CHANGELOGTEXT?{%{CHANGELOGTEXT:shescape}}|;
+name=%{NAME:shescape};
+version=%{VERSION:shescape};
+release=%{RELEASE:shescape};
+fileflags_filenames=["%{FILEFLAGS:fflags} "%{FILENAMES:shescape}"\n"];
+'
+
+	local buildtime changelogname changelogtext
+	local name version release fileflags_filenames
+	local response filelist
+
 	is_srpm "$srpm" &&
-	name="$(rpmquery -p --qf '%{NAME}' -- "$srpm")" &&
-	verrel="$(rpmquery -p --qf '%{VERSION}-%{RELEASE}' -- "$srpm")" &&
-	buildtime="$(rpmquery -p --qf '%{BUILDTIME}' -- "$srpm")" &&
-	changelogname="$(rpmquery -p --qf '%|changelogname?{%{changelogname}}|' -- "$srpm")" &&
-	changelog="$(rpmquery -p --qf '%|CHANGELOGTEXT?{%{CHANGELOGTEXT}}|' -- "$srpm")" &&
+	response="$(rpmquery -p --qf "$query" -- "$srpm")" &&
+	eval "$response" && unset query response &&
+	[ -n "$name" -a -n "$version" -a -n "$release" ] &&
 	filelist="$(rpm2cpio "$srpm" |cpio --list --quiet )" ||
 		fatal "$srpm: Not a valid source rpm package"
 
+	local verrel
+	verrel="$version-$release"
+
+	local filespec
+	filespec="$(printf %s "$fileflags_filenames" |
+		sed -n 's/^[^s ]*s[^s ]* \(.\+\)/\1/p')"
+	filespec="${filespec##*/}"
+
+	local author_name author_email
 	author_name="$(printf '%s\n' "$changelogname" |
 		sed -n 's/^\([^<]\+\)<[^@]\+\(@\| at \)[^@]\+>.*/\1/p' |
 		sed -e 's/^[[:space:]]\+//' -e 's/[[:space:]]\+$//')"
@@ -464,6 +485,7 @@ import()
 		sed -n 's/^[^<]*<\([^@]\+\(@\| at \)[^@]\+\)>.*/\1/p' |
 		sed -e 's/^[[:space:]]\+//' -e 's/[[:space:]]\+$//' |
 		sed s/alt-linux/altlinux/g)"
+
 	local GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
 	if [ -n "$author_name" ]; then
 		GIT_AUTHOR_NAME="$author_name"
@@ -485,12 +507,39 @@ import()
 		mkdir -p -- "${gear_rules%/*}"
 
 	# Find specfile.
-	spec_version=
-	local spec=
-	if spec="$(find_specfile_in_cwd "${srpm##*/}: " ${filelist})"; then
-		[ -z "${spec##$def_spec_pattern}" -o -z "${spec%%$def_spec_pattern}" ] ||
+	local pfx="${srpm##*/}: "
+	cat "$filespec" > /dev/null || {
+		verbose "${pfx}Ignored specfile from fileflags: $filespec"
+		filespec=
+	}
+	local spec="$(find_specfile_in_cwd "$pfx" ${filelist} ||:)"
+	if [ -n "$filespec" -a "$filespec" != "$spec" ]; then
+		spec="$filespec"
+		printf 'spec: %s\n' "$spec" >>"$gear_rules"
+		verbose "${pfx}Set specfile from fileflags: $spec"
+	elif [ -n "$spec" ]; then
+		if [ -n "${spec##$def_spec_pattern}" -a -n "${spec%%$def_spec_pattern}" ]; then
 			printf 'spec: %s\n' "$spec" >>"$gear_rules"
-		spec_version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$spec" |sed 's/[[:space:]]\+$//')"
+			if [ "$filespec" = "$spec" ]; then
+				verbose "${pfx}Set specfile: $spec"
+			else
+				verbose "${pfx}Set specfile from filelist: $spec"
+			fi
+		else
+			if [ "$filespec" = "$spec" ]; then
+				verbose "${pfx}Using specfile: $spec"
+			else
+				verbose "${pfx}Using specfile from filelist: $spec"
+			fi
+		fi
+	fi
+
+	spec_version=
+	if [ -n "$spec" ]; then
+		spec_version="$(sed '/^version:[[:space:]]*/I!d;s///;q' "$spec" |
+			sed 's/[[:space:]]\+$//')"
+	else
+		verbose "${pfx}Specfile not found"
 	fi
 
 	rm -f "$index_orig"
@@ -538,7 +587,7 @@ import()
 	optimize_rules "$gear_rules"
 
 	local message
-	message="$(printf '%s\n\n%s\n' "$verrel" "$changelog")"
+	message="$(printf '%s\n\n%s\n' "$verrel" "$changelogtext")"
 
 	if [ -z "$git_commit_fast" ]; then
 		git commit --h 2>&1 |fgrep -qs '[--fast]' &&
@@ -546,6 +595,7 @@ import()
 			git_commit_fast='git commit'
 	fi
 
+	local gts
 	gts="$buildtime +0000"
 	GIT_AUTHOR_DATE="$gts" GIT_COMMITTER_DATE="$gts" \
 		$git_commit_fast --no-verify ${quiet:+-q} -a -m "$message" ||
