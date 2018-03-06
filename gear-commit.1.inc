@@ -24,11 +24,26 @@ gear\-commit \- invoke git\-commit using last changelog entry from spec file for
 [CONFIGURATION]
 .TP
 .B gear.commit.edit-message
-If true, requires further editing of the message, otherwise the selected message
-is used without invoking an editor.
+If set to
+.IR true ,
+an editor is invoked for further editing of the generated commit message.
+.br
+If set to
+.IR false ,
+the generated commit message is used without invoking an editor.
+.br
+The default is
+.IR true .
 .TP
 .B gear.commit.require-message-save
-If true, requires an edited commit message to be saved, otherwise the commit is aborted.
+If set to
+.IR true ,
+requires the generated commit message to be edited and saved by the user;
+If the user exits the editor without saving a modified commit message,
+the commit is aborted.
+.br
+The default is
+.IR false .
 
 [ENVIRONMENT]
 .TP
