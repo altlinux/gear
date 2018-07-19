@@ -59,6 +59,8 @@ check_archive_list()
 	else
 		result="$(tar -t $tar_compress -f "$file")"
 	fi || exit 1
+	expected="$(printf %s "$expected" |sort)"
+	result="$(printf %s "$result" |sort)"
 	assertEquals "$expected" "$result"
 }
 
