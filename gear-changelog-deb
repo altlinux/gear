@@ -47,6 +47,7 @@ format_commit() {
 }
 
 format_footer() {
-	local stamp="$(LC_TIME=C date -R)"
+	local stamp
+	stamp="$(LC_TIME=C date -R)"
 	printf '\n%s\n\n' " -- $releaser  $stamp"
 }

@@ -88,7 +88,7 @@ MKDIR_P = mkdir -p
 TOUCH_R = touch -r
 CHMOD = chmod
 
-.PHONY:	all check install clean
+.PHONY:	all check install verify clean
 
 all: $(TARGETS)
 
@@ -133,6 +133,33 @@ install: all
 	$(INSTALL) -p -m644 $(MAN5PAGES) $(DESTDIR)$(man5dir)/
 	$(MKDIR_P) -m755 $(DESTDIR)$(geardatadir)
 	$(INSTALL) -p -m644 $(DATAFILES) $(DESTDIR)$(geardatadir)/
+
+# See https://github.com/koalaman/shellcheck/wiki/SC1090 for more information.
+SHELLCHECK_EXCLUDE =
+SHELLCHECK_EXCLUDE += SC1090 # ShellCheck is not able to include sourced files from paths that are determined at runtime.
+SHELLCHECK_EXCLUDE += SC1091 # ShellCheck, for whichever reason, is not able to access the source file.
+SHELLCHECK_EXCLUDE += SC2004 # $/${} is unnecessary on arithmetic variables.
+SHELLCHECK_EXCLUDE += SC2006 # Use $(...) notation instead of legacy backticked `...`.
+SHELLCHECK_EXCLUDE += SC2015 # Note that A && B || C is not if-then-else.
+SHELLCHECK_EXCLUDE += SC2034 # Variable appears unused. Verify it or export it.
+SHELLCHECK_EXCLUDE += SC2035 # Use ./*glob* or -- *glob* so names with dashes won't become options.
+SHELLCHECK_EXCLUDE += SC2086 # Double quote to prevent globbing and word splitting.
+SHELLCHECK_EXCLUDE += SC2103 # Use a ( subshell ) to avoid having to cd back.
+SHELLCHECK_EXCLUDE += SC2119 # Use foo "$@" if function's $1 should mean script's $1.
+SHELLCHECK_EXCLUDE += SC2120 # function references arguments, but none are ever passed.
+SHELLCHECK_EXCLUDE += SC2154 # var is referenced but not assigned.
+SHELLCHECK_EXCLUDE += SC2163 # export takes a variable name, but you give it an expanded variable instead.
+SHELLCHECK_EXCLUDE += SC2166 # Prefer [ p ] && [ q ] as [ p -a q ] is not well defined.
+
+verify:
+	exclude="$$(printf '%s,' $(SHELLCHECK_EXCLUDE))"; \
+	exclude="$${exclude%,}"; \
+	for f in *; do \
+	    [ -e "$$f" ] || continue; \
+	    ftype=$$(file -b "$$f"); \
+	    [ -n "$${ftype##*shell script*}" ] || \
+	    shellcheck -s dash $${exclude:+-e $$exclude} "$$f"; \
+	done
 
 clean:
 	$(RM) $(TARGETS) $(HTMLPAGES) *~

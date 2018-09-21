@@ -90,11 +90,11 @@ write_group() {
 	printf '%s\n' "$filter" >"$workdir/$num_groups/filter"
 
 	num_groups=$(($num_groups+1))
-	filter= regexp=
+	filter='' regexp=''
 }
 
 parse_changelog_rules() {
-	local found= group= regexp= filter=
+	local found='' group='' regexp='' filter=''
 	local cmd value
 
 	while read -r cmd value; do
@@ -233,7 +233,7 @@ while IFS="$tab" read -r hash atime aname aemail subj; do
 
 	i=0
 	while [ "$num_groups" -gt "$i" ]; do
-		if printf '%s' "$subj" |egrep -qsf "$workdir/$i/regexp"; then
+		if printf '%s' "$subj" |grep -E -qsf "$workdir/$i/regexp"; then
 			[ ! -s "$workdir/$i/filter" ] ||
 				subj="$(printf '%s\n' "$subj" |
 					sed -r -f "$workdir/$i/filter")"

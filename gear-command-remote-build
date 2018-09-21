@@ -37,6 +37,7 @@ remote_srcdir=
 
 detect_method()
 {
+	# shellcheck disable=SC2087
 	ssh "$server" "sh -efu"<<-EOF
 	${verbose:+set -x}
 	cd '$workdir'
@@ -51,12 +52,14 @@ detect_method()
 
 canonicalize_workdir()
 {
+	# shellcheck disable=SC2029
 	workdir="$(ssh "$server" "cd -- \"$(quote_shell "$1")\" && pwd -P")" ||
 		fatal "$server:$1: directory not available"
 }
 
 remote_prepare()
 {
+	# shellcheck disable=SC2087
 	ssh "$server" "sh -efu"<<-EOF
 	rm -rf -- '$workdir/out'
 	mkdir $verbose -p -- \
@@ -69,6 +72,7 @@ remote_prepare()
 
 remote_cleanup()
 {
+	# shellcheck disable=SC2087
 	ssh "$server" "sh -eu"<<-EOF
 	${verbose:+set -x}
 	! type -p hsh >/dev/null ||
@@ -91,6 +95,7 @@ remote_hsh()
 	# Once tarball is created, its sources are no longer needed.
 	rm -f -- "$gear_outfile"
 
+	# shellcheck disable=SC2087
 	ssh "$server" "sh -efu"<<-EOF
 	${verbose:+set -x}
 	cd '$remote_srcdir'
@@ -105,6 +110,7 @@ remote_hsh()
 
 remote_gear()
 {
+	# shellcheck disable=SC2087
 	ssh "$server" "sh -efu"<<-EOF
 	${verbose:+set -x}
 	[ -d '$remote_srcdir/.git' ] ||
@@ -114,6 +120,7 @@ remote_gear()
 	if ! git push --thin "$server:$remote_srcdir" "$gear_commit_id":refs/heads/master 2>/dev/null; then
 		verbose "Invalid remote git repository"
 
+		# shellcheck disable=SC2087
 		ssh "$server" "sh -efu"<<-EOF
 		rm -rf -- '$remote_srcdir/.git'
 		git --git-dir='$remote_srcdir/.git' init
@@ -122,6 +129,7 @@ remote_gear()
 		git push --thin "$server:$remote_srcdir" "$gear_commit_id":refs/heads/master
 	fi
 
+	# shellcheck disable=SC2087
 	ssh "$server" "sh -efu"<<-EOF
 	${verbose:+set -x}
 	cd '$remote_srcdir'
@@ -139,6 +147,7 @@ remote_rpm()
 {
 	rsync $verbose -rtlp "$gear_outdir/" "$server:$remote_srcdir/"
 
+	# shellcheck disable=SC2087
 	ssh "$server" "sh -efu"<<-EOF
 	${verbose:+set -x}
 	cd '$workdir/build'

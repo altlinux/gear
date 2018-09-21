@@ -239,7 +239,7 @@ get_tar_name()
 		tar_name='@dir@-@version@'
 	fi
 
-	local opt spec= tar_base_set= tar_suffix_set=
+	local opt spec='' tar_base_set='' tar_suffix_set=''
 
 	for opt; do
 		case "$opt" in
@@ -519,7 +519,7 @@ make_compress()
 {
 	# format: "$optional options -- patterns..."
 	local optional="$1"; shift
-	local target_name= cmd= args=
+	local target_name='' cmd='' args=''
 
 	while [ $# -gt 0 ]; do
 		case "$1" in

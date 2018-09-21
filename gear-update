@@ -89,7 +89,7 @@ validate_subdir()
 	[ -n "$subdir" ] ||
 		fatal "$source: subdirectory not found."
 
-	[ `printf %s "$subdir" |wc -l` -eq 0 ] ||
+	[ "`printf %s "$subdir" |wc -l`" -eq 0 ] ||
 		fatal "More than one subdirectory specified: $(printf %s "$subdir" |tr -s '[:space:]' ' ')"
 
 	local quoted_subdir
@@ -125,7 +125,7 @@ cleanup_handler()
 }
 
 path_to_self="$(type -p "$0")" && [ -x "$path_to_self" ] ||
-	fatal "Failed to locate "$0" binary"
+	fatal "Failed to locate \"$0\" binary"
 [ -z "${path_to_self##/*}" ] ||
 	path_to_self="$(readlink -ev "$path_to_self")"
 plugin_dir="${path_to_self%/*}"

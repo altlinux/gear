@@ -23,17 +23,18 @@ format_group() {
 }
 
 format_header() {
-	local stamp="$(LC_TIME=C date '+%a %b %d %Y')"
+	local stamp
+	stamp="$(LC_TIME=C date '+%a %b %d %Y')"
 	printf '%s\n' "* $stamp $releaser ${pkg_epoch:+$pkg_epoch:}${pkg_version:-VERSION}-${pkg_release:-RELEASE}"
 }
 
 format_commit() {
-	local m='+' s='  '
+	local str m='+' s='  '
 
 	[ -z "$no_groups" -a -z "$no_rules" ] ||
 		{ m='-'; s=''; }
 
-	local str="$(printf '%s\n' "$s$m $subj" |
+	str="$(printf '%s\n' "$s$m $subj" |
 		fmt -w$cwidth |
 		sed -e "s/^$s[^$m]/  &/")"
 

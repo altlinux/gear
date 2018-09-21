@@ -24,7 +24,8 @@ format_header() { :; }
 
 format_commit() {
 	if [ "$aname <$aemail>" != "${old_name:-releaser}" ]; then
-		local stamp="$(LC_TIME=C date -d "@$atime" '+%Y-%m-%d')"
+		local stamp
+		stamp="$(LC_TIME=C date -d "@$atime" '+%Y-%m-%d')"
 		printf '%s\n\n' "$stamp  $aname <$aemail>"
 		old_name="$aname <$aemail>"
 	fi

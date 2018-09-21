@@ -25,7 +25,7 @@ gear_cmd=
 show_help()
 {
 	cat <<-EOF
-	Usage: $PROG [options] [$gear_cmd options] [gear options]
+	Usage: ${PROG?} [options] [$gear_cmd options] [gear options]
 
 	Options:
 	  -v, --verbose      print a message for each action;

@@ -173,7 +173,7 @@ process_rule()
 		return 0
 	fi
 	# reset optional params
-	replace_version= replace_name= sed_i='i'
+	replace_version='' replace_name='' sed_i='i'
 	return 1
 }
 
@@ -181,7 +181,7 @@ rulesfile=
 parse_rules()
 {
 	local archive="$1"
-	local eof= keyword value
+	local eof='' keyword value
 	local pattern name version replace_version replace_name sed_i='i'
 
 	gear_config_option pattern         'archive-pattern'   ""

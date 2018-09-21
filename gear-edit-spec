@@ -72,4 +72,4 @@ disable_specsubst=1
 chdir_to_toplevel
 guess_specfile
 
-exec ${EDITOR-${VISUAL-vim}} $@ "$specfile"
+exec ${EDITOR-${VISUAL-vim}} "$@" "$specfile"

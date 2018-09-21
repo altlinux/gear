@@ -103,7 +103,7 @@ optimize_rules()
 	tmp="$(mktemp rules.XXXXXX)"
 	sed -n 's/^[^:]\+: [^ ]*\.\([^ .]\+\).*/\1/p' "$rules" |
 		LC_COLLATE=C sort -u |
-		while read suffix; do
+		while read -r suffix; do
 			local quoted
 			quote_sed_regexp_variable quoted "$suffix"
 			method="$(sed -n 's/^\([^:]\+\): [^ ]*\.'"$quoted"'$/\1/p' "$rules" |LC_COLLATE=C sort -u)"
@@ -247,7 +247,7 @@ import_tree()
 
 	# Avoid unpacking archives with paths containing /../
 	local dir_name=
-	printf %s "$tree_list" |LC_ALL=C egrep -qs '^\.\.(/|$)|/\.\.(/|$)' ||
+	printf %s "$tree_list" |LC_ALL=C grep -E -qs '^\.\.(/|$)|/\.\.(/|$)' ||
 		dir_name="$(printf %s "$tree_list" |
 			    tr -s / |			# squeeze slashes
 			    sed 's|^/|.&|' |		# prefix leading slash with dot
@@ -260,7 +260,7 @@ import_tree()
 		return
 	fi
 
-	local base= subdir unpack_into_subdir=
+	local base='' subdir unpack_into_subdir=''
 	if [ "$dir_name" != "$(printf %s "$dir_name" |LC_COLLATE=C tr -d '[:space:]')" ] ||
 	   [ -n "$(printf %s "$dir_name" |LC_COLLATE=C tr -d -- '-[:alnum:]_.,+')" ] ||
 	   [ -n "$($source_ls_toplevel_nondir_cmd "$f")" ]; then
@@ -328,7 +328,7 @@ import_tree()
 	fi
 	dir_name="$short_name"
 
-	local quoted rule_base= rule_name=
+	local quoted rule_base='' rule_name=''
 	quote_sed_regexp_variable quoted "$spec_version"
 
 	[ "$dir_name-$spec_version" = "$arch_basename" ] ||
@@ -500,7 +500,9 @@ fileflags_filenames=["%{FILEFLAGS:fflags} "%{FILENAMES:shescape}"\n"];
 	rm -rf "$workdir"
 	mkdir "$workdir"
 	cd "$workdir"
-	rpm2cpio "$srpm" |cpio --extract $([ -n "$verbose" ] || echo --quiet)
+	local cpio_quiet=''
+	[ -n "$verbose" ] || cpio_quiet=--quiet
+	rpm2cpio "$srpm" |cpio --extract $cpio_quiet
 	verbose "Unpacked ${srpm##*/}"
 
 	[ -n "${gear_rules##*/*}" ] ||
@@ -512,7 +514,8 @@ fileflags_filenames=["%{FILEFLAGS:fflags} "%{FILENAMES:shescape}"\n"];
 		verbose "${pfx}Ignored specfile from fileflags: $filespec"
 		filespec=
 	}
-	local spec="$(find_specfile_in_cwd "$pfx" ${filelist} ||:)"
+	local spec
+	spec="$(find_specfile_in_cwd "$pfx" ${filelist} ||:)"
 	if [ -n "$filespec" -a "$filespec" != "$spec" ]; then
 		spec="$filespec"
 		printf 'spec: %s\n' "$spec" >>"$gear_rules"
@@ -590,7 +593,7 @@ fileflags_filenames=["%{FILEFLAGS:fflags} "%{FILENAMES:shescape}"\n"];
 	message="$(printf '%s\n\n%s\n' "$verrel" "$changelogtext")"
 
 	if [ -z "$git_commit_fast" ]; then
-		git commit --h 2>&1 |fgrep -qs '[--fast]' &&
+		git commit --h 2>&1 |grep -F -qs '[--fast]' &&
 			git_commit_fast='git commit --fast' ||
 			git_commit_fast='git commit'
 	fi
@@ -683,7 +686,7 @@ workdir="$tmpdir/work"
 git symbolic-ref HEAD "refs/heads/$branch_import"
 
 if [ -n "$read_from_stdin" ]; then
-	while read REPLY; do
+	while read -r REPLY; do
 		import "$REPLY"
 	done
 else
