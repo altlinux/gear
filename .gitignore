@@ -1,5 +1,5 @@
 *.1
 *.5
-*.html
+docs/*.html
 gear-sh-functions
 gear-import
