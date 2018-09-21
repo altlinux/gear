@@ -551,7 +551,7 @@ if [ -n "$all$clean$verify" ]; then
 		show_usage 'Too many arguments'
 	[ -z "$delete" ] ||
 		show_usage '--delete cannot be used with --all, --clean or --verify'
-	[ -z "$verify" -o -z "$all$clean" ] ||
+	[ -z "$verify" ] || [ -z "$all$clean" ] ||
 		show_usage '--verify cannot be used with --all or --clean'
 elif [ -n "$delete" ]; then
 	# 1 argument when deleting a tag.

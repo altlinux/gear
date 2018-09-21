@@ -206,10 +206,10 @@ canon_destdir="$destdir"
 
 [ "$source" != "$destdir" ] ||
 	fatal "\`$source' and \`$destdir' are the same place."
-[ -n "$dest_create" -o -d "$destdir" ] ||
+[ -n "$dest_create" ] || [ -d "$destdir" ] ||
 	fatal "$destdir: not a directory."
 
-[ -z "$subdir" -o -z "$all_subdirs" ] ||
+[ -z "$subdir" ] || [ -z "$all_subdirs" ] ||
 	fatal "Cannot use --all and --subdir at the same time."
 
 # Export options
@@ -258,7 +258,7 @@ destdir="${destdir#$topdir/}"
 initial_commit=
 git rev-parse --verify HEAD >/dev/null 2>&1 || initial_commit=1
 
-if [ -z "$force" -a -z "$initial_commit" ]; then
+if [ -z "$force$initial_commit" ]; then
 	out="$(git diff-index --cached --name-only HEAD -- "$destdir")"
 	[ -z "$out" ] ||
 		fatal "$destdir: Changed files found in the index."
@@ -269,7 +269,7 @@ if [ -z "$force" -a -z "$initial_commit" ]; then
 		fatal "$destdir: Untracked or modified files found."
 fi
 
-[ -n "$dest_create" -o -n "$initial_commit" ] ||
+[ -n "$dest_create$initial_commit" ] ||
 	git rm -n -r $force -- "$destdir" >/dev/null
 
 [ -n "$all_subdirs" ] ||
@@ -314,7 +314,7 @@ if [ -n "$ignore_exclude" ]; then
 	git ls-files -z --others --modified -- "$destdir" |
 		git update-index --add ${verbose:+--verbose} -z --stdin
 else
-	[ -n "$dest_create" -o -n "$initial_commit" ] ||
+	[ -n "$dest_create$initial_commit" ] ||
 		git rm -f -r --cached -- "$destdir" >/dev/null
 	git add $verbose -- "$destdir"
 fi

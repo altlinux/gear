@@ -149,7 +149,6 @@ SHELLCHECK_EXCLUDE += SC2119 # Use foo "$@" if function's $1 should mean script'
 SHELLCHECK_EXCLUDE += SC2120 # function references arguments, but none are ever passed.
 SHELLCHECK_EXCLUDE += SC2154 # var is referenced but not assigned.
 SHELLCHECK_EXCLUDE += SC2163 # export takes a variable name, but you give it an expanded variable instead.
-SHELLCHECK_EXCLUDE += SC2166 # Prefer [ p ] && [ q ] as [ p -a q ] is not well defined.
 
 verify:
 	exclude="$$(printf '%s,' $(SHELLCHECK_EXCLUDE))"; \

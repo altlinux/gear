@@ -216,11 +216,11 @@ check_pathname()
 	[ -n "$value" ] ||
 		rules_error "Empty $name \"$value\" specified"
 
-	[ "$value" != '..' -a \
-	  -n "${value##/*}" -a \
-	  -n "${value##../*}" -a \
-	  -n "${value%%*/..}" -a \
-	  -n "${value##*/../*}" ] ||
+	[ "$value" != '..' ] &&
+	    [ -n "${value##/*}" ] &&
+	    [ -n "${value##../*}" ] &&
+	    [ -n "${value%%*/..}" ] &&
+	    [ -n "${value##*/../*}" ] ||
 		rules_error "Invalid $name \"$value\" specified"
 }
 
@@ -234,8 +234,7 @@ check_filename()
 	[ -n "$value" ] ||
 		rules_error "Empty $name \"$value\" specified"
 
-	[ "$value" != '..' -a \
-	  -n "${value##*/*}" ] ||
+	[ "$value" != '..' ] && [ -n "${value##*/*}" ] ||
 		rules_error "Invalid $name \"$value\" specified"
 }
 
@@ -362,7 +361,7 @@ expand_rpm_macros()
 	local var_value
 
 	set_var_value var_value "$var_name"
-	[ -n "$var_value" -a -z "${var_value##*%*}" ] || return 0
+	[ -n "$var_value" ] && [ -z "${var_value##*%*}" ] || return 0
 
 	var_value="$(awk '
 	BEGIN {
@@ -743,9 +742,9 @@ find_specfile_in_cwd()
 
 	for pattern in ${spec_pattern}; do
 		for f; do
-			[ -z "${f##$pattern}" -o -z "${f%%$pattern}" ] ||
+			[ -z "${f##$pattern}" ] || [ -z "${f%%$pattern}" ] ||
 				continue
-			[ ! -L "$f" -a -f "$f" ] ||
+			[ ! -L "$f" ] && [ -f "$f" ] ||
 				continue
 			[ -z "$spec" ] ||
 				many_specs=1

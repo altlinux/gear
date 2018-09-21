@@ -118,7 +118,7 @@ validate_rule() {
 			fatal "$b: branch not found."
 	done
 
-	[ "$cmd" != 'gendiff' -o -n "$name" ] ||
+	[ "$cmd" != 'gendiff' ] || [ -n "$name" ] ||
 		rules_error "patch name not defined. Use 'name' option."
 }
 
@@ -271,7 +271,7 @@ branch_gendiff() {
 	branch_merge
 
 	local dir="${name%/*}"
-	[ "$dir" = "$name" -o -d "$dir" ] ||
+	[ "$dir" = "$name" ] || [ -d "$dir" ] ||
 		mkdir -p -- "$dir"
 
 	{ [ -z "$message" ] || printf '%s\n\n' "$message"; } > "$name"
@@ -368,7 +368,7 @@ else
 	parse_rules
 fi
 
-if [ -n "$add_new_files" -a -n "$new_files" ]; then
+if [ -n "$add_new_files" ] && [ -n "$new_files" ]; then
 	set_current_branch
 	if [ "$cur_branch" != "$restore_branch" ]; then
 		git checkout "$restore_branch"

@@ -86,8 +86,7 @@ shorten_dir_name()
 	local short
 	short="$(printf %s "$name" |
 		 LC_COLLATE=C sed 's/\(-[[:alpha:]]*[0-9]\+\([.[:alpha:]]\+[.[:alnum:]]*\)\?\)\+$//')"
-	if [ -n "$short" -a "$short" != "$name" ] &&
-	   [ ! -e "$short" ]; then
+	if [ -n "$short" ] && [ "$short" != "$name" ] && [ ! -e "$short" ]; then
 		name="$short"
 	fi
 
@@ -300,7 +299,7 @@ import_tree()
 	short_name="$(shorten_dir_name "$dir_name")"
 
 	# Avoid file names clashes.
-	if [ -e "$short_name" -a "$dir_name" != "$arch_basename" ]; then
+	if [ -e "$short_name" ] && [ "$dir_name" != "$arch_basename" ]; then
 		# Try to shorten archive name.
 		short_name="$(shorten_dir_name "$arch_basename")"
 	fi
@@ -308,7 +307,7 @@ import_tree()
 	if [ -e "$short_name" ]; then
 		# Shorten heuristics failed, try with full directory name.
 		short_name="$dir_name"
-		if [ -e "$short_name" -a "$dir_name" != "$arch_basename" ]; then
+		if [ -e "$short_name" ] && [ "$dir_name" != "$arch_basename" ]; then
 			# Try with full archive name.
 			short_name="$arch_basename"
 		fi
@@ -465,7 +464,7 @@ fileflags_filenames=["%{FILEFLAGS:fflags} "%{FILENAMES:shescape}"\n"];
 	is_srpm "$srpm" &&
 	response="$(rpmquery -p --qf "$query" -- "$srpm")" &&
 	eval "$response" && unset query response &&
-	[ -n "$name" -a -n "$version" -a -n "$release" ] &&
+	[ -n "$name" ] && [ -n "$version" ] && [ -n "$release" ] &&
 	filelist="$(rpm2cpio "$srpm" |cpio --list --quiet )" ||
 		fatal "$srpm: Not a valid source rpm package"
 
@@ -516,12 +515,12 @@ fileflags_filenames=["%{FILEFLAGS:fflags} "%{FILENAMES:shescape}"\n"];
 	}
 	local spec
 	spec="$(find_specfile_in_cwd "$pfx" ${filelist} ||:)"
-	if [ -n "$filespec" -a "$filespec" != "$spec" ]; then
+	if [ -n "$filespec" ] && [ "$filespec" != "$spec" ]; then
 		spec="$filespec"
 		printf 'spec: %s\n' "$spec" >>"$gear_rules"
 		verbose "${pfx}Set specfile from fileflags: $spec"
 	elif [ -n "$spec" ]; then
-		if [ -n "${spec##$def_spec_pattern}" -a -n "${spec%%$def_spec_pattern}" ]; then
+		if [ -n "${spec##$def_spec_pattern}" ] && [ -n "${spec%%$def_spec_pattern}" ]; then
 			printf 'spec: %s\n' "$spec" >>"$gear_rules"
 			if [ "$filespec" = "$spec" ]; then
 				verbose "${pfx}Set specfile: $spec"
@@ -548,7 +547,7 @@ fileflags_filenames=["%{FILEFLAGS:fflags} "%{FILENAMES:shescape}"\n"];
 	rm -f "$index_orig"
 	local f
 	for f in ${filelist}; do
-		if [ -L "$f" -o ! -f "$f" ]; then
+		if [ -L "$f" ] || [ ! -f "$f" ]; then
 			message "$f: Non-regular file ignored."
 			continue
 		fi

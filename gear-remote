@@ -108,7 +108,7 @@ while :; do
 		gear_command_target="$1"
 		;;
 	    -m|--method) shift
-		[ "$1" != 'rpm' -o -z "$gear_command_remote_repo" ] ||
+		[ "$1" != 'rpm' ] || [ -z "$gear_command_remote_repo" ] ||
 			show_usage 'Option --method=rpm with --remote-repo does not make sense.'
 		gear_command_method="$1"
 		;;
@@ -119,7 +119,7 @@ while :; do
 	    -r|--rules) shift; rules="$1"
 		;;
 	    -t|--tree-ish) shift; main_tree_id="$1"
-		[ -z "$do_commit" -o -z "$main_tree_id" ] ||
+		[ -z "$do_commit" ] || [ -z "$main_tree_id" ] ||
 			show_usage 'Options --commit and --tree-ish are mutually exclusive.'
 		;;
 	    -v|--verbose) verbose=-v

@@ -111,7 +111,7 @@ parse_changelog_rules() {
 				[ -n "$value" ] ||
 					fatal "Directive \`$cmd' cannot be specified without a value."
 
-				[ -z "$group" -o "$group" = "$value" ] ||
+				[ -z "$group" ] || [ "$group" = "$value" ] ||
 					write_group "$num_groups"
 
 				group="$value"
@@ -254,7 +254,7 @@ done
 
 [ -n "$no_header" ] ||
 	format_header
-if [ -z "$no_rules" -a -z "$no_groups" ]; then
+if [ -z "$no_rules$no_groups" ]; then
 	i=0
 	while [ "$num_groups" -gt "$i" ]; do
 		if [ ! -s "$workdir/group$i" ]; then

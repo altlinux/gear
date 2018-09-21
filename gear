@@ -169,7 +169,7 @@ write_compressed_file()
 		copy)
 			[ $# -eq 0 ] ||
 				rules_error "Unsupported options for copy method specified: $*"
-			if [ -n "$name" -a "$file" != "$name" ]; then
+			if [ -n "$name" ] && [ "$file" != "$name" ]; then
 				mv -f -- "$file" "$name"
 				verbose "Wrote file \`${file##*/}' as \`${name##*/}'"
 			fi
@@ -224,7 +224,7 @@ get_tar_name()
 	local dir_name_prefix="${dir_name%/*}"
 	local dir_name_base="${dir_name##*/}"
 
-	if [ -z "$dir_name_prefix" -o "$dir_name" = "$dir_name_prefix" ]; then
+	if [ -z "$dir_name_prefix" ] || [ "$dir_name" = "$dir_name_prefix" ]; then
 		dir_name_prefix=
 	else
 		dir_name_prefix="$dir_name_prefix/"
@@ -260,15 +260,15 @@ get_tar_name()
 	done
 
 	local subst_vars='tar_name tar_tree'
-	[ -z "$tar_base" -o -z "$tar_base_set" ] ||
+	[ -z "$tar_base" ] || [ -z "$tar_base_set" ] ||
 		subst_vars="$subst_vars tar_base"
-	[ -z "$tar_suffix" -o -z "$tar_suffix_set" ] ||
+	[ -z "$tar_suffix" ] || [ -z "$tar_suffix_set" ] ||
 		subst_vars="$subst_vars tar_suffix"
 
 	subst_NVR_from_spec "$spec" dir $subst_vars
 	subst_key_in_vars '@dir@' "$dir" $subst_vars
 
-	if [ -n "$dir" -a "$dir" != "$dir_name_base" ]; then
+	if [ -n "$dir" ] && [ "$dir" != "$dir_name_base" ]; then
 		check_filename 'dir name' "$dir"
 		dir_name="$dir_name_prefix$dir"
 		check_pathname 'dir path' "$dir_name"
@@ -343,7 +343,7 @@ get_diff_name()
 	local new_d="$1" && shift
 
 	local old_d_prefix="${old_d%/*}"
-	if [ -z "$old_d_prefix" -o "$old_d" = "$old_d_prefix" ]; then
+	if [ -z "$old_d_prefix" ] || [ "$old_d" = "$old_d_prefix" ]; then
 		old_d_prefix=
 	else
 		old_d_prefix="$old_d_prefix/"
@@ -351,7 +351,7 @@ get_diff_name()
 	old_d="${old_d##*/}"
 
 	local new_d_prefix="${new_d%/*}"
-	if [ -z "$new_d_prefix" -o "$new_d" = "$new_d_prefix" ]; then
+	if [ -z "$new_d_prefix" ] || [ "$new_d" = "$new_d_prefix" ]; then
 		new_d_prefix=
 	else
 		new_d_prefix="$new_d_prefix/"
@@ -386,12 +386,12 @@ get_diff_name()
 	subst_key_in_vars '@new_dir@' "$new_d" $subst_vars
 	subst_NVR_from_spec "$spec" old_d new_d $subst_vars
 	check_filename 'diff name' "$diff_name"
-	if [ -n "$old_d" -a "$old_d" != "$old_dir" ]; then
+	if [ -n "$old_d" ] && [ "$old_d" != "$old_dir" ]; then
 		check_filename 'old dir name' "$old_d"
 		old_dir="$old_d_prefix$old_d"
 		check_pathname 'old dir path' "$old_dir"
 	fi
-	if [ -n "$new_d" -a "$new_d" != "$new_dir" ]; then
+	if [ -n "$new_d" ] && [ "$new_d" != "$new_dir" ]; then
 		check_filename 'new dir name' "$new_d"
 		new_dir="$new_d_prefix$new_d"
 		check_pathname 'new dir path' "$new_dir"
@@ -487,20 +487,20 @@ extract_pattern()
 		[ "$otype" = blob ] ||
 			continue
 		# ignore invalid filenames.
-		[ "$name" = "${name#*/}" -a \
-		  "$name" = "${name%/*}" ] ||
+		[ "$name" = "${name#*/}" ] &&
+		    [ "$name" = "${name%/*}" ] ||
 			continue
 		# ignore unmatched.
-		[ -z "${name##$base_name}" -o \
-		  -z "${name%%$base_name}" ] ||
+		[ -z "${name##$base_name}" ] ||
+		    [ -z "${name%%$base_name}" ] ||
 			continue
 
 		local ex_pattern sample
 		sample="$dir_name/$name"
 		for ex_pattern in $exclude_pattern_list; do
 			# ignore excluded.
-			[ -n "${sample##$ex_pattern}" -a \
-			  -n "${sample%%$ex_pattern}" ] ||
+			[ -n "${sample##$ex_pattern}" ] &&
+			    [ -n "${sample%%$ex_pattern}" ] ||
 				continue 2
 		done
 
@@ -511,7 +511,7 @@ extract_pattern()
 		write_compressed_file "$name" "$target_name" "$cmd" "$@"
 		found=1
 	done <"$workdir/blobs"
-	[ -n "$found" -o "$optional" = 1 ] ||
+	[ -n "$found" ] || [ "$optional" = 1 ] ||
 		rules_error "Unmatched pattern specified: $pattern"
 }
 
@@ -535,7 +535,7 @@ make_compress()
 				shift; break
 				;;
 			*)
-				[ -n "$1" -a -z "${1##-*}" ] ||
+				[ -n "$1" ] && [ -z "${1##-*}" ] ||
 					rules_error "Invalid option specified: $1"
 				check_filename 'command args' "$1"
 				args="$args \"$(quote_shell "$1")\""
@@ -705,7 +705,7 @@ while :; do
 	shift
 done
 
-[ -z "$do_commit" -o "${main_tree_id%%:*}" = HEAD ] ||
+[ -z "$do_commit" ] || [ "${main_tree_id%%:*}" = HEAD ] ||
 	show_usage 'Option --commit is allowed for HEAD commit only.'
 
 case "$command$describe$hasher${outdir:+1}$rpmbuild" in

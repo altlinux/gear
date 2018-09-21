@@ -199,5 +199,5 @@ done
 remote_prepare
 remote_$method
 
-[ -n "${gear_command_build_only-}" -o -z "$not_remote_repo" ] ||
+[ -n "${gear_command_build_only-}" ] || [ -z "$not_remote_repo" ] ||
 	rsync $verbose -rtlp "$server:$workdir/out/" "$outdir/"

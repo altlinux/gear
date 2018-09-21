@@ -33,7 +33,7 @@ validate_destdir()
 	local dst_dir="$1"; shift
 	[ -z "$gear_update_force" ] ||
 		return 0
-	if [ "$dst_dir" = '.' -a -d '.git' -a -d "$src_dir/.git" ]; then
+	if [ "$dst_dir" = '.' ] && [ -d '.git' ] && [ -d "$src_dir/.git" ]; then
 		fatal "$gear_update_canon_destdir/.git: Cowardly refusing to replace git directory."
 	fi
 }
