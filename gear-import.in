@@ -38,6 +38,7 @@ show_help()
 	  --time=STR             use time described by STR;
 	  --time=FILE            use the last modification time of FILE;
 	  --ignore-exclude       pass --ignore-exclude to gear-update;
+	  --honor-exclude        pass --honor-exclude to gear-update;
 	  -C, --create           pass --create to gear-update;
 	  -f, --force            pass --force to gear-update;
 	  -a, --all              pass --all to gear-update;
@@ -233,6 +234,7 @@ all_files=
 subdir=
 dest_create=
 ignore_exclude=
+honor_exclude=
 timestamp=
 dry_run=
 
@@ -243,7 +245,7 @@ gear_config_option tag_format tag ""
 gear_config_option tag_msg_format tag-message ""
 gear_config_option commit_msg_format commit-message ""
 
-TEMP=`getopt -n $PROG -o a,f,c:,C,r:,s,S:,t:,T:,v,V,h -l all,commit:,create,dry-run,force,no-commit,no-tag,ignore-exclude,rules:,sign,subdir:,tag:,tag-message:,time:,verbose,version,help -- "$@"` ||
+TEMP=`getopt -n $PROG -o a,f,c:,C,r:,s,S:,t:,T:,v,V,h -l all,commit:,create,dry-run,force,no-commit,no-tag,ignore-exclude,honor-exclude,rules:,sign,subdir:,tag:,tag-message:,time:,verbose,version,help -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
@@ -256,6 +258,8 @@ while :; do
 		--time) shift; timestamp="$1"
 			;;
 		--ignore-exclude) ignore_exclude=1
+			;;
+		--honor-exclude) honor_exclude=1
 			;;
 		--dry-run) dry_run=1
 			;;
@@ -342,6 +346,9 @@ for archive_file; do
 
 	[ -z "$ignore_exclude" ] ||
 		extra_args="$extra_args --ignore-exclude"
+
+	[ -z "$honor_exclude" ] ||
+		extra_args="$extra_args --honor-exclude"
 
 	[ -z "$force" ] ||
 		extra_args="$extra_args --force"

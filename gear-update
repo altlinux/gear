@@ -37,7 +37,8 @@ Usage: $PROG [Options] <source> <subdirectory>
 Options:
 
   --exclude=PATTERN   exclude files matching posix-egrep regular expression PATTERN;
-  --ignore-exclude    ignore .gitignore and .git/info/exclude;
+  --ignore-exclude    ignore .gitignore and .git/info/exclude (the default);
+  --honor-exclude     honor .gitignore and .git/info/exclude;
   --remove-source     remove the <source> after updating;
   --strip-components=NUMBER
                       strip NUMBER of leading path components from file names;
@@ -141,11 +142,12 @@ for s_handler in "$plugin_dir/gear-update-src-"*; do
 done
 set -f
 
-TEMP=`getopt -n $PROG -o a,c,f,t:,s:,v,V,h -l all,create,exclude:,ignore-exclude,force,remove-source,type:,subdir:,strip-components:,verbose,version,help -- "$@"` || show_usage
+TEMP=`getopt -n $PROG -o a,c,f,t:,s:,v,V,h -l all,create,exclude:,ignore-exclude,honor-exclude,force,remove-source,type:,subdir:,strip-components:,verbose,version,help -- "$@"` || show_usage
 eval set -- "$TEMP"
 
 gear_config_option exclude_pattern exclude-pattern ''
 ignore_exclude=
+honor_exclude=
 force=
 remove_source=
 source_type=
@@ -161,6 +163,8 @@ while :; do
 		exclude_pattern="$1"
 		;;
 	    --ignore-exclude) ignore_exclude=1
+		;;
+	    --honor-exclude) honor_exclude=1
 		;;
 	    --remove-source) remove_source=1
 		;;
@@ -192,6 +196,10 @@ done
 	show_usage 'Not enough arguments.'
 [ "$#" -eq 2 ] ||
 	show_usage 'Too many arguments.'
+
+if [ -n "$ignore_exclude" ] && [ -n "$honor_exclude" ]; then
+	fatal "--ingore-exclude and --honor-exclude are mutually exclusive"
+fi
 
 source="$(readlink -ev -- "$1")"; shift
 if [ -n "$dest_create" ]; then
@@ -308,7 +316,7 @@ else
 	rm -- "$export_ignore"
 fi
 
-if [ -n "$ignore_exclude" ]; then
+if [ -z "$honor_exclude" ]; then
 	git ls-files -z -- "$destdir" |
 		git update-index --remove --force-remove -z --stdin
 	git ls-files -z --others --modified -- "$destdir" |
