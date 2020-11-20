@@ -147,7 +147,8 @@ write_compressed_file()
 			if [ $# -eq 0 ]; then
 				case "$cmd" in
 					gzip) set -- -9n ;;
-					zstd) set -- -11 ;;
+					zstd) set -- -11 -T0 ;;
+					xz) set -- -9 -T0 ;;
 					*) set -- -9 ;;
 				esac
 			fi
