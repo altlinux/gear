@@ -1,0 +1,51 @@
+#!/bin/sh -efu
+
+gear_rules_diff_tag_tree_exclude() # test entry point
+{
+	local spec=file.spec
+	local n=foo
+	local v=1
+	local r=99
+	local src=a/bb/ccc/dddd/src
+	local dst=1/22/333/4444/55555/dst
+	local patch="${dst##*/}-$v-$r.patch${gear_directive#diff}"
+
+	printf 'Name:%s\nVersion:  %s\nRelease:   %s' "$n" "$v" "$r" >"$spec"
+	mkdir -p $src
+	echo one >$src/file
+	mkdir $src/sub
+	echo two >$src/sub/file2
+	git add "$spec" $src/file $src/sub/file2
+	git commit -q -a -m 1
+	git tag -a -m t1 v1
+	git rm -q -f $src/file $src/sub/file2
+	mkdir .gear
+	echo "$gear_directive: v1:$src $dst exclude=sub/** exclude=*3" > .gear/rules
+	mkdir -p $dst
+	echo two >$dst/file
+	echo three >$dst/file3
+	git add .gear/rules $dst/file $dst/file3
+	gear-store-tags -a
+	git commit -q -a -m 2
+
+	finalize_repo
+
+	$GEAR "$GEAR_OUT"
+	check_pkgtar_list "$spec
+./
+./$spec
+./$patch"
+	check_pkgtar_spec "$GEAR_OUT" "$spec"
+	unpack_pkgtar_to .out
+	result="$($decompress_prog ".out/$patch")"
+	assertEquals ' file | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/file b/file
+index 5626abf..f719efd 100644
+--- a/file
++++ b/file
+@@ -1 +1 @@
+-one
++two' "$result"
+}
