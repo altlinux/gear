@@ -160,7 +160,7 @@ find_tags_in_diff_options()
 			spec=*) spec="${opt#spec=}"
 				check_pathname specfile "$spec"
 				;;
-			name=*)
+			name=*|exclude=*)
 				;;
 			*) rules_info "Unrecognized option \"$opt\" ignored"
 				;;

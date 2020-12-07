@@ -380,6 +380,12 @@ unless the path part of
 .I new_tree_path
 is \*(lq.\*(rq, in which case the default is
 .BR @name@\-@version@\-@release@.patch .
+.TP
+.BI exclude= glob_pattern
+All files matching the
+.I glob_pattern
+are excluded from the generated diff file. This option can be specified multiple
+times.
 .RE
 .IP
 Value of the
@@ -541,6 +547,19 @@ However, if a prerelease version is packaged, parts like
 \*(lqpreN\*(rq or \*(lqrcN\*(rq should not be included in the package
 version, therefore the rule file will need some modifications for such
 versions.
+.PP
+You may want to exclude
+.I .gear
+subdirectory and spec file from diff generation:
+.RS 4
+.PP
+.ft CW
+.nf
+tar: v@version@:.
+diff: v@version@:. . exclude=.gear/** exclude=*.spec
+.fi
+.RE
+.PP
 .
 .SS "Archive with unmodified sources and separate patch files"
 If you prefer to maintain patch files for local modifications instead

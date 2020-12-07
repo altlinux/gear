@@ -338,7 +338,7 @@ make_archive()
 	write_git_archive "$format" "$optional" "$cmd" "$tar_tree" "$dir_name" "$tar_name" "$tar_base" "$tar_suffix"
 }
 
-get_diff_name()
+get_diff_opts()
 {
 	local old_d="$1" && shift
 	local new_d="$1" && shift
@@ -377,6 +377,14 @@ get_diff_name()
 				;;
 			name=*) diff_name="${opt#name=}"
 				;;
+			exclude=*)
+				opt="${opt#exclude=}"
+				[ -n "$opt" ] ||
+					rules_error "Invalid diff exclude pattern specified: empty pattern"
+				valid_string "$opt" ||
+					rules_error "Invalid diff exclude pattern specified: $opt"
+				diff_exclude="$diff_exclude :(exclude,glob)$opt"
+				;;
 			*) rules_error "Unrecognized option: $opt"
 				;;
 		esac
@@ -403,6 +411,7 @@ write_git_diff()
 {
 	local optional="$1" && shift
 	local cmd="$1" && shift
+	local diff_exclude="$1" && shift
 	local old_tree="$1" && shift
 	local old_dir="$1" && shift
 	local new_tree="$1" && shift
@@ -424,7 +433,7 @@ write_git_diff()
 		}
 
 	git diff-tree --patch-with-stat --text --no-renames --no-ext-diff \
-		"$old_id" "$new_id" >"$outdir/$name"
+		"$old_id" "$new_id" -- $diff_exclude >"$outdir/$name"
 	verbose "Extracted diff: $name"
 
 	compress_file "$cmd" "$name" ''
@@ -450,14 +459,18 @@ make_difference()
 	diff_new_tree="${new_dir%%:*}"
 	new_dir="${new_dir#*:}"
 
-	get_diff_name "$old_dir" "$new_dir" "$@"
+	local diff_exclude=
+	get_diff_opts "$old_dir" "$new_dir" "$@"
 
 	diff_old_tree="$(resolve_tree_base_name "$diff_old_tree")" ||
 		rules_error "Invalid old tree: $diff_old_tree"
 	diff_new_tree="$(resolve_tree_base_name "$diff_new_tree")" ||
 		rules_error "Invalid new tree: $diff_new_tree"
 
-	write_git_diff "$optional" "$cmd" "$diff_old_tree" "$old_dir" "$diff_new_tree" "$new_dir" "$diff_name"
+	write_git_diff \
+		"$optional" "$cmd" "$diff_exclude" \
+		"$diff_old_tree" "$old_dir" \
+		"$diff_new_tree" "$new_dir" "$diff_name"
 }
 
 extract_pattern()
