@@ -468,8 +468,9 @@ extract_pattern()
 	local target_name="$1"; shift
 	local cmd="$1"; shift
 
-	[ -z "$(printf %s "$pattern" |tr -d '[:alnum:]_.?*-/')" ] ||
+	valid_string "$pattern" ||
 		rules_error "Invalid extract pattern specified: $pattern"
+
 	local dir_name base_name tree
 
 	dir_name="$(dirname "$pattern")"
@@ -569,7 +570,7 @@ parse_rules()
 	while read -r cmd options; do
 		lineno="$((lineno+1))"
 		if [ "$cmd" = 'exclude:' ]; then
-			[ -z "$(printf %s "$options" |tr -d '[:alnum:]_.?*-/')" ] ||
+			valid_string "$options" ||
 				rules_error "Invalid exclude pattern specified: $options"
 			exclude_pattern_list="$exclude_pattern_list $options"
 		fi

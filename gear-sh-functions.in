@@ -911,6 +911,11 @@ gear_config_option()
 	set_var_value "$var_name" gear_config_option_val
 }
 
+valid_string()
+{
+	[ -z "$(printf %s "$1" |LANG=C tr -d '[:graph:]')" ]
+}
+
 gear_config_option verbose verbose ''
 [ -z "$verbose" ] || verbose=-v
 gear_config_option quiet quiet ''
