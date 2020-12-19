@@ -4,9 +4,11 @@ gear_update_subdir() # test entry point
 {
 	local suffix result msg diff_output diff_subdir long_move short_move
 
-	[ "$gear_subdir" = "." ] &&
-		diff_subdir= ||
+	if [ "$gear_subdir" = '.' ]; then
+		diff_subdir=
+	else
 		diff_subdir="$gear_subdir/"
+	fi
 
 	diff_output="\
  ${diff_subdir}contents-changed-file | 2 +-
@@ -98,9 +100,11 @@ index d265e35..0000000
 	cp -a "subdir-1.2.3$gear_type" "subdir-1.2.3.left_extension"
 	popd>/dev/null
 
-	[ "$gear_subdir" = "." ] &&
-		gear-update ".git/.work/initial-import$gear_type" "$gear_subdir" ||
+	if [ "$gear_subdir" = '.' ]; then
+		gear-update ".git/.work/initial-import$gear_type" "$gear_subdir"
+	else
 		gear-update -c ".git/.work/initial-import$gear_type" "$gear_subdir"
+	fi
 	git commit -q -a -m 'Initial import'
 
 	mkdir -p .gear/tags .gear-tags
