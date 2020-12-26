@@ -1,5 +1,5 @@
 Name: gear
-Version: 2.4.0
+Version: 2.4.1
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -59,6 +59,9 @@ ln -s gear-store-tags.1 %buildroot%_man1dir/gear-update-tag.1
 %doc docs/QUICKSTART* docs/ABOUT*
 
 %changelog
+* Sat Dec 26 2020 Vitaly Chikunov <vt@altlinux.org> 2.4.1-alt1
+- Re-enable multi-threaded compression for xz and zstd.
+
 * Sat Dec 19 2020 Dmitry V. Levin <ldv@altlinux.org> 2.4.0-alt1
 - Added "exclude=" option to "diff" directive
   (by Vladimir D. Seleznev, Alexey Gladkov, and me).
