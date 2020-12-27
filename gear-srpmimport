@@ -50,7 +50,7 @@ Options:
   --no-unpack               do not unpack source archives;
   --rules=FILENAME          gear rules filename (default is ".gear/rules");
   --spec-pattern=PATTERN    specfile pattern list (default is "*.spec");
-  --stdin                   read source package names from stdin;
+  --stdin                   read source package file names from stdin;
   -q, --quiet               try to be more quiet;
   -v, --verbose             print a message for each action;
   -V, --version             print program version and exit;
