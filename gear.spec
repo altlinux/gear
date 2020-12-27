@@ -13,8 +13,8 @@ Source: %name-%version.tar
 # due to gear-srpmimport.
 Requires: faketime
 
-# due to git-diff-tree --no-ext-diff
-Requires: git-core >= 0:1.5.3
+# due to magic signature in pathspec.
+Requires: git-core >= 0:1.9.0
 
 # due to quote_shell_args()
 Requires: libshell >= 0:0.1.0
