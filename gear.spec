@@ -1,5 +1,5 @@
 Name: gear
-Version: 2.4.1
+Version: 2.4.2
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -59,6 +59,11 @@ ln -s gear-store-tags.1 %buildroot%_man1dir/gear-update-tag.1
 %doc docs/QUICKSTART* docs/ABOUT*
 
 %changelog
+* Sun Dec 27 2020 Dmitry V. Levin <ldv@altlinux.org> 2.4.2-alt1
+- Updated git-core requirement.
+- gear-srpmimport: expanded help text on --stdin option a bit.
+- tests: sort output before comparison in one more place (by Ivan Zakharyaschev).
+
 * Sat Dec 26 2020 Vitaly Chikunov <vt@altlinux.org> 2.4.1-alt1
 - Re-enable multi-threaded compression for xz and zstd.
 
