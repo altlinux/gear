@@ -24,6 +24,7 @@
 PROJECT = gear
 VERSION = $(shell sed '/^Version: */!d;s///;q' gear.spec)
 PROGRAMS = \
+	describe-specfile \
 	gear \
 	gear-buildreq \
 	gear-changelog \
