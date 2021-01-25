@@ -41,7 +41,8 @@ Options:
                           written without aggregation (grouping, filtering, etc);
   --no-credits            do not print an author of changes;
   --no-groups             do not group entries as described in a rules file;
-  --no-header             do not print changelog header;
+  --no-header             do not print the changelog header;
+  --header-only           print only the changelog header;
   --no-spec               do not use information from specfile;
   -d, --since-date=DATE   show commits more recent than a specific date;
   -f, --format=TYPE       specify source type: 'deb', 'rpm' or 'gnu',
@@ -130,7 +131,7 @@ parse_changelog_rules() {
 		write_group
 }
 
-TEMP=`getopt -n $PROG -o 'd:f:,r:,h,V' -l 'format:,no-credits,no-groups,no-header,no-rules,no-spec,rules:,since-date:,help,version' -- "$@"` ||
+TEMP=`getopt -n $PROG -o 'd:f:,r:,h,V' -l 'format:,no-credits,no-groups,no-header,header-only,no-rules,no-spec,rules:,since-date:,help,version' -- "$@"` ||
 	show_usage
 eval set -- "$TEMP"
 
@@ -138,6 +139,7 @@ no_rules=
 no_credits=
 no_groups=
 no_header=
+header_only=
 no_specfile=
 since_date=
 while :; do
@@ -147,6 +149,10 @@ while :; do
 		--no-groups) no_groups=1
 			;;
 		--no-header) no_header=1
+			;;
+		--header-only)
+			header_only=1
+			no_rules=1
 			;;
 		--no-rules) no_rules=1
 			;;
@@ -170,6 +176,10 @@ while :; do
 	esac
 	shift
 done
+case "$no_header:$header_only" in
+	1:1) fatal '--no-header and --header-only are mutually exclusive.' ;;
+	*) ;;
+esac
 
 case "$format" in
 	deb|rpm|gnu) ;;
@@ -216,6 +226,12 @@ gear_config_option GIT_AUTHOR_EMAIL email "${GIT_AUTHOR_EMAIL-$(git config --get
 releaser="${GIT_AUTHOR_NAME-GIT_AUTHOR_NAME} <${GIT_AUTHOR_EMAIL-GIT_AUTHOR_EMAIL}>"
 
 . "$0-$format"
+
+if [ -n "$header_only" ]; then
+	format_header
+	format_footer
+	exit
+fi
 
 git log \
 	--no-merges \
