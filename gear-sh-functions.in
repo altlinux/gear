@@ -22,6 +22,9 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 
+if [ -z "${__included_gear_sh_functions-}" ]; then
+__included_gear_sh_functions=1
+
 . shell-error
 . shell-quote
 . shell-args
@@ -920,3 +923,5 @@ gear_config_option verbose verbose ''
 [ -z "$verbose" ] || verbose=-v
 gear_config_option quiet quiet ''
 [ -z "$quiet" ] || quiet=-q
+
+fi #__included_gear_sh_functions

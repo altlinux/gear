@@ -19,6 +19,9 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 
+if [ -z "${__included_gear_update_sh_functions-}" ]; then
+__included_gear_update_sh_functions=1
+
 . gear-sh-functions
 
 gear_update_verbose=
@@ -85,3 +88,5 @@ gear_update_handler()
 			;;
 	esac
 }
+
+fi #__included_gear_update_sh_functions
