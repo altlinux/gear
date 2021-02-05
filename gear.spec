@@ -10,6 +10,8 @@ BuildArch: noarch
 
 Source: %name-%version.tar
 
+Requires: gear-sh-functions = %EVR
+
 # due to gear-srpmimport.
 Requires: faketime
 
@@ -33,6 +35,24 @@ This package contains utilities for building RPM packages from GEAR
 repositories and managing GEAR repositories.
 See %_docdir/%name-%version/QUICKSTART.ru_RU.UTF-8 for details.
 
+%package sh-functions
+Summary: GEAR shell functions
+Group: Development/Other
+# git-core is optional
+%filter_from_requires /^git-core/d
+
+%description sh-functions
+This package contains GEAR's shell functions.
+
+%package -n describe-specfile
+Summary: Print specfile name and version using gear's parser
+Group: Development/Other
+Requires: gear-sh-functions = %EVR
+
+%description -n describe-specfile
+This package contains utility which uses GEAR's spec parser to determine
+specfile for its name and version info.
+
 %prep
 %setup
 
@@ -51,12 +71,22 @@ install -pDm644 contrib/gear-bash_completion \
 ln -s gear-store-tags %buildroot%_bindir/gear-update-tag
 ln -s gear-store-tags.1 %buildroot%_man1dir/gear-update-tag.1
 
+%define _unpackaged_files_terminate_build 1
+
 %files
 %config /etc/bash_completion.d/*
-%_bindir/*
+%_bindir/gear*
+%exclude %_bindir/gear-sh-functions
 %_datadir/%name
-%_mandir/man?/*
+%_mandir/man?/gear*
 %doc docs/QUICKSTART* docs/ABOUT*
+
+%files sh-functions
+%_bindir/gear-sh-functions
+
+%files -n describe-specfile
+%_bindir/describe-specfile*
+%_man1dir/describe-specfile*
 
 %changelog
 * Sun Dec 27 2020 Dmitry V. Levin <ldv@altlinux.org> 2.4.2-alt1
