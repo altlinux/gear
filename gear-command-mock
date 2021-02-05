@@ -20,7 +20,7 @@
 gear-command-rpmbuild \
 	rpmbuild -bs --nodeps --define "_srcrpmdir $gear_workdir"
 
-. gear-sh-functions
+. gear-utils-sh-functions
 
 verbose="${gear_verbose-}"
 rm -rf -- "$gear_outdir"

@@ -63,6 +63,10 @@ HELPERS = \
 	gear-update-src-tar \
 	gear-update-src-zip \
 	#
+FUNCTIONS = \
+	gear-sh-functions \
+	gear-utils-sh-functions \
+	#
 DATAFILES = gear-import-rules
 MAN1PAGES = $(PROGRAMS:=.1)
 MAN5PAGES = gear-rules.5 gear-merge-rules.5 gear-changelog-rules.5 \
@@ -92,7 +96,7 @@ CHMOD = chmod
 
 all: $(TARGETS)
 
-$(MAN1PAGES): gear-sh-functions
+$(MAN1PAGES): gear-sh-functions gear-utils-sh-functions
 
 $(MAN7PAGES):
 
@@ -104,7 +108,7 @@ $(MAN7PAGES):
 	$(TOUCH_R) $< $@
 	chmod --reference=$< $@
 
-%.1: % %.1.inc gear-sh-functions
+%.1: % %.1.inc gear-sh-functions gear-utils-sh-functions
 	$(HELP2MAN1) -i $@.inc ./$< >$@
 
 %.html: %
@@ -124,7 +128,8 @@ check: tests/run
 
 install: all
 	$(MKDIR_P) -m755 $(DESTDIR)$(bindir)
-	$(INSTALL) -p -m644 gear-sh-functions $(DESTDIR)$(bindir)/
+	$(CHMOD) 644 $(FUNCTIONS)
+	$(CP) $(FUNCTIONS) $(DESTDIR)$(bindir)/
 	$(CHMOD) 755 $(PROGRAMS) $(HELPERS)
 	$(CP) $(PROGRAMS) $(HELPERS) $(DESTDIR)$(bindir)/
 	$(MKDIR_P) -m755 $(DESTDIR)$(man1dir)

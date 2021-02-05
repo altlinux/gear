@@ -64,7 +64,7 @@
 #    @name@, @version@, @release@.
 #  Default diff name is @new_dir@-@version@-@release@.patch.
 
-. gear-sh-functions
+. gear-utils-sh-functions
 
 print_version()
 {

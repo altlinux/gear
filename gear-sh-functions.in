@@ -919,9 +919,4 @@ valid_string()
 	[ -z "$(printf %s "$1" |LANG=C tr -d '[:graph:]')" ]
 }
 
-gear_config_option verbose verbose ''
-[ -z "$verbose" ] || verbose=-v
-gear_config_option quiet quiet ''
-[ -z "$quiet" ] || quiet=-q
-
 fi #__included_gear_sh_functions

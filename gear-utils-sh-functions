@@ -1,0 +1,13 @@
+#!/bin/sh -efu
+
+if [ -z "${__included_gear_utils_sh_functions-}" ]; then
+__included_gear_utils_sh_functions=1
+
+. gear-sh-functions
+
+gear_config_option verbose verbose ''
+[ -z "$verbose" ] || verbose=-v
+gear_config_option quiet quiet ''
+[ -z "$quiet" ] || quiet=-q
+
+fi #__included_gear_utils_sh_functions

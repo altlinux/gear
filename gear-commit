@@ -21,7 +21,7 @@
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 #
 
-. gear-sh-functions
+. gear-utils-sh-functions
 . shell-getopt
 . shell-var
 

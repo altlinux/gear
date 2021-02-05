@@ -22,7 +22,7 @@
 if [ -z "${__included_gear_update_sh_functions-}" ]; then
 __included_gear_update_sh_functions=1
 
-. gear-sh-functions
+. gear-utils-sh-functions
 
 gear_update_verbose=
 gear_update_force=

@@ -32,7 +32,7 @@
 # <git merge strategy> - Use the given merge strategy. See man git-merge(1).
 #
 
-. gear-sh-functions
+. gear-utils-sh-functions
 
 show_help() {
 	cat <<EOF

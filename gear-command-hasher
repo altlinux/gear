@@ -20,7 +20,7 @@
 
 gear-command-tar "$@"
 
-. gear-sh-functions
+. gear-utils-sh-functions
 
 verbose="${gear_verbose-}"
 
