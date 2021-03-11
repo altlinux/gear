@@ -142,13 +142,27 @@ disable_specsubst=1
 install_cleanup_handler cleanup_workdir
 workdir="$(mktemp -dt "$PROG.XXXXXXXXXX")"
 find_specfile
-cleanup_workdir
-uninstall_cleanup_handler
 
 subst_NVR_from_spec_file '' tag_name tag_msg
 
 [ -z "$specsubst_msg" ] ||
 	tag_msg="$tag_msg$nl$specsubst_msg"
+
+# Check whether all required specsubst variables are defined in the tag message.
+# The implementation is derived from substitute_vars_in_spec().
+get_uniq_directive_from_rules specsubst specsubst
+[ -z "$(printf %s "$specsubst" |LANG=C tr -d '[:alnum:]_[:space:]')" ] ||
+	rules_error "Invalid specsubst value \"$specsubst\" specified"
+# $specsubst is a space-separated sequence of alphanumerics
+for var in $specsubst; do
+	printf %s "$tag_msg" |
+	    grep -qs "^X-gear-specsubst:[[:space:]]\\+$var=" ||
+		fatal "specsubst variable \"$var\" is not defined in the tag message"
+done
+unset var
+
+cleanup_workdir
+uninstall_cleanup_handler
 
 [ -n "$quiet" ] ||
 	message "Creating tag named \"$tag_name\" using tag message \"$tag_msg\" for commit $main_commit_sha1"
