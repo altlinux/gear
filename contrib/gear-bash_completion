@@ -38,13 +38,16 @@ _gear_long_options="--bzip2 --command --commit --describe --disable-specsubst --
 --lz4 --lzop --no-compress --quiet --rpmbuild --rules --tree-ish --update-spec --verbose --version --xz --zstd"
 
 _gear_update_shrt_options="-a -c -f -h -s -t -v -V"
-_gear_update_long_options="--all --create --exclude --force --help --ignore-exclude --subdir --type --verbose --version"
+_gear_update_long_options="--all --create --exclude --force --help
+--honor-exclude --ignore-exclude --subdir --type --verbose --version"
 
-_gear_changelog_shrt_options="-f -h -r -V"
-_gear_changelog_long_options="--no-groups --no-rules --no-specfile --format --rules --version --help"
+_gear_changelog_shrt_options="-d -f -h -r -V"
+_gear_changelog_long_options="--no-credits --no-groups --no-header --no-rules
+--no-spec --format --header-only --rules --since-date --version --help"
 
-_gear_create_tag_shrt_options="-f -h -m -n -q -r -u -v -V"
-_gear_create_tag_long_options="--force --help --key-id --message --name --quiet --rules --verbose --version"
+_gear_create_tag_shrt_options="-f -h -m -n -q -s -r -u -v -V"
+_gear_create_tag_long_options="--force --help --key-id --message --name --quiet
+--rules --specsubst --verbose --version"
 
 _gear_store_tags_shrt_options="-a -c -d -h -q -r -v -V"
 _gear_store_tags_long_options="--all --clean --delete --no-clean --rules --quiet --verbose --version --help"
@@ -62,8 +65,9 @@ _gear_edit_spec_shrt_options="-h -V"
 _gear_edit_spec_long_options="--help --version"
 
 _gear_import_shrt_options="-a -c -C -f -h -r -s -S -t -T -v -V"
-_gear_import_long_options="--all --commit --create --dry-run --force --no-commit --no-tag --ignore-exclude
---rules --sign --subdir --tag --tag-message --time --verbose --version --help"
+_gear_import_long_options="--all --commit --create --dry-run --force
+--no-commit --no-tag --honor-exclude --ignore-exclude --rules --sign
+--subdir --tag --tag-message --time --verbose --version --help"
 
 _gear_rpm_shrt_options="$_rpmbuild_shrt_options $_gear_shrt_options"
 _gear_rpm_long_options="$_rpmbuild_long_options $_gear_long_options"
