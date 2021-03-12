@@ -1,6 +1,6 @@
 #
 # Copyright (C) 2006-2010  Dmitry V. Levin <ldv@altlinux.org>
-# Copyright (C) 2006-2011  Alexey Gladkov <legion@altlinux.org>
+# Copyright (C) 2006-2018  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006,2009  Alexey I. Froloff <raorn@altlinux.org>
 # Copyright (C) 2006-2007  Sergey Vlasov <vsu@altlinux.org>
 #

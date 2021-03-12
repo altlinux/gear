@@ -1,6 +1,6 @@
 #!/bin/sh -eu
 #
-# Copyright (C) 2006-2009  Alexey Gladkov <legion@altlinux.org>
+# Copyright (C) 2006-2018  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006-2009  Dmitry V. Levin <ldv@altlinux.org>
 # Copyright (C) 2006  Sergey Vlasov <vsu@altlinux.org>
 #

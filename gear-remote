@@ -1,6 +1,6 @@
 #!/bin/sh -efu
 #
-# Copyright (C) 2007-2009  Alexey Gladkov <legion@altlinux.org>
+# Copyright (C) 2007-2018  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2007  Alexey I. Froloff <raorn@altlinux.org>
 # Copyright (C) 2008  Dmitry V. Levin <ldv@altlinux.org>
 #
@@ -58,7 +58,7 @@ print_version()
 	$PROG version $PROG_VERSION
 	Written by Alexey Gladkov <legion@altlinux.org>
 
-	Copyright (C) 2007-2009  Alexey Gladkov <legion@altlinux.org>
+	Copyright (C) 2007-2018  Alexey Gladkov <legion@altlinux.org>
 	Copyright (C) 2007  Alexey I. Froloff <raorn@altlinux.org>
 	Copyright (C) 2008  Dmitry V. Levin <ldv@altlinux.org>
 	This is free software; see the source for copying conditions.  There is NO
