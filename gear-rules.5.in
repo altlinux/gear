@@ -275,6 +275,12 @@ Add
 to the archive file name instead of the default
 .B .tar
 suffix.
+.TP
+.BI exclude= glob_pattern
+All files matching the
+.I glob_pattern
+are excluded from the generated tar file. This option can be specified multiple
+times.
 .RE
 .IP
 Values of the
