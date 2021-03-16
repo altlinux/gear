@@ -220,6 +220,23 @@ subst_NVR_from_spec()
 	subst_NVR_from_spec_file "$spec" "$@"
 }
 
+parse_exclude_option()
+{
+	local name="$1" && shift
+	local ret="$1" && shift
+	local opt="$1" && shift
+
+	opt="${opt#exclude=}"
+
+	[ -n "$opt" ] ||
+		rules_error "Invalid $name exclude pattern specified: empty pattern"
+
+	valid_string "$opt" ||
+		rules_error "Invalid $name exclude pattern specified: $opt"
+
+	eval "$ret=\"\$$ret :(exclude,glob)\$opt\""
+}
+
 get_tar_name()
 {
 	local dir_name_prefix="${dir_name%/*}"
@@ -378,12 +395,7 @@ get_diff_opts()
 			name=*) diff_name="${opt#name=}"
 				;;
 			exclude=*)
-				opt="${opt#exclude=}"
-				[ -n "$opt" ] ||
-					rules_error "Invalid diff exclude pattern specified: empty pattern"
-				valid_string "$opt" ||
-					rules_error "Invalid diff exclude pattern specified: $opt"
-				diff_exclude="$diff_exclude :(exclude,glob)$opt"
+				parse_exclude_option diff diff_exclude "$opt"
 				;;
 			*) rules_error "Unrecognized option: $opt"
 				;;
