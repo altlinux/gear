@@ -274,6 +274,9 @@ get_archive_opts()
 			suffix=*) tar_suffix="${opt#suffix=}"
 				tar_suffix_set=1
 				;;
+			exclude=*)
+				parse_exclude_option "$format" archive_exclude "$opt"
+				;;
 			*) rules_error "Unrecognized option: $opt"
 				;;
 		esac
@@ -305,6 +308,7 @@ write_git_archive()
 	local format="$1" && shift
 	local optional="$1" && shift
 	local cmd="$1" && shift
+	local exclude="$1" && shift
 	local tree="$1" && shift
 	local dir="$1" && shift
 	local name="${1##*/}" && shift
@@ -323,7 +327,8 @@ write_git_archive()
 		}
 		rc=$?
 
-	git archive --format="$format" ${tar_base:+--prefix="$tar_base"/} "$id" >"$outdir/$name.$format"
+	git archive --format="$format" ${tar_base:+--prefix="$tar_base"/} \
+		"$id" -- $exclude >"$outdir/$name.$format"
 	verbose "Extracted archive: $name.$format"
 
 	local output_name=
@@ -347,14 +352,16 @@ make_archive()
 	local dir_name="${tree_path#*:}"
 	tar_tree="${tree_path%%:*}"
 
-	local tar_base tar_suffix
+	local tar_base tar_suffix archive_exclude
 	# Special non-empty marker.
 	tar_base='/'
 	tar_suffix='/'
+	archive_exclude=''
 	get_archive_opts "$format" "$@"
 
 	tar_tree="$(resolve_tree_base_name "$tar_tree")" || return 1
-	write_git_archive "$format" "$optional" "$cmd" "$tar_tree" "$dir_name" "$tar_name" "$tar_base" "$tar_suffix"
+	write_git_archive "$format" "$optional" "$cmd" "$archive_exclude" \
+		"$tar_tree" "$dir_name" "$tar_name" "$tar_base" "$tar_suffix"
 }
 
 get_diff_opts()
