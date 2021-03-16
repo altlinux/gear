@@ -237,8 +237,10 @@ parse_exclude_option()
 	eval "$ret=\"\$$ret :(exclude,glob)\$opt\""
 }
 
-get_tar_name()
+get_archive_opts()
 {
+	local format="$1" && shift
+
 	local dir_name_prefix="${dir_name%/*}"
 	local dir_name_base="${dir_name##*/}"
 
@@ -291,11 +293,11 @@ get_tar_name()
 		dir_name="$dir_name_prefix$dir"
 		check_pathname 'dir path' "$dir_name"
 	fi
-	check_filename 'tar name' "$tar_name"
+	check_filename "$format name" "$tar_name"
 	[ -n "${subst_vars##*tar_base*}" ] ||
-		check_pathname 'tar base' "$tar_base"
+		check_pathname "$format base" "$tar_base"
 	[ -n "${subst_vars##*tar_suffix*}" ] ||
-		check_filename 'tar suffix' "$tar_suffix"
+		check_filename "$format suffix" "$tar_suffix"
 }
 
 write_git_archive()
@@ -349,7 +351,7 @@ make_archive()
 	# Special non-empty marker.
 	tar_base='/'
 	tar_suffix='/'
-	get_tar_name "$@"
+	get_archive_opts "$format" "$@"
 
 	tar_tree="$(resolve_tree_base_name "$tar_tree")" || return 1
 	write_git_archive "$format" "$optional" "$cmd" "$tar_tree" "$dir_name" "$tar_name" "$tar_base" "$tar_suffix"
