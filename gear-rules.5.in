@@ -1,6 +1,6 @@
 .\" Copyright (C) 2007  Sergey Vlasov <vsu@altlinux.org>
 .\" Copyright (C) 2007-2017  Dmitry V. Levin <ldv@altlinux.org>
-.\" Copyright (C) 2008  Alexey Gladkov <legion@altlinux.org>
+.\" Copyright (C) 2008-2021  Alexey Gladkov <legion@altlinux.org>
 .\" Copyright (C) 2020  Vladimir D. Seleznev <vseleznv@altlinux.org>
 .\"
 .\" Documentation for the .gear-rules file format.

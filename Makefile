@@ -3,6 +3,7 @@
 # Copyright (C) 2006-2018  Alexey Gladkov <legion@altlinux.org>
 # Copyright (C) 2006,2009  Alexey I. Froloff <raorn@altlinux.org>
 # Copyright (C) 2006-2007  Sergey Vlasov <vsu@altlinux.org>
+# Copyright (C) 2021  Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>
 #
 # Makefile for the gear project.
 #
