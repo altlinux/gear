@@ -1,5 +1,5 @@
 Name: gear
-Version: 2.4.2
+Version: 2.5.0
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -89,6 +89,24 @@ ln -s gear-store-tags.1 %buildroot%_man1dir/gear-update-tag.1
 %_man1dir/describe-specfile*
 
 %changelog
+* Wed Mar 17 2021 Dmitry V. Levin <ldv@altlinux.org> 2.5.0-alt1
+- Added exclude= option for tar: and zip: directives
+  (by Alexey Gladkov; closes: #39801).
+- describe-specfile (by Gleb Fotengauer-Malinovskiy):
+  + new utility, prints name and version info for specfile.
+- gear:
+  + change the current workdir back before the last command invocation.
+- gear-changelog (by Arseny Maslennikov):
+  + added --header-only option to only print changelog header.
+- gear-create-tag:
+  + refuse to create tags that do not define all specsubst variables;
+  + implemented -s/--specsubst option (closes: #39783).
+- gear-update-sh-functions (by Gleb Fotengauer-Malinovskiy):
+  + fixed permissions (755 -> 644).
+- Moved gear-sh-functions and describe-specfile to separate
+  subpackages (by Gleb Fotengauer-Malinovskiy).
+- Updated bash completions.
+
 * Sun Dec 27 2020 Dmitry V. Levin <ldv@altlinux.org> 2.4.2-alt1
 - Updated git-core requirement.
 - gear-srpmimport: expanded help text on --stdin option a bit.
