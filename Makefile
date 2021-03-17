@@ -52,7 +52,6 @@ HELPERS = \
 	gear-command-remote-build \
 	gear-command-rpmbuild \
 	gear-command-tar \
-	gear-update-sh-functions \
 	gear-update-src-cpio \
 	gear-update-src-cpio.bz2 \
 	gear-update-src-cpio.gz \
@@ -65,6 +64,7 @@ HELPERS = \
 	#
 FUNCTIONS = \
 	gear-sh-functions \
+	gear-update-sh-functions \
 	gear-utils-sh-functions \
 	#
 DATAFILES = gear-import-rules
