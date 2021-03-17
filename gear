@@ -947,4 +947,9 @@ gear_quiet="$quiet"
 gear_verbose="$verbose"
 export gear_rules gear_tar_compress gear_update_spec gear_quiet gear_verbose
 
+# In gear --update-spec mode the path to specfile has to be absolute.
+if [ -n "$update_spec" ] && [ -n "${gear_specfile##/*}" ]; then
+	gear_specfile="$(readlink -fv -- "$gear_specfile")"
+fi
+
 run_command $command_helper "$@"
