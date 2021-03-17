@@ -952,4 +952,7 @@ if [ -n "$update_spec" ] && [ -n "${gear_specfile##/*}" ]; then
 	gear_specfile="$(readlink -fv -- "$gear_specfile")"
 fi
 
+# Change the cwd back if it was changed earlier by chdir_to_toplevel.
+chdir_back_from_toplevel
+
 run_command $command_helper "$@"
