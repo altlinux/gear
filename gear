@@ -307,13 +307,11 @@ write_git_archive()
 {
 	local format="$1" && shift
 	local optional="$1" && shift
-	local cmd="$1" && shift
 	local exclude="$1" && shift
 	local tree="$1" && shift
 	local dir="$1" && shift
 	local name="${1##*/}" && shift
 	local tar_base="$1" && shift
-	local suffix="$1" && shift
 
 	if [ "$tar_base" = '/' ]; then
 		tar_base="$name"
@@ -327,15 +325,11 @@ write_git_archive()
 		}
 		rc=$?
 
-	git archive --format="$format" ${tar_base:+--prefix="$tar_base"/} \
-		"$id" -- $exclude >"$outdir/$name.$format"
-	verbose "Extracted archive: $name.$format"
+	tar_archive="$name.$format"
 
-	local output_name=
-	if [ "$suffix" != '/' ]; then
-		output_name="$name$suffix"
-	fi
-	compress_file "$cmd" "$name.$format" "$output_name"
+	git archive --format="$format" ${tar_base:+--prefix="$tar_base"/} \
+		"$id" -- $exclude >"$outdir/$tar_archive"
+	verbose "Extracted archive: $tar_archive"
 }
 
 make_archive()
@@ -352,16 +346,23 @@ make_archive()
 	local dir_name="${tree_path#*:}"
 	tar_tree="${tree_path%%:*}"
 
-	local tar_base tar_suffix archive_exclude
+	local tar_base tar_suffix archive_exclude tar_archive
 	# Special non-empty marker.
 	tar_base='/'
 	tar_suffix='/'
 	archive_exclude=''
 	get_archive_opts "$format" "$@"
 
+	tar_archive=''
 	tar_tree="$(resolve_tree_base_name "$tar_tree")" || return 1
-	write_git_archive "$format" "$optional" "$cmd" "$archive_exclude" \
-		"$tar_tree" "$dir_name" "$tar_name" "$tar_base" "$tar_suffix"
+	write_git_archive "$format" "$optional" "$archive_exclude" \
+		"$tar_tree" "$dir_name" "$tar_name" "$tar_base"
+
+	local output_name=
+	if [ "$tar_suffix" != '/' ]; then
+		output_name="$tar_name$tar_suffix"
+	fi
+	compress_file "$cmd" "$tar_archive" "$output_name"
 }
 
 get_diff_opts()
