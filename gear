@@ -313,10 +313,6 @@ write_git_archive()
 	local name="${1##*/}" && shift
 	local tar_base="$1" && shift
 
-	if [ "$tar_base" = '/' ]; then
-		tar_base="$name"
-	fi
-
 	local id
 	id="$(traverse_tree "$tree" "$dir" "$optional")" ||
 		{
@@ -355,6 +351,11 @@ make_archive()
 
 	tar_archive=''
 	tar_tree="$(resolve_tree_base_name "$tar_tree")" || return 1
+
+	if [ "$tar_base" = '/' ]; then
+		tar_base="$tar_name"
+	fi
+
 	write_git_archive "$format" "$optional" "$archive_exclude" \
 		"$tar_tree" "$dir_name" "$tar_name" "$tar_base"
 
