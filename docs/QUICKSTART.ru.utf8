@@ -8,7 +8,7 @@ gear: Quick start
 
 `gear` (Get Every Archive from git package Repository) - система для
 работы с произвольными архивами программ.  В качестве хранилища данных
-`gear` использует link:http://kernel.org/pub/software/scm/git/docs/[git],
+`gear` использует link:https://kernel.org/pub/software/scm/git/docs/[git],
 что позволяет работать с полной историей проекта.
 
 

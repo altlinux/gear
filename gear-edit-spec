@@ -16,7 +16,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
 . gear-utils-sh-functions
@@ -31,7 +31,7 @@ show_help()
 	  --version          print program version and exit;
 	  --help             show this text and exit.
 
-	Report bugs to http://bugzilla.altlinux.org/
+	Report bugs to https://bugzilla.altlinux.org/
 
 	EOF
 	exit

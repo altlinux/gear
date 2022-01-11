@@ -16,14 +16,14 @@ Abstract
 --------
 
 Основной смысл хранения исходного кода пакетов в
-link:http://kernel.org/pub/software/scm/git/docs/[git-репозитории]
+link:https://kernel.org/pub/software/scm/git/docs/[git-репозитории]
 заключается в более эффективной и удобной совместной разработке, а также
 в минимизации используемого дискового пространства для хранения архива
 репозитория за длительный срок и минимизации трафика при обновлении
 исходного кода.
 
 Идея
-link:http://git.altlinux.org/people/ldv/packages/?p=gear.git;a=blob_plain;f=gear.1.html;hb=html[`gear(1)`]
+link:https://git.altlinux.org/people/ldv/packages/?p=gear.git;a=blob_plain;f=gear.1.html;hb=html[`gear(1)`]
 заключается в том, чтобы с помощью одного файла с простыми правилами
 (для обработки которых достаточно `sed` и `git`) можно было бы собирать
 пакеты из произвольно устроенного git-репозитория, по аналогии с
@@ -134,7 +134,7 @@ git-репозиторий наиболее удобным для пользов
 коммиту.
 
 Правила экспорта из gear-репозитория описаны детально в
-link:http://git.altlinux.org/people/ldv/packages/?p=gear.git;a=blob_plain;f=gear-rules.5.html;hb=html[`gear-rules(5)`].
+link:https://git.altlinux.org/people/ldv/packages/?p=gear.git;a=blob_plain;f=gear-rules.5.html;hb=html[`gear-rules(5)`].
 
 
 Основные типы устройства gear-репозитория

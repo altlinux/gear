@@ -62,7 +62,7 @@ Options:
   -V, --version             print program version and exit;
   -h, --help                show this text and exit.
 
-Report bugs to http://bugzilla.altlinux.org/
+Report bugs to https://bugzilla.altlinux.org/
 
 EOF
     exit
