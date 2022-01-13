@@ -279,8 +279,14 @@ suffix.
 .BI exclude= glob_pattern
 All files matching the
 .I glob_pattern
-are excluded from the generated tar file. This option can be specified multiple
-times.
+are excluded from the generated tar file.
+This option can be specified multiple times.
+The
+.I glob_pattern
+syntax is described in
+.I glob
+section of
+.IR /usr/share/doc/git/user-manual.html .
 .RE
 .IP
 Values of the
@@ -391,8 +397,14 @@ is \*(lq.\*(rq, in which case the default is
 .BI exclude= glob_pattern
 All files matching the
 .I glob_pattern
-are excluded from the generated diff file. This option can be specified multiple
-times.
+are excluded from the generated tar file.
+This option can be specified multiple times.
+The
+.I glob_pattern
+syntax is described in
+.I glob
+section of
+.IR /usr/share/doc/git/user-manual.html .
 .RE
 .IP
 Value of the
