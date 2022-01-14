@@ -804,7 +804,8 @@ fi
 create_temporary_git_object_directory()
 {
 	local orig_object_dir
-	orig_object_dir="${GIT_OBJECT_DIRECTORY-"$git_dir/objects"}"
+	orig_object_dir="${GIT_OBJECT_DIRECTORY-"$(git rev-parse --git-path objects)"}"
+	orig_object_dir="$(cd "$orig_object_dir" && pwd)"
 	mkdir -p "$tmpdir/objects/info"
 	printf %s\\n "$orig_object_dir" >"$tmpdir/objects/info/alternates"
 	GIT_OBJECT_DIRECTORY="$tmpdir/objects"
