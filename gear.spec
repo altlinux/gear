@@ -67,18 +67,18 @@ make check
 %install
 %makeinstall_std
 install -pDm644 contrib/gear-bash_completion \
-	%buildroot/etc/bash_completion.d/gear
+	%buildroot%_datadir/bash-completion/completions/gear
 ln -s gear-store-tags %buildroot%_bindir/gear-update-tag
 ln -s gear-store-tags.1 %buildroot%_man1dir/gear-update-tag.1
 
 %define _unpackaged_files_terminate_build 1
 
 %files
-%config /etc/bash_completion.d/*
 %_bindir/gear*
 %exclude %_bindir/gear-sh-functions
 %_datadir/%name
 %_mandir/man?/gear*
+%_datadir/bash-completion/completions/gear
 %doc docs/QUICKSTART* docs/ABOUT*
 
 %files sh-functions
