@@ -95,7 +95,7 @@ add_used_tree()
 		return 0
 	fi
 	check_tag_name "$tree"
-	[ -n "${used_tag_names##* $tree *}" ] || return 0
+	[ -n "${used_tag_names##* "$tree" *}" ] || return 0
 	used_tag_names="$used_tag_names$tree "
 }
 
@@ -221,7 +221,7 @@ mark_used_stored_tags()
 {
 	local sha1="$1" && shift
 
-	[ -n "${used_stored_tags##* $sha1 *}" ] ||
+	[ -n "${used_stored_tags##* "$sha1" *}" ] ||
 		return 0
 
 	local real_sha1 next
@@ -257,7 +257,7 @@ store_tag_chain()
 {
 	local sha1="$1" && shift
 
-	[ -n "${new_stored_tags##* $sha1 *}" ] ||
+	[ -n "${new_stored_tags##* "$sha1" *}" ] ||
 		return 0
 
 	local type next
@@ -313,7 +313,7 @@ clean_unused_stored_tags()
 
 	new_stored_tags="$(list_stored_tags)"
 	for sha1 in $old_stored_tags; do
-		if [ -n "${new_stored_tags##* $sha1 *}" ]; then
+		if [ -n "${new_stored_tags##* "$sha1" *}" ]; then
 			rm -f -- "$tag_dir/$sha1"
 			git update-index --remove -- "$tag_dir/$sha1"
 			verbose "Deleted $tag_dir/$sha1"
@@ -474,7 +474,7 @@ verify_used_tags()
 	tag_list_lineno=0
 	while read -r sha1 name; do
 		tag_list_lineno="$((tag_list_lineno+1))"
-		if [ -n "${used_tag_names##* $name *}" ]; then
+		if [ -n "${used_tag_names##* "$name" *}" ]; then
 			verbose "Tag \"$name\" is unnecessary"
 			rc=1
 		fi
@@ -490,7 +490,7 @@ delete_unused_tags()
 	tag_list_lineno=0
 	while read -r sha1 name; do
 		tag_list_lineno="$((tag_list_lineno+1))"
-		if [ -n "${used_tag_names##* $name *}" ]; then
+		if [ -n "${used_tag_names##* "$name" *}" ]; then
 			verbose "Deleted unused tag \"$name\""
 		else
 			printf '%s %s\n' "$sha1" "$name" >>"$workdir/new_tags"

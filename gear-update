@@ -258,7 +258,7 @@ topdir="$(readlink -ev .)"
 
 # Make destdir relative
 destdir="$destdir/"
-destdir="${destdir#$topdir/}"
+destdir="${destdir#"$topdir/"}"
 [ "$destdir" = "${destdir#/}" ] ||
 	fatal "$destdir: directory out of \`$topdir' tree."
 [ -n "$destdir" ] &&
@@ -330,7 +330,7 @@ else
 fi
 
 if [ -n "$remove_source" ]; then
-	[ -n "${source##$topdir/*}" ] ||
+	[ -n "${source##"$topdir"/*}" ] ||
 		git ls-files -z -- "$source" |
 			git update-index --remove --force-remove -z --stdin
 	rm -rf -- "$source"
