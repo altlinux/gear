@@ -157,15 +157,10 @@ SHELLCHECK_EXCLUDE += SC2120 # function references arguments, but none are ever 
 SHELLCHECK_EXCLUDE += SC2154 # var is referenced but not assigned.
 SHELLCHECK_EXCLUDE += SC2163 # export takes a variable name, but you give it an expanded variable instead.
 
-verify:
+verify: $(FUNCTIONS) $(PROGRAMS) $(HELPERS)
 	exclude="$$(printf '%s,' $(SHELLCHECK_EXCLUDE))"; \
 	exclude="$${exclude%,}"; \
-	for f in *; do \
-	    [ -e "$$f" ] || continue; \
-	    ftype=$$(file -b "$$f"); \
-	    [ -n "$${ftype##*shell script*}" ] || \
-	    shellcheck -s dash $${exclude:+-e $$exclude} "$$f"; \
-	done
+	shellcheck -s dash $${exclude:+-e $$exclude} $^
 
 clean:
 	$(RM) $(TARGETS) $(HTMLPAGES) *~
