@@ -62,7 +62,7 @@ update_destdir()
 	local i=$((${gear_update_strip_components:-0} + 1))
 
 	find "$src_dir" -mindepth $i -maxdepth $i \! \( -name '.git' -o -name '.gear' -o -name '.gear-rules' -o -name '.gear-tags' \) -print0 |
-		xargs -r0 -i $cmd -- \{\} "$dst_dir/"
+		xargs -r0 -I'{}' $cmd -- '{}' "$dst_dir/"
 }
 
 check_source_type()
