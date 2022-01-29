@@ -91,7 +91,7 @@ rules_info()
 	message "$rules$lineno_text: $*"
 }
 
-: ${__gear_exported_vars:=__gear_exported_vars}
+: "${__gear_exported_vars:=__gear_exported_vars}"
 export __gear_exported_vars
 gear_export_vars()
 {
