@@ -350,7 +350,7 @@ get_uniq_directive_from_rules()
 		sed 's/[[:space:]]\+$//')"
 	[ -n "$value" ] || return 0
 
-	[ "`printf %s "$value" |wc -l`" -le 0 ] ||
+	[ "$(printf %s "$value" |wc -l)" -le 0 ] ||
 		rules_error "More than one \"$directive\" directive specified"
 
 	set_var_value "$var_name" value
@@ -504,7 +504,7 @@ find_specfile()
 	if [ -z "$specfile" ]; then
 		specfile="$(git ls-tree "$main_tree_id" |
 			sed -ne 's/^[^[:space:]]\+[[:space:]]\+blob[[:space:]]\+[^[:space:]]\+[[:space:]]\+\([^/[:space:]]\+\.spec\)$/\1/p')"
-		[ "`printf %s "$specfile" |wc -l`" -le 0 ] || {
+		[ "$(printf %s "$specfile" |wc -l)" -le 0 ] || {
 			message "Too many specfiles found${GIT_DIR:+ in $GIT_DIR}"
 			[ "$fail_ok" = fail_ok ] && return 1 || exit
 		}

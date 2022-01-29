@@ -146,7 +146,6 @@ SHELLCHECK_EXCLUDE =
 SHELLCHECK_EXCLUDE += SC1090 # ShellCheck is not able to include sourced files from paths that are determined at runtime.
 SHELLCHECK_EXCLUDE += SC1091 # ShellCheck, for whichever reason, is not able to access the source file.
 SHELLCHECK_EXCLUDE += SC2004 # $/${} is unnecessary on arithmetic variables.
-SHELLCHECK_EXCLUDE += SC2006 # Use $(...) notation instead of legacy backticked `...`.
 SHELLCHECK_EXCLUDE += SC2015 # Note that A && B || C is not if-then-else.
 SHELLCHECK_EXCLUDE += SC2034 # Variable appears unused. Verify it or export it.
 SHELLCHECK_EXCLUDE += SC2035 # Use ./*glob* or -- *glob* so names with dashes won't become options.

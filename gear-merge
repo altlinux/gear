@@ -287,7 +287,7 @@ branch_gendiff() {
 		new_files="$new_files $name"
 }
 
-TEMP=`getopt -n $PROG -o a,r:,s:,I,V,v,h -l add,rules:,stop:,no-interactive,ignore-changed,ignore-untracked,version,verbose,help -- "$@"` ||
+TEMP=$(getopt -n $PROG -o a,r:,s:,I,V,v,h -l add,rules:,stop:,no-interactive,ignore-changed,ignore-untracked,version,verbose,help -- "$@") ||
 	show_usage
 eval set -- "$TEMP"
 

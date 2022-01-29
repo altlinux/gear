@@ -608,7 +608,7 @@ fileflags_filenames=["%{FILEFLAGS:fflags} "%{FILENAMES:shescape}"\n"];
 	[ -n "${quiet-}" ] || message "Imported $srpm"
 }
 
-TEMP=`getopt -n $PROG -o h,q,v,V -l branch:,import-only,no-unpack,no-untar,rules:,spec-pattern:,stdin,help,quiet,verbose,version -- "$@"` ||
+TEMP=$(getopt -n $PROG -o h,q,v,V -l branch:,import-only,no-unpack,no-untar,rules:,spec-pattern:,stdin,help,quiet,verbose,version -- "$@") ||
 	show_usage
 eval set -- "$TEMP"
 

@@ -50,7 +50,7 @@ print_version()
 	exit
 }
 
-TEMP=`getopt -n $PROG -o E,V,h -l epoch,version,help -- "$@"` ||
+TEMP=$(getopt -n $PROG -o E,V,h -l epoch,version,help -- "$@") ||
 	show_usage
 eval set -- "$TEMP"
 

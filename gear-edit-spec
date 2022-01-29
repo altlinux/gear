@@ -53,7 +53,7 @@ print_version()
 
 GETOPT_ALLOW_UNKNOWN=1
 
-TEMP=`getopt -n $PROG -o + -l version,help -- "$@"` ||
+TEMP=$(getopt -n $PROG -o + -l version,help -- "$@") ||
 	show_usage
 eval set -- "$TEMP"
 

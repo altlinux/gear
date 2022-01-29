@@ -499,7 +499,7 @@ delete_unused_tags()
 	mv -f -- "$workdir/new_tags" "$workdir/tags"
 }
 
-TEMP=`getopt -n "$PROG" -o a,c,d,r:$getopt_common_opts -l all,clean,no-clean,delete,verify,rules:,$getopt_common_longopts -- "$@"` ||
+TEMP=$(getopt -n "$PROG" -o a,c,d,r:$getopt_common_opts -l all,clean,no-clean,delete,verify,rules:,$getopt_common_longopts -- "$@") ||
 	show_usage
 eval set -- "$TEMP"
 

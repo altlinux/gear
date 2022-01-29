@@ -133,7 +133,7 @@ parse_changelog_rules() {
 		write_group
 }
 
-TEMP=`getopt -n $PROG -o 'd:f:,r:,h,V' -l 'format:,no-credits,no-groups,no-header,header-only,no-rules,no-spec,rules:,since-date:,help,version' -- "$@"` ||
+TEMP=$(getopt -n $PROG -o 'd:f:,r:,h,V' -l 'format:,no-credits,no-groups,no-header,header-only,no-rules,no-spec,rules:,since-date:,help,version' -- "$@") ||
 	show_usage
 eval set -- "$TEMP"
 

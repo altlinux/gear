@@ -92,7 +92,7 @@ validate_subdir()
 	[ -n "$subdir" ] ||
 		fatal "$source: subdirectory not found."
 
-	[ "`printf %s "$subdir" |wc -l`" -eq 0 ] ||
+	[ "$(printf %s "$subdir" |wc -l)" -eq 0 ] ||
 		fatal "More than one subdirectory specified: $(printf %s "$subdir" |tr -s '[:space:]' ' ')"
 
 	local quoted_subdir
@@ -144,7 +144,7 @@ for s_handler in "$plugin_dir/gear-update-src-"*; do
 done
 set -f
 
-TEMP=`getopt -n $PROG -o a,c,f,t:,s:,v,V,h -l all,create,exclude:,ignore-exclude,honor-exclude,force,remove-source,type:,subdir:,strip-components:,verbose,version,help -- "$@"` || show_usage
+TEMP=$(getopt -n $PROG -o a,c,f,t:,s:,v,V,h -l all,create,exclude:,ignore-exclude,honor-exclude,force,remove-source,type:,subdir:,strip-components:,verbose,version,help -- "$@") || show_usage
 eval set -- "$TEMP"
 
 gear_config_option exclude_pattern exclude-pattern ''

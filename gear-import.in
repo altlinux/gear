@@ -247,7 +247,7 @@ gear_config_option tag_format tag ""
 gear_config_option tag_msg_format tag-message ""
 gear_config_option commit_msg_format commit-message ""
 
-TEMP=`getopt -n $PROG -o a,f,c:,C,r:,s,S:,t:,T:,v,V,h -l all,commit:,create,dry-run,force,no-commit,no-tag,ignore-exclude,honor-exclude,rules:,sign,subdir:,tag:,tag-message:,time:,verbose,version,help -- "$@"` ||
+TEMP=$(getopt -n $PROG -o a,f,c:,C,r:,s,S:,t:,T:,v,V,h -l all,commit:,create,dry-run,force,no-commit,no-tag,ignore-exclude,honor-exclude,rules:,sign,subdir:,tag:,tag-message:,time:,verbose,version,help -- "$@") ||
 	show_usage
 eval set -- "$TEMP"
 

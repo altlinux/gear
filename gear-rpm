@@ -82,7 +82,7 @@ args="$args-$gear_cmd $prog"
 
 GETOPT_ALLOW_UNKNOWN=1
 GETOPT_ALLOW_ABBREV=
-TEMP=`getopt -n $PROG -o "$gear_short_options" -l "$gear_long_options" -- "$@"` ||
+TEMP=$(getopt -n $PROG -o "$gear_short_options" -l "$gear_long_options" -- "$@") ||
 	show_usage
 eval set -- "$TEMP"
 

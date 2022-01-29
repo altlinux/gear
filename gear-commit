@@ -63,7 +63,7 @@ EOF
 }
 
 GETOPT_ALLOW_UNKNOWN=1
-TEMP=`getopt -n $PROG -o 'e,m:,h,V' -l 'edit,message:,no-edit,spec:,help,version' -- "$@"` || show_usage
+TEMP=$(getopt -n $PROG -o 'e,m:,h,V' -l 'edit,message:,no-edit,spec:,help,version' -- "$@") || show_usage
 eval set -- "$TEMP"
 
 gear_config_option gear_edit_message edit-message yes
