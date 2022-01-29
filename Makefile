@@ -160,7 +160,7 @@ SHELLCHECK_EXCLUDE += SC2163 # export takes a variable name, but you give it an 
 verify: $(FUNCTIONS) $(PROGRAMS) $(HELPERS)
 	exclude="$$(printf '%s,' $(SHELLCHECK_EXCLUDE))"; \
 	exclude="$${exclude%,}"; \
-	shellcheck -s dash $${exclude:+-e $$exclude} $^
+	shellcheck -s bash $${exclude:+-e $$exclude} $^
 
 clean:
 	$(RM) $(TARGETS) $(HTMLPAGES) *~
