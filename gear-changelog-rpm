@@ -37,7 +37,7 @@ format_commit() {
 
 	str="$(printf '%s\n' "$s$m $subj" |
 		fmt -w$cwidth |
-		sed -e "s/^$s[^$m]/  &/")"
+		sed -e "s/^${s}[^$m]/  &/")"
 
 	[ -n "$no_credits" ] || [ "$releaser" = "$aname <$aemail>" ] ||
 		str="$str (thx $aname)"
