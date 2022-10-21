@@ -1,5 +1,5 @@
 Name: gear
-Version: 2.5.1
+Version: 2.6.0
 Release: alt1
 
 Summary: Get Every Archive from git package Repository
@@ -89,6 +89,10 @@ ln -s gear-store-tags.1 %buildroot%_man1dir/gear-update-tag.1
 %_man1dir/describe-specfile*
 
 %changelog
+* Thu Nov 10 2022 Dmitry V. Levin <ldv@altlinux.org> 2.6.0-alt1
+- Relocated bash completion (closes: #41720).
+- Introduced "type" directive support.
+
 * Fri Jan 14 2022 Dmitry V. Levin <ldv@altlinux.org> 2.5.1-alt1
 - gear-rules.5: added references to git glob syntax (closes: #39804).
 - gear-store-tags: fixed the warning about specsubst directive (closes: #39898).
