@@ -199,7 +199,7 @@ find_tags_in_rules()
 				;;
 		esac
 		case "$cmd" in
-			spec|specsubst|tags|compress|copy|gzip|bzip2|lzma|xz|zstd|exclude)
+			spec|specsubst|tags|type|compress|copy|gzip|bzip2|lzma|xz|zstd|exclude)
 				continue
 				;;
 			tar|tar.gz|tar.bz2|tar.lzma|tar.xz|tar.zst|zip)

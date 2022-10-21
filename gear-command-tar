@@ -24,7 +24,8 @@ specfile="${gear_specfile##*/}"
 verbose="${gear_verbose-}"
 
 tar --create --file="$gear_outfile" --directory="$gear_outdir" \
-	--label="$specfile" --owner=root --group=root \
+	--label="${gear_spectype:+"$gear_spectype/"}$specfile" \
+	--owner=root --group=root \
 	--mode=u+w,go-w,go+rX \
 	${SOURCE_DATE_EPOCH:+--mtime=@"$SOURCE_DATE_EPOCH"} \
 	${gear_tar_compress-} .

@@ -480,6 +480,16 @@ get_specsubst_from_rules()
 	fi
 }
 
+spec_type=
+get_spec_type_from_rules()
+{
+	get_uniq_directive_from_rules spec_type type
+	if [ -n "$spec_type" ] &&
+	   [ -n "$(printf %s "$spec_type" |LANG=C tr -d '[:alpha:]')" ]; then
+		rules_error "Invalid spec type \"$spec_type\" specified"
+	fi
+}
+
 specfile=
 pkg_name=
 pkg_epoch=
@@ -488,6 +498,8 @@ pkg_release=
 find_specfile()
 {
 	local fail_ok="${1-}"
+
+	get_spec_type_from_rules
 
 	get_specsubst_from_rules
 	if [ -n "$specsubst" ]; then

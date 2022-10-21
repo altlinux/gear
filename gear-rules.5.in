@@ -144,6 +144,12 @@ stored tag objects instead of
 .BR .gear\-tags " and " .gear/tags .
 .
 .TP
+.BI "type: " spec_type
+Specify the type of the spec file instead of an unspecified default.
+This information is saved in the volume header of the output tar archive
+produced by
+.BR gear (1).
+.TP
 .BI "copy: " glob_pattern\fR...
 Copy files matching the specified glob patterns to the output
 directory, except files which match any of glob patterns specified by

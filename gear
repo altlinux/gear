@@ -639,7 +639,7 @@ parse_rules()
 		eval "set -- $opts"
 
 		case "$cmd" in
-			spec|specsubst|exclude|tags)
+			spec|specsubst|exclude|tags|type)
 				continue
 				;;
 			tar|tar.gz|tar.bz2|tar.lzma|tar.xz|tar.zst)
@@ -939,9 +939,10 @@ export gear_pkg_name gear_pkg_version gear_pkg_release
 gear_outdir="$outdir"
 gear_outfile="${out_file:-$workdir/pkg.tar}"
 gear_specfile="$specfile"
+gear_spectype="$spec_type"
 gear_tmpdir="$tmpdir"
 gear_workdir="$workdir"
-export gear_outdir gear_outfile gear_specfile gear_tmpdir gear_workdir
+export gear_outdir gear_outfile gear_specfile gear_spectype gear_tmpdir gear_workdir
 
 gear_rules="$rules"
 gear_tar_compress="$tar_compress"
