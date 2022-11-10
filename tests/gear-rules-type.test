@@ -1,0 +1,21 @@
+#!/bin/sh -efu
+
+gear_rules_type() # test entry point
+{
+	local spec=bar.spec
+	local spectype=foo
+
+	> "$spec"
+	git add "$spec"
+
+	mkdir -p .gear
+	printf 'type: %s\n' "$spectype" >.gear/rules
+	git add .gear
+
+	git commit -q -a -m 1
+
+	finalize_repo
+
+	$GEAR "$GEAR_OUT"
+	check_pkgtar_spec "$GEAR_OUT" "$spectype/$spec"
+}
