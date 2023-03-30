@@ -92,7 +92,7 @@ write_group() {
 	printf '%s\n' "$regexp" >"$workdir/$num_groups/regexp"
 	printf '%s\n' "$filter" >"$workdir/$num_groups/filter"
 
-	num_groups=$(($num_groups+1))
+	num_groups=$((num_groups+1))
 	filter='' regexp=''
 }
 
@@ -266,7 +266,7 @@ while IFS="$tab" read -r hash atime aname aemail subj; do
 			format_commit "$subj" >> "$out"
 			break
 		fi
-		i=$(($i+1))
+		i=$((i+1))
 	done
 done
 
@@ -276,13 +276,13 @@ if [ -z "$no_rules$no_groups" ]; then
 	i=0
 	while [ "$num_groups" -gt "$i" ]; do
 		if [ ! -s "$workdir/group$i" ]; then
-			i=$(($i+1))
+			i=$((i+1))
 			continue
 		fi
 		group="$(cat "$workdir/$i/descr")"
 		format_group "$group"
 		uniq < "$workdir/group$i"
-		i=$(($i+1))
+		i=$((i+1))
 	done
 else
 	[ ! -s "$workdir/group" ] ||

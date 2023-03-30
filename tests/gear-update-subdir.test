@@ -152,13 +152,13 @@ FAIL"
 FAIL"
 		;;
 	esac
-	result="$((gear-update -s non-existant-subdir ".git/.work/subdir-1.2.3$gear_type" "$gear_subdir" 2>&1 && echo OK || echo FAIL) | sed -e "s#$(quote_sed_regexp "$workdir/")#WORKDIR/#g")"
+	result="$( (gear-update -s non-existant-subdir ".git/.work/subdir-1.2.3$gear_type" "$gear_subdir" 2>&1 && echo OK || echo FAIL) | sed -e "s#$(quote_sed_regexp "$workdir/")#WORKDIR/#g")"
 	assertEquals "should not update non-existant directory" "$msg" "$result"
 
 	assertEquals "should not alter anything on error" "" "$(git diff -p --stat)$(git diff -p --stat --cached)"
 
 	touch "$gear_subdir"/left-file
-	result="$((gear-update ".git/.work/subdir-1.2.3$gear_type" "$gear_subdir" 2>&1 && echo OK || echo FAIL) | sed -e "s#$(quote_sed_regexp "$workdir/")#WORKDIR/#g")"
+	result="$( (gear-update ".git/.work/subdir-1.2.3$gear_type" "$gear_subdir" 2>&1 && echo OK || echo FAIL) | sed -e "s#$(quote_sed_regexp "$workdir/")#WORKDIR/#g")"
 	assertEquals "should fail on untracked files" "gear-update: $gear_subdir: Untracked or modified files found.
 FAIL" "$result"
 
@@ -166,21 +166,21 @@ FAIL" "$result"
 
 	touch "$gear_subdir"/left-file
 	git add "$gear_subdir"/left-file
-	result="$((gear-update ".git/.work/subdir-1.2.3$gear_type" "$gear_subdir" 2>&1 && echo OK || echo FAIL) | sed -e "s#$(quote_sed_regexp "$workdir/")#WORKDIR/#g")"
+	result="$( (gear-update ".git/.work/subdir-1.2.3$gear_type" "$gear_subdir" 2>&1 && echo OK || echo FAIL) | sed -e "s#$(quote_sed_regexp "$workdir/")#WORKDIR/#g")"
 	assertEquals "should fail on new files" "gear-update: $gear_subdir: Changed files found in the index.
 FAIL" "$result"
 
 	git reset -q --hard HEAD
 
 	rm -f "$gear_subdir"/file
-	result="$((gear-update ".git/.work/subdir-1.2.3$gear_type" "$gear_subdir" 2>&1 && echo OK || echo FAIL) | sed -e "s#$(quote_sed_regexp "$workdir/")#WORKDIR/#g")"
+	result="$( (gear-update ".git/.work/subdir-1.2.3$gear_type" "$gear_subdir" 2>&1 && echo OK || echo FAIL) | sed -e "s#$(quote_sed_regexp "$workdir/")#WORKDIR/#g")"
 	assertEquals "should fail on deleted files" "gear-update: $gear_subdir: Untracked or modified files found.
 FAIL" "$result"
 
 	git reset -q --hard HEAD
 
 	echo "Modified file." > "$gear_subdir"/file
-	result="$((gear-update ".git/.work/subdir-1.2.3$gear_type" "$gear_subdir" 2>&1 && echo OK || echo FAIL) | sed -e "s#$(quote_sed_regexp "$workdir/")#WORKDIR/#g")"
+	result="$( (gear-update ".git/.work/subdir-1.2.3$gear_type" "$gear_subdir" 2>&1 && echo OK || echo FAIL) | sed -e "s#$(quote_sed_regexp "$workdir/")#WORKDIR/#g")"
 	assertEquals "should fail on modified files" "gear-update: $gear_subdir: Untracked or modified files found.
 FAIL" "$result"
 
@@ -256,7 +256,7 @@ FAIL"
 		msg="OK"
 		;;
 	esac
-	result="$((gear-update -a ".git/.work/subdir-1.2.3$gear_type" "$gear_subdir" 2>&1 && echo OK || echo FAIL) | sed -e "s#$(quote_sed_regexp "$workdir/")#WORKDIR/#g")"
+	result="$( (gear-update -a ".git/.work/subdir-1.2.3$gear_type" "$gear_subdir" 2>&1 && echo OK || echo FAIL) | sed -e "s#$(quote_sed_regexp "$workdir/")#WORKDIR/#g")"
 	assertEquals "should accept -a when allowed" "$msg" "$result"
 
 	result="$(git diff -p --stat)"
